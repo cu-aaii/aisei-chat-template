@@ -1,0 +1,14 @@
+# https://www.robotstxt.org/robotstxt.html
+# Served at /robots.txt via the `assets` array in angular.json. Without a real
+# file here the SPA fallback returns index.html with a 200, which crawlers (and
+# Lighthouse) read as a robots file full of syntax errors.
+#
+# The committed copy of this file deliberately has no Sitemap: line. That needs an absolute URL,
+# and the canonical host is still unsettled (the test host is SSO-gated; the public
+# host is still WordPress), so no host is committed to this file. Instead
+# `scripts/generate-sitemap.mjs` appends `Sitemap: $SITE_URL/sitemap.xml` to the built
+# copy of this file at the end of `npm run build`, alongside writing sitemap.xml.
+# Editing the host means setting SITE_URL, not editing this file.
+
+User-agent: *
+Allow: /

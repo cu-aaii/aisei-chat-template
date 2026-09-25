@@ -1,0 +1,113 @@
+/* The minimal styles used by cornell base theme */
+html {
+  -webkit-text-size-adjust: 100%;
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: subpixel-antialiased;
+  height: 100%;
+
+  #main {
+    h2 {
+      color: var(--color-accent);
+    }
+  }
+}
+
+*,
+:after,
+:before {
+  box-sizing: border-box;
+}
+
+.sr-only,
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.row {
+  margin-left: -15px;
+  margin-right: -15px;
+
+  >* {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  &:after {
+    content: " ";
+    display: table;
+    clear: both;
+  }
+
+  &:before {
+    content: " ";
+    display: table;
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+
+  >.primary {
+    float: left;
+    width: 100%;
+    margin-bottom: 2.5em;
+  }
+
+  >.secondary {
+    float: left;
+    width: 100%;
+    margin-bottom: 2.5em;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+}
+
+.container-fluid {
+  margin-right: auto;
+  margin-left: auto;
+  padding-left: 15px;
+  padding-right: 15px;
+
+  &:before {
+    content: " ";
+    display: table;
+  }
+
+  &:after {
+    content: " ";
+    display: table;
+    clear: both;
+  }
+}
+
+/* apply styles to screen sizes above 768px */
+@media (min-width: 768px) {
+  .container-fluid {
+    padding-left: 30px;
+    padding-right: 30px;
+    max-width: 1340px;
+  }
+}
+
+@media (min-width: 992px) {
+  .container-fluid {
+    padding-left: 60px;
+    padding-right: 60px;
+    max-width: 1400px;
+  }
+}

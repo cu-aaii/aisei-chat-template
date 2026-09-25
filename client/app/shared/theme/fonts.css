@@ -1,0 +1,169 @@
+/*
+ * Metric-matched fallback for freight-sans-pro.
+ *
+ * The problem this solves: the Typekit kit ships `font-display: auto`, which Chrome
+ * treats as `block`, and the font files only start downloading after two serialized
+ * blocking stylesheet hops (`use.typekit.net/nwp2wku.css` then the `p.typekit.net/p.css`
+ * it `@import`s). On anything but a fast warm connection the block period expires first,
+ * so the browser paints in a local fallback and then re-renders when freight arrives.
+ *
+ * freight-sans-pro is a humanist sans with tall ascenders; Arial is a neo-grotesque that
+ * runs 8-13% wider with a much shorter ascender. At the hero's 97px that mismatch was
+ * measured at 43px of horizontal reflow and 10px of vertical movement on the word
+ * "Empowering" — plainly visible, and the reason this file exists.
+ *
+ * The fix is not to change the brand face, it's to make the fallback lie about its
+ * metrics. `size-adjust` scales the glyphs so advance widths match freight's; the
+ * ascent/descent overrides move the baseline to where freight would put it. The swap
+ * still happens, but nothing moves when it does — the letterforms change, the layout
+ * does not.
+ *
+ * Arial is the base because it is the one face present on every platform we serve, and
+ * because Liberation Sans (Linux) and Arimo (ChromeOS) are metrically identical to it by
+ * design — so the numbers hold everywhere rather than drifting per OS.
+ *
+ * ---------------------------------------------------------------------------------
+ * THE TRAP, if you ever re-derive these numbers
+ *
+ * Do NOT derive `size-adjust` by measuring freight against canvas `700 100px Arial`.
+ * That measurement lets Chrome *synthesize* bold from Arial Regular, which is ~5.5%
+ * wider than Arial Regular itself. But inside an `@font-face`, `src: local('Arial')`
+ * resolves to Arial **Regular**, and declaring `font-weight: 700` on the face tells the
+ * browser this file already *is* 700 — so no synthesis happens. Derive against the
+ * synthesized width and every bold face comes out 5.46% too narrow. That was the first
+ * version of this file, and it left exactly 43px of residual error on the hero: the
+ * right magnitude, the wrong direction.
+ *
+ * The reliable method is to measure the fallback family itself, in the browser, with
+ * these rules already live, and correct multiplicatively. Recipe at the bottom.
+ * ---------------------------------------------------------------------------------
+ */
+
+/*
+ * weight, style, size-adjust, ascent-override, descent-override
+ *
+ * The overrides are the same absolute face metrics throughout — freight's own
+ * fontBoundingBox is 102.0/30.0 per 100px — just divided by each row's `size-adjust`,
+ * because the spec applies overrides *after* the size adjustment. So the vertical
+ * result is identical across rows even though the printed percentages differ.
+ *
+ * Note the 400/500 rows need no bold synthesis and so came out unchanged from the naive
+ * derivation; 600 and up all shifted by the same 5.46%. Only weights and styles this
+ * site actually uses are listed (400/500/600/700 normal, 700/900 italic) — there is no
+ * 400-italic anywhere in the codebase, and an unused face is one more thing to keep
+ * honest.
+ */
+
+@font-face {
+  font-family: freight-fallback;
+  /* Arial first, then the metrically-identical clones for Linux/ChromeOS, then */
+  /* Helvetica for older macOS. All resolve to the *Regular* file — see THE TRAP above. */
+  src: local('Arial'), local('Liberation Sans'), local('Arimo'), local('Helvetica');
+  font-weight: 400;
+  font-style: normal;
+  size-adjust: 86.74%;
+  ascent-override: 117.59%;
+  descent-override: 34.58%;
+  /* freight's fontBoundingBox metrics above already describe the full box; leaving a */
+  /* line gap in would add leading the real face doesn't have, which would move every */
+  /* block that relies on `line-height: normal`. */
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: freight-fallback;
+  src: local('Arial'), local('Liberation Sans'), local('Arimo'), local('Helvetica');
+  font-weight: 500;
+  font-style: normal;
+  size-adjust: 89.13%;
+  ascent-override: 114.44%;
+  descent-override: 33.66%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: freight-fallback;
+  src: local('Arial'), local('Liberation Sans'), local('Arimo'), local('Helvetica');
+  font-weight: 600;
+  font-style: normal;
+  size-adjust: 93.17%;
+  ascent-override: 109.47%;
+  descent-override: 32.20%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: freight-fallback;
+  src: local('Arial'), local('Liberation Sans'), local('Arimo'), local('Helvetica');
+  font-weight: 700;
+  font-style: normal;
+  size-adjust: 97.19%;
+  ascent-override: 104.95%;
+  descent-override: 30.87%;
+  line-gap-override: 0%;
+}
+
+/*
+ * The 900 row is a special case, three times over.
+ *
+ * First: the kit has no 900 face — it tops out at 700, so the browser synthesizes the
+ * extra weight. Measured, freight's "900 italic" is byte-identical in width to its 700
+ * italic (5318.2px on the sample string), confirming the synthesis. Don't "fix" the 900
+ * in hero.component.ts without checking it against the live site: the synthetic
+ * emboldening is what the live WordPress site renders too.
+ *
+ * Second, why this row's size-adjust differs from 700: `size-adjust` is a single uniform
+ * scale, so it matches a long sample on average but not any given word — the per-glyph
+ * ratios spread from 0.999 to 1.055. This face has exactly one consumer on the whole
+ * site (the two `h1 .accent-*` spans in the hero), so it is tuned to the text it
+ * actually renders rather than to a generic sample. Measured ratios there:
+ * "Empowering" 1.0303, "Responsible AI" 0.9993.
+ *
+ * Tuned to "Empowering", not to the mean of the two, because only "Empowering"'s width
+ * is observable. The h1 is left-aligned and wraps to "Empowering Cornell with" /
+ * "Responsible AI", so a width change on the first word drags the rest of line 1
+ * with it while the second line reflows independently — only the first word's ratio
+ * is load-bearing for layout.
+ *
+ * Third, why `font-style: normal` here even though this row also stands in for 900
+ * italic: this font has no italic face of its own to synthesize from, and
+ * declaring `font-style: italic` on a face tells the browser the file already is
+ * italic — so it renders upright, and the accents read as plain roman text until
+ * freight lands. Leaving every face `normal` instead means an italic request finds no
+ * italic face and Chrome applies synthetic oblique, which is a shear: it changes the
+ * letterforms without changing advance widths, so the accents look italic during the
+ * block period and the metrics still hold. 700-italic (about.component.ts's
+ * `.intro .lead.accent`) resolves to the 700 row the same way, at a 0.13% cost.
+ */
+@font-face {
+  font-family: freight-fallback;
+  src: local('Arial'), local('Liberation Sans'), local('Arimo'), local('Helvetica');
+  font-weight: 900;
+  font-style: normal;
+  size-adjust: 100.00%;
+  ascent-override: 102.00%;
+  descent-override: 30.00%;
+  line-gap-override: 0%;
+}
+
+/*
+ * To re-derive after a kit change: build, serve, open the site, and in the console —
+ *
+ *   await document.fonts.ready;
+ *   const c = document.createElement('canvas').getContext('2d');
+ *   const S = 'Empowering Cornell with Responsible AI abcdefghijklmnopqrstuvwxyz ' +
+ *             'ABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789';
+ *   const m = (f) => { c.font = f; const x = c.measureText(S);
+ *                      return [x.width, x.fontBoundingBoxAscent, x.fontBoundingBoxDescent]; };
+ *   const spec = 'italic 700 100px ';                    // the combo you're fixing
+ *   await document.fonts.load(spec + '"freight-sans-pro"');   // else you measure the fallback
+ *   const [tw, ta, td] = m(spec + '"freight-sans-pro"');
+ *   const [fw]         = m(spec + '"freight-fallback"');  // what this file renders today
+ *   const next = CURRENT_SIZE_ADJUST * (tw / fw);         // multiplicative correction
+ *   console.log({ sizeAdjust: next, ascent: ta / (next / 100), descent: td / (next / 100) });
+ *
+ * Measuring at 100px makes every result read directly as a percentage. Iterate until
+ * `tw / fw` is 1.000 — it should converge in one pass. The `document.fonts.load` line is
+ * load-bearing: an unrequested face stays [unloaded] and canvas silently measures the
+ * fallback, so the error reads a reassuring 0.00% while nothing has been verified.
+ */
