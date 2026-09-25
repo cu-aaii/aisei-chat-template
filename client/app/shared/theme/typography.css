@@ -1,0 +1,60 @@
+/* Global stylesheet. Deliberately Material-free: see typography.css for what */
+/* replaced the theme, and note that no template on this site uses a `mat-*` */
+/* class or component. `html`/`body` sizing and resets live in styles.css. */
+/* Cornell loads freight-sans-pro via its Typekit kit (nwp2wku) — linked in client/index.html. */
+/* The kit is block-not-swap, so a local face paints first; `freight-fallback` is that face, */
+/* metric-adjusted in fonts.css to occupy exactly freight's box. Keep these two stacks */
+/* identical to --heading-font/--body-font in variables.css. */
+
+/* Base type for the document. This used to come from Angular Material's */
+/* `typography-hierarchy` mixin, keyed off `class="mat-typography"` on <body> — */
+/* the only Material class this site ever applied, and so the only reason ~106 KB */
+/* of Material CSS was live. The declarations below are what that mixin actually */
+/* emitted, transcribed onto plain selectors so the output is byte-for-byte */
+/* equivalent without the theme. */
+/*  */
+/* Two notes if you're tempted to "fix" these values: */
+/*  - The 14px/14px base and the h4-smaller-than-body scale are Material M2's */
+/*    defaults leaking through, not a design decision. Every component that cares */
+/*    sets its own size, so this is close to inert — but changing it here would */
+/*    shift anything that doesn't. Do it as a deliberate type-scale pass, not as */
+/*    a side effect of this cleanup. */
+/*  - Specificity dropped from `.mat-typography h1` (0,1,1) to `h1` (0,0,1). */
+/*    Component styles (`h1[_ngcontent-x]`, also (0,1,1)) previously won only on */
+/*    source order; now they win outright. Same computed result, more headroom. */
+/*  - h5/h6 are deliberately not reproduced. Material set them to 11.62px and */
+/*    9.38px — smaller than body text — and nothing on the site uses them. New */
+/*    content is better served by browser defaults than by that. */
+
+body {
+  font: 400 14px/14px "freight-sans-pro", "freight-fallback", Arial, sans-serif;
+  letter-spacing: normal;
+}
+
+p {
+  margin: 0 0 12px;
+}
+
+h1 {
+  font: 400 36px/36px "freight-sans-pro", "freight-fallback", Arial, sans-serif;
+  letter-spacing: normal;
+  margin: 0 0 16px;
+}
+
+h2 {
+  font: 400 30px/30px "freight-sans-pro", "freight-fallback", Arial, sans-serif;
+  letter-spacing: normal;
+  margin: 0 0 16px;
+}
+
+h3 {
+  font: 400 24px/24px "freight-sans-pro", "freight-fallback", Arial, sans-serif;
+  letter-spacing: normal;
+  margin: 0 0 16px;
+}
+
+h4 {
+  font: 400 14px/14px "freight-sans-pro", "freight-fallback", Arial, sans-serif;
+  letter-spacing: normal;
+  margin: 0 0 16px;
+}

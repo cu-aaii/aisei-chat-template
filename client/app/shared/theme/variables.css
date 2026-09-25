@@ -1,0 +1,49 @@
+/* https://github.dev/CU-CommunityApps/cwd_framework_lite/tree/main/sass/components */
+
+/* @todo use css variables instead of scss variables */
+:root {
+  --color-primary: #2d668e; /* Cornell blue — M2 primary palette 500 */
+  --color-accent: #b31b1b; /* Cornell red  — M2 accent palette 500 */
+  --color-accent-dark: #a01114; /* Cornell red — dark (nav bar, button hover) */
+  --color-nav: #961b1b; /* Cornell red — primary nav band (measured from live site) */
+  --color-dropdown-bg: #343434; /* Dark gray — primary-nav dropdown flyout (measured from live site) */
+  --color-on-primary: #fff;
+  --color-border: #e0e0e0;
+  /* Secondary text on white (dates, cohorts, bylines, placeholders). #666 is */
+  /* 5.74:1 on #fff and 4.90:1 on the search drawer's #ededed input, so it clears */
+  /* WCAG AA at any size. The design's earlier #888/#777 were 3.54:1 and 4.48:1. */
+  --color-muted: #666666;
+  --color-warning: #F8981D; /* Cornell brand orange */
+  --color-on-warning: #222222; /* Cornell dark gray — accessible on warning background */
+
+  /* --color-primary tinted toward white in increasing steps — for use anywhere */
+  /* --color-primary itself is too dark (e.g. on the hero's dark gradient bg, */
+  /* where the base blue is only 2.3–2.8:1, below WCAG's 3:1 floor even for */
+  /* large/bold text). Pick the lightest step that still reads as "blue" for */
+  /* the given background rather than inventing an unrelated hex. */
+  /*   20% → ~4.4:1 / 3.6:1 vs. hero bg   35% → ~6.0:1 / 4.9:1   50% → ~7.7:1 / 6.5:1 */
+  --color-primary-tint-20: color-mix(in srgb, var(--color-primary), white 20%);
+  --color-primary-tint-35: color-mix(in srgb, var(--color-primary), white 35%);
+  --color-primary-tint-50: color-mix(in srgb, var(--color-primary), white 50%);
+
+  /* WordPress-migration tokens — hero/footer parity with the live site. */
+  --color-hero-bg: #1a1a1a; /* Homepage hero band gradient base */
+  /* 35% step clears 4.5:1 at both gradient ends (#1a1a1a and #2a2a2a) with a */
+  /* safe margin while staying visibly blue — see --color-primary-tint-* above. */
+  --color-hero-accent-1: var(--color-primary-tint-35); /* Italic hero headline word (blue) — dark-bg only */
+  --color-hero-accent-2: #c6b20f; /* Italic hero headline word (yellow/olive) — dark-bg only */
+  --color-footer-bg: #333333; /* Site footer band */
+  --color-footer-legal-bg: #292929; /* Footer legal/copyright bar */
+  --color-footer-text: #bbbbbb; /* Footer body text */
+  --color-link: #1176ac; /* Inline body-copy links */
+
+  /* freight-sans-pro (Typekit kit nwp2wku) → freight-fallback, a metric-matched local */
+  /* face declared in _fonts.scss. freight-fallback always resolves, so nothing after it */
+  /* is reachable; the trailing generics are there only so the stack is still valid if */
+  /* _fonts.scss is ever dropped. See _fonts.scss for why the fallback is needed. */
+  --heading-font: "freight-sans-pro", "freight-fallback", Arial, sans-serif;
+  --body-font: "freight-sans-pro", "freight-fallback", Arial, sans-serif;
+
+  --max-width: 1280px; /* 1280px centered content column */
+}
+
