@@ -95,14 +95,17 @@ client/
   app/shared/components/  hero, button, icon, wordmark, chat panel + widget, events widget
   app/shared/theme/       CSS variables, fonts, typography, utilities
 scripts/                  Build steps: chat page index, sitemap
-.claude/skills/           Instructions for Claude Code when working in this repo
+.claude/skills/           Longer task guides for AI coding agents (plain Markdown)
 ```
 
-## Working with Claude Code
+## Working with an AI coding agent
 
-`CLAUDE.md` tells Claude Code how this repo is put together. Open the folder in Claude
-Code and ask it for what you want ("add a Team page with three cards", "make the
-assistant also answer from a FAQ list").
+`AGENTS.md` tells an AI coding agent how this repo is put together and which rules to
+keep: stack, layout, commands, component conventions, and the chat guard rails. Most
+agents (Codex, Cursor, Copilot, Gemini CLI, ...) read it automatically; `CLAUDE.md` just
+imports it for Claude Code. Open the folder in your agent and ask for what you want
+("add a Team page with three cards", "make the assistant also answer from a FAQ list").
+If you change how the project works, update `AGENTS.md` so the next agent knows.
 
 ## License
 

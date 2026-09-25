@@ -1,5 +1,5 @@
 // Two independent layers against forged requests to /api/*, neither of which needs a
-// session/data layer (this app deliberately has none — see CLAUDE.md):
+// session/data layer (this app deliberately has none — see AGENTS.md):
 //
 // 1. Same-origin check via `sec-fetch-site`/`Origin` — cheap, but a non-browser caller
 //    can fake both headers in a single request.
