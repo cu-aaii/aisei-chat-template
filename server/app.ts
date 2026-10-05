@@ -6,6 +6,7 @@ import { logger } from 'hono/logger';
 import { secureHeaders } from 'hono/secure-headers';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { chatRouter } from './modules/chat/chat.routes.js';
+import { config } from './app.config.js';
 import { issueCsrfCookie, verifyCsrfToken } from './middleware/csrf.js';
 
 export const app = new Hono();
@@ -118,7 +119,14 @@ app.get('/health', (c) => {
 
 // Two-layer CSRF check (same-origin + double-submit cookie) on every method/route under
 // /api/chat, including GET /api/chat/config — see server/middleware/csrf.ts.
-app.use('/api/chat/*', verifyCsrfToken());
+//
+// Skipped outside production: in `npm run dev` the pages come from `ng serve` on :4200,
+// not from this server, so the browser never receives an XSRF-TOKEN cookie and every
+// chat request would 403. The Docker image sets NODE_ENV=production, so deployments
+// keep the check.
+if (config.isProduction) {
+  app.use('/api/chat/*', verifyCsrfToken());
+}
 
 app.route('/api/chat', chatRouter);
 
