@@ -9,7 +9,7 @@
   "scripts": {
     "predev": "tsx scripts/export-chat-content.mjs",
     "dev": "concurrently --kill-others \"npm run server:dev\" \"ng serve --proxy-config proxy.conf.json --port 4200\"",
-    "server:dev": "tsx watch --env-file=.env server/index.ts",
+    "server:dev": "node --watch --env-file=.env --import tsx server/index.ts",
     "build": "ng build --configuration production --output-path=dist/client && tsc -p server/tsconfig.json && tsx scripts/export-chat-content.mjs && tsx scripts/generate-sitemap.mjs",
     "start": "node --env-file=.env dist/server/index.js",
     "run:local": "npm run build && node --env-file=.env dist/server/index.js",
