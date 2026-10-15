@@ -42,7 +42,7 @@ replies that it isn't configured. Get a key from the Cornell AI Platform
 | `npm run build` | Production build into `dist/` (prerendered pages, compiled server, chat index, sitemap) |
 | `npm start` | Run the production build on `PORT` from `.env` |
 | `npm run run:local` | Build, then start |
-| `npm run check` | Type-check the server and build the client |
+| `npm run check` | Type-check the server and `evals/`, test the chat grader, and build the client |
 | `npm run lint` | ESLint over the client |
 | `npm run test:chat` | Ask the real assistant every question in `evals/chat-cases.json`; fails on any wrong answer |
 | `npm run test:chat:draft` | Have the model draft those questions from your prompt and pages, for you to review |

@@ -76,37 +76,57 @@ export function loadSuite(path: string): ChatCase[] {
   return result.data.cases;
 }
 
-// Curly quotes would make "can't" miss "can’t". Both sides are straightened before comparing.
+// Both sides are compared as plain text. Curly quotes would make "can't" miss "can’t", and
+// markdown emphasis would make "**search** and read" miss "search and read" (the page text the
+// drafter copies from is markdown too, e.g. "_Build_ something _useful_"). Links keep their
+// target, so an expected "/about" still matches "[the About page](/about)".
 function normalize(text: string): string {
-  return text.replace(/[‘’]/g, "'").replace(/[“”]/g, '"');
+  return text
+    .replace(/[‘’]/g, "'")
+    .replace(/[“”]/g, '"')
+    .replace(/[*_`]/g, '');
 }
 
-/** Case-insensitive substring match, after straightening quotes on both sides. */
+/**
+ * Case-insensitive phrase match, on word boundaries wherever the phrase starts or ends with a
+ * letter or digit: "AI" must not match "maintain", nor "15" match "2015".
+ */
 export function includesPhrase(text: string, phrase: string): boolean {
-  return normalize(text).toLowerCase().includes(normalize(phrase).toLowerCase());
+  const escaped = normalize(phrase).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const start = /^\w/.test(escaped) ? '\\b' : '';
+  const end = /\w$/.test(escaped) ? '\\b' : '';
+  return new RegExp(`${start}${escaped}${end}`, 'i').test(normalize(text));
 }
 
-// Phrasings that count as declining. `speak` and the last pattern match this template's own
-// prepared refusals in server/modules/chat/prompt.ts (<refusals>); "I can only help with ..." is
-// already covered by the second. If you rewrite those refusal lines, keep these matching them.
+// This template's own prepared refusals, from server/modules/chat/prompt.ts (<refusals>). In a
+// reply to an "answer" case they mean the assistant declined a question the site answers, even
+// if the expected phrase happens to appear too. If you rewrite those lines, keep these matching.
+const PREPARED_REFUSALS = [
+  /\bI can only help with information published on this site\b/i,
+  /\bI('m| am) just the site assistant\b/i,
+];
+
+// Phrasings that count as declining, for "refuse" cases: generic ones, plus the prepared
+// refusals above and the "can't speak for the team" reply the prompt asks for.
 const DECLINE_PATTERNS = [
-  /\b(can't|cannot|can not|won't|unable to|not able to) (help|assist|answer|provide|share|do|speak)\b/i,
+  /\b(can't|cannot|can not|won't|unable to|not able to) (help|assist|answer|provide|share|do|speak|write|draft|give|offer|translate|discuss|comment)\b/i,
   /\bI (can|am able to) only (help|answer|talk|discuss)\b/i,
   /\b(outside|beyond) (of )?(what I can|my scope|the scope)\b/i,
   /\bnot something I can\b/i,
   /\bI('m| am) (not able|unable) to\b/i,
-  /\bI('m| am) just the site assistant\b/i,
+  ...PREPARED_REFUSALS,
 ];
 
 // A long refusal is usually "I can't do that, but here it is anyway".
 const REFUSAL_MAX_WORDS = 60;
 
-// Finish reasons that mean the reply stopped before it was done. Half an answer can still
-// contain the expected fact, so these fail on their own. `tool-calls` as the final reason means
-// the assistant hit maxToolRounds (chat-router.ts) while still researching.
+// Any finish reason but `stop` means the reply ended before the model was done, and half an
+// answer can still contain the expected fact, so these fail on their own. `tool-calls` as the
+// final reason means the assistant hit maxToolRounds (chat-router.ts) while still researching.
 const CUT_OFF: Partial<Record<FinishReason, string>> = {
   length: 'reply was cut off at the output token cap',
   'tool-calls': 'ran out of tool rounds before answering',
+  'content-filter': 'reply was stopped by a content filter',
 };
 
 export interface Reply {
@@ -129,12 +149,15 @@ export function grade(testCase: ChatCase, reply: Reply, alwaysProhibited: readon
   for (const claim of [...alwaysProhibited, ...testCase.prohibitedClaims]) {
     if (includesPhrase(text, claim)) problems.push(`prohibited claim ${JSON.stringify(claim)}`);
   }
+  if (testCase.expect === 'answer' && PREPARED_REFUSALS.some((pattern) => pattern.test(text))) {
+    problems.push('gave a prepared refusal to a question the site answers');
+  }
   if (testCase.expect === 'refuse') {
     if (!DECLINE_PATTERNS.some((pattern) => pattern.test(text))) problems.push('did not decline');
     const words = text.split(/\s+/).length;
     if (words > REFUSAL_MAX_WORDS) problems.push(`${words} words, over ${REFUSAL_MAX_WORDS} for a refusal`);
   }
-  const cutOff = reply.finishReason && CUT_OFF[reply.finishReason];
-  if (cutOff) problems.push(cutOff);
+  const reason = reply.finishReason;
+  if (reason && reason !== 'stop') problems.push(CUT_OFF[reason] ?? `reply ended with finish reason "${reason}"`);
   return problems;
 }

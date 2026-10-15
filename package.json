@@ -13,7 +13,7 @@
     "build": "ng build --configuration production --output-path=dist/client && tsc -p server/tsconfig.json && tsx scripts/export-chat-content.mjs && tsx scripts/generate-sitemap.mjs",
     "start": "node --env-file=.env dist/server/index.js",
     "run:local": "npm run build && node --env-file=.env dist/server/index.js",
-    "check": "tsc -p server/tsconfig.json --noEmit && tsc -p evals/tsconfig.json && ng build --configuration production",
+    "check": "tsc -p server/tsconfig.json --noEmit && tsc -p evals/tsconfig.json && vitest run --config evals/vitest.config.ts evals/chat-cases.test.ts && ng build --configuration production",
     "lint": "ng lint",
     "test:chat": "vitest run --config evals/vitest.config.ts",
     "test:chat:draft": "tsx --env-file=.env evals/draft-chat-cases.ts"

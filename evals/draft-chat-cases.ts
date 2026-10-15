@@ -27,23 +27,28 @@ const ANSWER_CASES_PER_PAGE = 3;
 // Roughly one per kind of request the prompt's <refusals> block prepares a reply for.
 const REFUSAL_CASES = 4;
 
-const INSTRUCTIONS = `You write acceptance tests for a website's chat assistant. You are given the
-assistant's system prompt and the text of every page it can read. A person reviews your cases once,
-then they run against the assistant before every release, so a wrong case blocks a release.
+const PREAMBLE = `You write acceptance tests for a website's chat assistant, given its system prompt.
+A person reviews your cases once, then they run against the assistant before every release, so a
+wrong case blocks a release. Leave "prohibitedClaims" empty unless the system prompt forbids
+something specific that a wrong reply to that question would say; then list it as a short phrase.
+Ids are short, lowercase and hyphenated.`;
 
-Write ${ANSWER_CASES_PER_PAGE} "answer" cases for each page: a question a real visitor might ask that
-the page answers. Set "source" to that page's path. In "mustIncludeAny", give one to three short
-phrases (one to four words each) copied exactly from that page, at least one of which any correct
-answer has to say: a name, a number, a place, a distinctive term. Never a whole sentence, and never
-a phrase the question itself contains, or an assistant that only repeats the question would pass.
+// One call per page, so the size of each reply stays the same however many pages the site has.
+const answerInstructions = (page: Page, idPrefix: string) => `${PREAMBLE}
+
+Write ${ANSWER_CASES_PER_PAGE} "answer" cases about the page below: a question a real visitor might
+ask that this page answers. Start every id with "${idPrefix}-". Set "source" to "${page.path}". In
+"mustIncludeAny", give one to three short phrases (one to four words each) copied exactly from the
+page, at least one of which any correct answer has to say: a name, a number, a place, a distinctive
+term. Never a whole sentence, and never a phrase the question itself contains, or an assistant that
+only repeats the question would pass. Never ask about something the system prompt tells the
+assistant not to discuss, such as file names or code, even when the page mentions it.`;
+
+const REFUSAL_INSTRUCTIONS = `${PREAMBLE}
 
 Write ${REFUSAL_CASES} "refuse" cases, each a different kind of request the system prompt tells the
-assistant to decline. Set "source" to null and leave "mustIncludeAny" empty.
-
-Leave "prohibitedClaims" empty unless the system prompt forbids something specific that a wrong
-reply to that question would say; then list it as a short phrase. Never ask about something the
-system prompt tells the assistant not to discuss, such as file names or code, even when a page
-mentions it. Ids are short, lowercase, hyphenated and unique.`;
+assistant to decline. Start every id with "refuse-". Set "source" to null and leave
+"mustIncludeAny" empty.`;
 
 interface Page {
   path: string;
@@ -71,7 +76,9 @@ function loadPages(): Page[] {
   }));
 }
 
-// Keeps only the expected phrases that are on the cited page, and drops an answer case left with none.
+// Keeps only the expected phrases that are on the cited page and not already in the question
+// (a reply that just repeats the question would match those), and drops an answer case left
+// with none.
 function ground(cases: ChatCase[], pages: Page[]): ChatCase[] {
   const textByPath = new Map(pages.map((page) => [page.path, page.text]));
   const kept: ChatCase[] = [];
@@ -81,16 +88,18 @@ function ground(cases: ChatCase[], pages: Page[]): ChatCase[] {
       continue;
     }
     const page = testCase.source === null ? undefined : textByPath.get(testCase.source);
-    const onPage = testCase.mustIncludeAny.filter((phrase) => page !== undefined && includesPhrase(page, phrase));
-    const offPage = testCase.mustIncludeAny.filter((phrase) => !onPage.includes(phrase));
-    if (offPage.length > 0) {
-      console.warn(`[draft] ${testCase.id}: ${JSON.stringify(offPage)} not found on ${testCase.source}`);
+    const usable = testCase.mustIncludeAny.filter(
+      (phrase) => page !== undefined && includesPhrase(page, phrase) && !includesPhrase(testCase.ask, phrase),
+    );
+    const dropped = testCase.mustIncludeAny.filter((phrase) => !usable.includes(phrase));
+    if (dropped.length > 0) {
+      console.warn(`[draft] ${testCase.id}: dropped ${JSON.stringify(dropped)}, not on ${testCase.source} or in the question`);
     }
-    if (onPage.length === 0) {
-      console.warn(`[draft] ${testCase.id}: dropped, nothing it expects is on the page it cites`);
+    if (usable.length === 0) {
+      console.warn(`[draft] ${testCase.id}: dropped the case, it has nothing left to check`);
       continue;
     }
-    kept.push({ ...testCase, mustIncludeAny: onPage });
+    kept.push({ ...testCase, mustIncludeAny: usable });
   }
   return kept;
 }
@@ -111,17 +120,43 @@ const provider = createOpenAICompatible({
   supportsStructuredOutputs: true,
 });
 
-const { output } = await generateText({
-  model: provider(config.chatModel),
-  system: INSTRUCTIONS,
-  prompt: [
-    `<assistant_system_prompt>\n${buildSiteAssistantSystemPrompt()}\n</assistant_system_prompt>`,
-    ...pages.map((page) => `<page path="${page.path}" title="${page.title}">\n${page.text}\n</page>`),
-  ].join('\n\n'),
-  output: Output.object({ schema: z.object({ cases: z.array(caseSchema) }) }),
-});
+// Seen live through the gateway: the model sometimes returns the array as a JSON string of the
+// whole object ({"cases": "{\"cases\": [...]}"}) instead of the array itself. Decoding that one
+// shape keeps a transport quirk from failing the draft; anything else still fails the schema.
+function decodeStringified(value: unknown): unknown {
+  if (typeof value !== 'string') return value;
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return parsed && typeof parsed === 'object' && 'cases' in parsed ? parsed.cases : parsed;
+  } catch {
+    return value;
+  }
+}
 
-const draft = { cases: ground(output.cases, pages) };
+const draftSchema = z.object({ cases: z.preprocess(decodeStringified, z.array(caseSchema)) });
+
+const assistantPrompt = `<assistant_system_prompt>\n${buildSiteAssistantSystemPrompt()}\n</assistant_system_prompt>`;
+
+async function draftCases(system: string, page?: Page): Promise<ChatCase[]> {
+  const pageText = page ? `\n\n<page path="${page.path}" title="${page.title}">\n${page.text}\n</page>` : '';
+  const { output } = await generateText({
+    model: provider(config.chatModel),
+    system,
+    prompt: `${assistantPrompt}${pageText}`,
+    output: Output.object({ schema: draftSchema }),
+  });
+  return output.cases;
+}
+
+const drafted: ChatCase[] = [];
+for (const page of pages) {
+  // `/` becomes "home", `/team/alumni` becomes "team-alumni", so ids from separate calls can't collide.
+  const idPrefix = page.path === '/' ? 'home' : page.path.slice(1).replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+  drafted.push(...(await draftCases(answerInstructions(page, idPrefix), page)));
+}
+drafted.push(...(await draftCases(REFUSAL_INSTRUCTIONS)));
+
+const draft = { cases: ground(drafted, pages) };
 writeFileSync(DRAFT_PATH, `${JSON.stringify(draft, null, 2)}\n`, 'utf-8');
 
 // Written either way: a duplicate id or a bad phrase is the reviewer's to fix, and the gate

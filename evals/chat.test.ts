@@ -58,14 +58,19 @@ beforeAll(async () => {
   }
 });
 
-/** One visitor message through POST /api/chat, read with the stream parser the browser's transport uses. */
-async function ask(question: string): Promise<Reply> {
+/**
+ * One visitor message through POST /api/chat, read with the stream parser the browser's transport
+ * uses. `signal` is the test's own: when a case times out it aborts the request, and chat-router.ts
+ * passes that on to the gateway call, so an abandoned run stops being billed.
+ */
+async function ask(question: string, signal: AbortSignal): Promise<Reply> {
   const wait = lastRequestAt + PACE_MS - Date.now();
   if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
   lastRequestAt = Date.now();
 
   const response = await app.request('/api/chat', {
     method: 'POST',
+    signal,
     headers: {
       'content-type': 'application/json',
       origin: ORIGIN,
@@ -107,9 +112,9 @@ describe('site assistant', () => {
   for (const testCase of cases) {
     test(
       testCase.id,
-      async () => {
+      async ({ signal }) => {
         for (let run = 1; run <= RUNS_PER_CASE; run++) {
-          const reply = await ask(testCase.ask);
+          const reply = await ask(testCase.ask, signal);
           // On failure, show what the assistant actually said: the reviewer needs it to decide
           // whether the answer is wrong or the case is.
           expect(

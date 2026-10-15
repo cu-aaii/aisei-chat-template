@@ -70,8 +70,9 @@ npm run test:chat:draft  # After a build: model drafts cases into evals/chat-cas
 ```
 
 Both `test:chat` scripts call the gateway with `GATEWAY_API_KEY`, so they cost money per run and
-need `npm run build` first (the assistant reads the prerendered pages). `check` type-checks
-`evals/` but runs neither.
+need `npm run build` first (the assistant reads the prerendered pages). `check` runs neither,
+but it does type-check `evals/` and run the grader's own tests (`evals/chat-cases.test.ts`, no
+key needed), so a grader edit that makes it pass everything fails `check`.
 
 `check` runs neither script in `scripts/`, and its `ng build` wipes `dist/client/browser`
 (so no sitemap afterwards). After touching either script, run it by hand and look at the

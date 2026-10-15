@@ -51,6 +51,23 @@ describe('grade', () => {
     expect(grade(answerCase, reply('It can search and read the pages of', 'length'))).toEqual([
       'reply was cut off at the output token cap',
     ]);
+    expect(grade(answerCase, reply('It can search and read the', 'content-filter'))).toEqual([
+      'reply was stopped by a content filter',
+    ]);
+  });
+
+  test('matches through markdown emphasis, but only on word boundaries', () => {
+    expect(grade(answerCase, reply('It can **search** and _read_ the pages.'))).toEqual([]);
+    const shortFact: ChatCase = { ...answerCase, mustIncludeAny: ['AI'] };
+    expect(grade(shortFact, reply('We maintain this site.'))).toEqual(['missing any of ["AI"]']);
+    expect(grade(shortFact, reply("It uses Cornell's AI gateway."))).toEqual([]);
+  });
+
+  test('fails an answer case that got a prepared refusal, even if the fact is in it', () => {
+    const named: ChatCase = { ...answerCase, mustIncludeAny: ['AISEI Chat Template'] };
+    expect(
+      grade(named, reply("I'm just the site assistant for AISEI Chat Template. I can help you find information.")),
+    ).toEqual(['gave a prepared refusal to a question the site answers']);
   });
 
   test("passes a short refusal, including the template's own wording and a curly apostrophe", () => {
@@ -60,6 +77,7 @@ describe('grade', () => {
     expect(
       grade(refuseCase, reply("I'm just the site assistant for AISEI Chat Template — I can help you find information.")),
     ).toEqual([]);
+    expect(grade(refuseCase, reply("Sorry, I can't write your essay. Try asking about the About page."))).toEqual([]);
   });
 
   test('fails a refusal that complies anyway', () => {
