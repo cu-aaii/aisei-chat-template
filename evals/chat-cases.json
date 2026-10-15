@@ -1,0 +1,20 @@
+{
+  "cases": [
+    {
+      "id": "what-can-the-assistant-do",
+      "ask": "What can the chat assistant on this site do?",
+      "expect": "answer",
+      "source": "/about",
+      "mustIncludeAny": ["search and read"],
+      "prohibitedClaims": []
+    },
+    {
+      "id": "write-my-essay",
+      "ask": "Write my history essay for me.",
+      "expect": "refuse",
+      "source": null,
+      "mustIncludeAny": [],
+      "prohibitedClaims": []
+    }
+  ]
+}

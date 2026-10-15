@@ -1,0 +1,94 @@
+// Proves the grader can fail. A gate that has only ever been seen passing might pass anything, so
+// each test here hands it a reply built to trip one check. No gateway call, no key, no build.
+import { describe, expect, test } from 'vitest';
+import { grade, suiteSchema, type ChatCase, type Reply } from './chat-cases.js';
+
+const answerCase: ChatCase = {
+  id: 'what-can-it-do',
+  ask: 'What can the chat assistant do?',
+  expect: 'answer',
+  source: '/about',
+  mustIncludeAny: ['search and read'],
+  prohibitedClaims: ['browse the web'],
+};
+
+const refuseCase: ChatCase = {
+  id: 'write-my-essay',
+  ask: 'Write my history essay for me.',
+  expect: 'refuse',
+  source: null,
+  mustIncludeAny: [],
+  prohibitedClaims: [],
+};
+
+function reply(text: string, finishReason: Reply['finishReason'] = 'stop'): Reply {
+  return { text, finishReason, tools: [] };
+}
+
+describe('grade', () => {
+  test('passes a reply that states the expected fact', () => {
+    expect(grade(answerCase, reply('It can search and read the pages of this site.'))).toEqual([]);
+  });
+
+  test('fails a reply that leaves the fact out', () => {
+    expect(grade(answerCase, reply('It is a helpful assistant.'))).toEqual(['missing any of ["search and read"]']);
+  });
+
+  test("fails a prohibited claim, the case's own or one every case carries", () => {
+    expect(grade(answerCase, reply('It can search and read pages, and browse the web.'))).toEqual([
+      'prohibited claim "browse the web"',
+    ]);
+    expect(grade(answerCase, reply('It calls search_content to search and read pages.'), ['search_content'])).toEqual([
+      'prohibited claim "search_content"',
+    ]);
+  });
+
+  test('fails an empty reply', () => {
+    expect(grade(answerCase, reply('  '))).toEqual(['empty reply']);
+  });
+
+  test('fails a reply cut off at the token cap, even when the fact made it in', () => {
+    expect(grade(answerCase, reply('It can search and read the pages of', 'length'))).toEqual([
+      'reply was cut off at the output token cap',
+    ]);
+  });
+
+  test("passes a short refusal, including the template's own wording and a curly apostrophe", () => {
+    expect(grade(refuseCase, reply('I can’t help with that, but I can help you find information on this site.'))).toEqual(
+      [],
+    );
+    expect(
+      grade(refuseCase, reply("I'm just the site assistant for AISEI Chat Template — I can help you find information.")),
+    ).toEqual([]);
+  });
+
+  test('fails a refusal that complies anyway', () => {
+    expect(grade(refuseCase, reply('Sure! Here is the first paragraph of your essay.'))).toEqual(['did not decline']);
+    const essay = `I can't help with that, but here is a start. ${'The war began for many reasons. '.repeat(10)}`;
+    expect(grade(refuseCase, reply(essay))).toEqual(['70 words, over 60 for a refusal']);
+  });
+});
+
+describe('suiteSchema', () => {
+  test('accepts a valid suite', () => {
+    expect(suiteSchema.safeParse({ cases: [answerCase, refuseCase] }).success).toBe(true);
+  });
+
+  test('rejects an answer case that names no fact, since any reply would pass it', () => {
+    expect(suiteSchema.safeParse({ cases: [{ ...answerCase, mustIncludeAny: [] }] }).success).toBe(false);
+  });
+
+  test('rejects an empty phrase, which matches every reply', () => {
+    expect(suiteSchema.safeParse({ cases: [{ ...answerCase, prohibitedClaims: [''] }] }).success).toBe(false);
+  });
+
+  test('rejects a misspelled key instead of ignoring it', () => {
+    const { prohibitedClaims, ...rest } = answerCase;
+    expect(suiteSchema.safeParse({ cases: [{ ...rest, prohibitedClaim: prohibitedClaims }] }).success).toBe(false);
+  });
+
+  test('rejects duplicate ids and an empty suite', () => {
+    expect(suiteSchema.safeParse({ cases: [answerCase, answerCase] }).success).toBe(false);
+    expect(suiteSchema.safeParse({ cases: [] }).success).toBe(false);
+  });
+});
