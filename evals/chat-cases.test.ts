@@ -10,6 +10,7 @@ const answerCase: ChatCase = {
   source: '/about',
   mustIncludeAny: ['search and read'],
   prohibitedClaims: ['browse the web'],
+  prohibitedPatterns: [],
 };
 
 const refuseCase: ChatCase = {
@@ -19,6 +20,7 @@ const refuseCase: ChatCase = {
   source: null,
   mustIncludeAny: [],
   prohibitedClaims: [],
+  prohibitedPatterns: [],
 };
 
 function reply(text: string, finishReason: Reply['finishReason'] = 'stop'): Reply {
@@ -41,6 +43,19 @@ describe('grade', () => {
     expect(grade(answerCase, reply('It calls search_content to search and read pages.'), ['search_content'])).toEqual([
       'prohibited claim "search_content"',
     ]);
+  });
+
+  test('fails a prohibited pattern, such as a date the prompt forbids naming', () => {
+    const nextEvent: ChatCase = {
+      ...answerCase,
+      mustIncludeAny: ['home page'],
+      prohibitedClaims: [],
+      prohibitedPatterns: [String.raw`\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.? \d{1,2}\b`],
+    };
+    expect(grade(nextEvent, reply('The next workshop is October 20; see the home page.'))).toEqual([
+      String.raw`prohibited pattern /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.? \d{1,2}\b/ matched "October 20"`,
+    ]);
+    expect(grade(nextEvent, reply('You may want to check the home page for the live list.'))).toEqual([]);
   });
 
   test('fails an empty reply', () => {
@@ -98,6 +113,10 @@ describe('suiteSchema', () => {
 
   test('rejects an empty phrase, which matches every reply', () => {
     expect(suiteSchema.safeParse({ cases: [{ ...answerCase, prohibitedClaims: [''] }] }).success).toBe(false);
+  });
+
+  test('rejects a pattern that is not a valid regular expression', () => {
+    expect(suiteSchema.safeParse({ cases: [{ ...answerCase, prohibitedPatterns: ['(unclosed'] }] }).success).toBe(false);
   });
 
   test('rejects a misspelled key instead of ignoring it', () => {

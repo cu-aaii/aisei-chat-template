@@ -31,7 +31,8 @@ const PREAMBLE = `You write acceptance tests for a website's chat assistant, giv
 A person reviews your cases once, then they run against the assistant before every release, so a
 wrong case blocks a release. Leave "prohibitedClaims" empty unless the system prompt forbids
 something specific that a wrong reply to that question would say; then list it as a short phrase.
-Ids are short, lowercase and hyphenated.`;
+Always leave "prohibitedPatterns" empty: the reviewer writes those. Ids are short, lowercase and
+hyphenated.`;
 
 // One call per page, so the size of each reply stays the same however many pages the site has.
 const answerInstructions = (page: Page, idPrefix: string) => `${PREAMBLE}

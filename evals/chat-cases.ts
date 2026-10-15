@@ -28,6 +28,9 @@ export const caseSchema = z
       .array(z.string())
       .describe('A correct reply contains at least one of these, ignoring case. Required for "answer".'),
     prohibitedClaims: z.array(z.string()).describe('A reply containing any of these fails, ignoring case.'),
+    prohibitedPatterns: z
+      .array(z.string())
+      .describe('Regular expressions, ignoring case. A reply matching any fails. For what no phrase can list, like a date.'),
   })
   .strict();
 
@@ -52,8 +55,19 @@ export const suiteSchema = z
       }
       // An empty phrase is contained in every reply: a must-include that always passes, or a
       // prohibited claim that always fails.
-      if ([...testCase.mustIncludeAny, ...testCase.prohibitedClaims].some((phrase) => !phrase.trim())) {
+      if (
+        [...testCase.mustIncludeAny, ...testCase.prohibitedClaims, ...testCase.prohibitedPatterns].some(
+          (phrase) => !phrase.trim(),
+        )
+      ) {
         fail(`${id}: empty phrase, which matches every reply`);
+      }
+      for (const pattern of testCase.prohibitedPatterns) {
+        try {
+          new RegExp(pattern, 'i');
+        } catch (error) {
+          fail(`${id}: bad pattern /${pattern}/ (${error instanceof Error ? error.message : error})`);
+        }
       }
     }
   });
@@ -148,6 +162,10 @@ export function grade(testCase: ChatCase, reply: Reply, alwaysProhibited: readon
   }
   for (const claim of [...alwaysProhibited, ...testCase.prohibitedClaims]) {
     if (includesPhrase(text, claim)) problems.push(`prohibited claim ${JSON.stringify(claim)}`);
+  }
+  for (const pattern of testCase.prohibitedPatterns) {
+    const found = new RegExp(pattern, 'i').exec(text);
+    if (found) problems.push(`prohibited pattern /${pattern}/ matched ${JSON.stringify(found[0])}`);
   }
   if (testCase.expect === 'answer' && PREPARED_REFUSALS.some((pattern) => pattern.test(text))) {
     problems.push('gave a prepared refusal to a question the site answers');

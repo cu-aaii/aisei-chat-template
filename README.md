@@ -96,6 +96,8 @@ You review the questions once; you don't write them:
    phrases a right answer has to contain, and any phrase not actually on that page is dropped.
 2. Read every case. Delete the ones a visitor wouldn't ask, fix any expected phrase that isn't
    the point of the answer, and add to `prohibitedClaims` anything wrong you've seen it say.
+   For what no fixed phrase can list, such as any date, add a regular expression to
+   `prohibitedPatterns` (see the `next-event-date` case).
 3. Save it as `evals/chat-cases.json` and commit it.
 
 Then run `npm run build && npm run test:chat` before every release, and re-draft when your pages
