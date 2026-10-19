@@ -13,8 +13,10 @@
     "build": "ng build --configuration production --output-path=dist/client && tsc -p server/tsconfig.json && tsx scripts/export-chat-content.mjs && tsx scripts/generate-sitemap.mjs",
     "start": "node --env-file=.env dist/server/index.js",
     "run:local": "npm run build && node --env-file=.env dist/server/index.js",
-    "check": "tsc -p server/tsconfig.json --noEmit && ng build --configuration production",
-    "lint": "ng lint"
+    "check": "tsc -p server/tsconfig.json --noEmit && tsc -p evals/tsconfig.json && vitest run --config evals/vitest.config.ts evals/chat-cases.test.ts && ng build --configuration production",
+    "lint": "ng lint",
+    "test:chat": "vitest run --config evals/vitest.config.ts",
+    "test:chat:draft": "tsx --env-file=.env evals/draft-chat-cases.ts"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.0",
@@ -50,6 +52,7 @@
     "tsx": "^4.19.0",
     "typescript": "~6.0.3",
     "typescript-eslint": "8.62.1",
+    "vitest": "^4.1.11",
     "zone.js": "^0.15.0"
   },
   "license": "MIT",

@@ -49,6 +49,12 @@ client/app/
 scripts/
   export-chat-content.mjs  Build step: dist/content/site-index.json (STATIC_PAGES)
   generate-sitemap.mjs     Build step: sitemap.xml + robots.txt Sitemap: line ($SITE_URL)
+evals/
+  chat.test.ts          The gate: asks the real assistant every case via app.request() (CSRF,
+                        rate limit, prompt, tools, gateway); fails on any wrong answer
+  chat-cases.ts         Case schema + deterministic grader (substring/regex, no second model)
+  chat-cases.json       Reviewed cases. A person reads every one; a model only drafts them
+  draft-chat-cases.ts   Model drafts cases from the prompt + pages into chat-cases.draft.json
 ```
 
 ## Commands
@@ -59,7 +65,14 @@ npm run build    # Angular prerender + tsc server + chat index + sitemap
 npm start        # Serve the production build
 npm run check    # tsc --noEmit + ng build — run before every commit
 npm run lint
+npm run test:chat        # After a build: ask the real assistant every case in evals/chat-cases.json
+npm run test:chat:draft  # After a build: model drafts cases into evals/chat-cases.draft.json
 ```
+
+Both `test:chat` scripts call the gateway with `GATEWAY_API_KEY`, so they cost money per run and
+need `npm run build` first (the assistant reads the prerendered pages). `check` runs neither,
+but it does type-check `evals/` and run the grader's own tests (`evals/chat-cases.test.ts`, no
+key needed), so a grader edit that makes it pass everything fails `check`.
 
 `check` runs neither script in `scripts/`, and its `ng build` wipes `dist/client/browser`
 (so no sitemap afterwards). After touching either script, run it by hand and look at the
@@ -88,6 +101,9 @@ Don't pass `--env-file .env` to `docker run`: its `PORT=4318` overrides the imag
 - `/api/chat` is public and paid per request: keep the rate limit, size caps, CSRF check
   and prompt guard rails; never register a content root holding anything internal;
   never commit a key (`.env` is git-ignored)
+- `evals/chat-cases.json` is what a person signed off on. When `test:chat` fails, fix the
+  prompt or the pages, not the case, unless the person agrees the case is wrong; never replace
+  the file with an unreviewed draft
 
 ## Longer guides
 

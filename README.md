@@ -42,8 +42,10 @@ replies that it isn't configured. Get a key from the Cornell AI Platform
 | `npm run build` | Production build into `dist/` (prerendered pages, compiled server, chat index, sitemap) |
 | `npm start` | Run the production build on `PORT` from `.env` |
 | `npm run run:local` | Build, then start |
-| `npm run check` | Type-check the server and build the client |
+| `npm run check` | Type-check the server and `evals/`, test the chat grader, and build the client |
 | `npm run lint` | ESLint over the client |
+| `npm run test:chat` | Ask the real assistant every question in `evals/chat-cases.json`; fails on any wrong answer |
+| `npm run test:chat:draft` | Have the model draft those questions from your prompt and pages, for you to review |
 | `docker build --target app -t my-site . && docker run -p 8000:8000 -e GATEWAY_API_KEY=... my-site` | Run it in a container |
 
 ## Where to change things
@@ -80,6 +82,28 @@ assistant on topic, and a `CHAT_ENABLED=false` kill switch.
 Only ever let the assistant read content you would publish. If you add a content root,
 don't point it at notes, source code, or anything internal.
 
+## Testing the assistant before launch
+
+`npm run test:chat` asks the real assistant, through the real `/api/chat`, every question in
+`evals/chat-cases.json`, twice, and fails if any answer is wrong: a missing fact, something it
+must never say, or a request it should have declined. It needs `npm run build` first and a
+gateway key, and each question is billed like a visitor's.
+
+You review the questions once; you don't write them:
+
+1. `npm run build`, then `npm run test:chat:draft`. The model reads your system prompt and your
+   pages and drafts questions into `evals/chat-cases.draft.json`. Each answer names the short
+   phrases a right answer has to contain, and any phrase not actually on that page is dropped.
+2. Read every case. Delete the ones a visitor wouldn't ask, fix any expected phrase that isn't
+   the point of the answer, and add to `prohibitedClaims` anything wrong you've seen it say.
+   For what no fixed phrase can list, such as any date, add a regular expression to
+   `prohibitedPatterns` (see the `next-event-date` case).
+3. Save it as `evals/chat-cases.json` and commit it.
+
+Then run `npm run build && npm run test:chat` before every release, and re-draft when your pages
+change enough that the old questions no longer fit. A pass is a floor, not proof: it catches a
+missing fact and the wrong claims someone wrote down, not an invented one nobody listed.
+
 ## Project layout
 
 ```
@@ -95,6 +119,7 @@ client/
   app/shared/components/  hero, button, icon, wordmark, chat panel + widget, events widget
   app/shared/theme/       CSS variables, fonts, typography, utilities
 scripts/                  Build steps: chat page index, sitemap
+evals/                    Pre-launch chat test: reviewed questions, grader, draft script
 .claude/skills/           Longer task guides for AI coding agents (plain Markdown)
 ```
 
