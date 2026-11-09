@@ -76,6 +76,13 @@ interface MessagePart {
             </div>
           </div>
         }
+        @if (awaitingReply()) {
+          <div class="row assistant">
+            <div class="bubble">
+              <app-thinking-indicator />
+            </div>
+          </div>
+        }
       } @else {
         <div class="empty">
           <app-icon name="chat" />
@@ -319,6 +326,20 @@ export class ChatPanelComponent {
 
   protected errorText(): string | undefined {
     return this.chatEngine.chat.error?.message;
+  }
+
+  /**
+   * True from the moment a question is sent until the first chunk of the reply
+   * arrives. In that window there is no assistant message yet, so `showThinking`
+   * (which lives inside a message) has nothing to attach to, and the visitor sees
+   * a silent pause. With a large system prompt that pause is most of the wait:
+   * the model reads the whole prompt before it streams a word.
+   */
+  protected awaitingReply(): boolean {
+    if (!this.busy()) return false;
+    const messages = this.chatEngine.chat.messages;
+    const last = messages[messages.length - 1];
+    return !last || last.role !== 'assistant';
   }
 
   protected isStreamingLast(id: string): boolean {
