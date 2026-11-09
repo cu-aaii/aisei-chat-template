@@ -26,7 +26,7 @@ server/
   app.ts                Middleware chain — ORDER IS LOAD-BEARING (ETag, compress,
                         cache-control, CSRF; /api/* is exempt from anything that buffers,
                         or SSE stops streaming). /health, /api/chat, static dist/client/browser
-  app.config.ts         Reads only PORT / GATEWAY_API_KEY / CHAT_ENABLED; model, gateway URL
+  app.config.ts         Reads only PORT / GATEWAY_API_KEY / CHAT_ENABLED / BUILD_SHA; model, gateway URL
                         and rate limits are constants here
   middleware/csrf.ts    Same-origin check + double-submit cookie on /api/chat/*
   modules/chat/

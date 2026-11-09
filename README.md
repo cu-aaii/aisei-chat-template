@@ -109,7 +109,7 @@ missing fact and the wrong claims someone wrote down, not an invented one nobody
 ```
 server/
   index.ts, app.ts        Hono entry + middleware (order matters; comments say why)
-  app.config.ts           PORT / GATEWAY_API_KEY / CHAT_ENABLED; everything else is a constant
+  app.config.ts           PORT / GATEWAY_API_KEY / CHAT_ENABLED / BUILD_SHA; everything else is a constant
   middleware/csrf.ts      CSRF protection for /api/chat
   modules/chat/           The assistant: router, prompt, rate limit, tools
 client/

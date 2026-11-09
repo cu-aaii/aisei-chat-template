@@ -28,6 +28,11 @@ ENV NODE_ENV=production
 # Container port. Whatever runs the image (a load balancer, `docker run -p`) must point
 # at 8000. Local dev keeps using 4318; the two are independent.
 ENV PORT=8000
+# The commit GET /health reports as `sha`. A deploy pipeline passes it
+# (`docker build --build-arg BUILD_SHA=<commit>`); a local build keeps `unknown`. Declared
+# in this stage, not the build stage, so a new sha never busts the npm ci cache.
+ARG BUILD_SHA=unknown
+ENV BUILD_SHA=$BUILD_SHA
 
 # Copy only what's needed to run
 COPY --from=build /app/dist ./dist
