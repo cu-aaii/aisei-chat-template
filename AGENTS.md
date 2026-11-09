@@ -26,12 +26,13 @@ server/
   app.ts                Middleware chain — ORDER IS LOAD-BEARING (ETag, compress,
                         cache-control, CSRF; /api/* is exempt from anything that buffers,
                         or SSE stops streaming). /health, /api/chat, static dist/client/browser
-  app.config.ts         Reads only PORT / GATEWAY_API_KEY / CHAT_ENABLED / BUILD_SHA; model, gateway URL
-                        and rate limits are constants here
+  app.config.ts         Reads only PORT / GATEWAY_API_KEY / CHAT_ENABLED / BUILD_SHA / CHAT_TRANSCRIPT_LOG;
+                        model, gateway URL and rate limits are constants here
   middleware/csrf.ts    Same-origin check + double-submit cookie on /api/chat/*
   modules/chat/
     chat.routes.ts      Real router when GATEWAY_API_KEY is set, stub otherwise
     chat-router.ts      POST / (streaming) + GET /config; size caps, rate limit
+    transcript-log.ts   CHAT_TRANSCRIPT_LOG: one `chat.transcript` JSON line per turn (off by default)
     prompt.ts           System prompt (SITE_NAME, scope, refusals) + embedded site index
     content-roots.ts    What the tools may read — visitor-facing content ONLY
     tools/              search_content, read_content, ToolRegistry
@@ -78,6 +79,16 @@ key needed), so a grader edit that makes it pass everything fails `check`.
 (so no sitemap afterwards). After touching either script, run it by hand and look at the
 output in `dist/`. Adding a page = route in `app.routes.ts` + link in `nav-items.ts` + a
 line in `STATIC_PAGES` (`generate-sitemap.mjs` warns if you forget the last one).
+
+## Transcript log
+
+`CHAT_TRANSCRIPT_LOG=true` (default off) makes the chat router write one JSON line per turn to
+stdout: `event: "chat.transcript"`, `conversationId`, `turn`, the last user message, the final
+assistant text (each capped at 8,000 characters, with `truncated`), tool names, model, token
+counts, `sha`, `ts`. Never add an IP, NetID, email or header to it, and never log earlier turns.
+The client sends a conversation id as `body.id`; `ChatEngineService.clear()` starts a new one.
+`GET /api/chat/config` reports `transcriptLog` so the UI can say chats are saved. Tests:
+`evals/transcript-log.test.ts` (no key needed).
 
 ## Docker
 

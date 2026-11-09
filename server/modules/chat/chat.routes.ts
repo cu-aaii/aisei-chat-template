@@ -45,7 +45,9 @@ function stubChatRouter(message: string, enabled: boolean): Hono {
     return createUIMessageStreamResponse({ stream });
   });
 
-  app.get('/config', (c) => c.json({ enabled, model: null, tools: tools.names(), toolLabels }));
+  app.get('/config', (c) =>
+    c.json({ enabled, model: null, tools: tools.names(), toolLabels, transcriptLog: false }),
+  );
 
   return app;
 }
@@ -69,5 +71,7 @@ export const chatRouter = !config.chatEnabled
         // the UI (see ChatPanelComponent.debugTools) — never streamed to a public visitor.
         sendReasoning: !config.isProduction,
         providerName: 'ai-gateway',
+        transcriptLog: config.chatTranscriptLog,
+        buildSha: config.buildSha,
       })
     : stubChatRouter(NOT_CONFIGURED_MESSAGE, true);
