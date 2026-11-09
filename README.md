@@ -82,8 +82,9 @@ assistant on topic, and a `CHAT_ENABLED=false` kill switch.
 **Saving conversations (off by default).** Set `CHAT_TRANSCRIPT_LOG=true` and the server
 writes one JSON line per chat turn to stdout (`"event":"chat.transcript"`): a conversation id,
 the turn number, the visitor's last message, the assistant's answer (each cut at 8,000
-characters, with `"truncated":true`), the tools used, the model, token counts and the build
-sha. It never includes an IP address, NetID, email or request headers. If your host collects
+characters, with `"truncated":true`), the tools used, the model, token counts (with cached input
+tokens and whether the gateway reported them), the time to the first streamed text and the
+total time in ms, and the build sha. It never includes an IP address, NetID, email or request headers. If your host collects
 container logs, the lines show up there. Only turn it on where visitors are told their chats
 are saved; `GET /api/chat/config` reports it as `transcriptLog`. Clearing the chat starts a
 new conversation id.

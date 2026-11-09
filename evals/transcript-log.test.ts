@@ -6,6 +6,7 @@ import { createChatRouter } from '../server/modules/chat/chat-router.js';
 import {
   TRANSCRIPT_MAX_CHARS,
   buildTranscriptLine,
+  cacheReportedIn,
   capText,
   logTranscript,
   sanitizeConversationId,
@@ -58,10 +59,43 @@ describe('buildTranscriptLine', () => {
       model: 'claude-sonnet-5',
       inputTokens: 11,
       outputTokens: 22,
+      cachedInputTokens: 0,
+      cacheReported: false,
+      msToFirstChunk: null,
+      msTotal: 0,
       sha: 'deadbeef',
       ts: '2026-11-09T17:00:00.000Z',
       truncated: false,
     });
+  });
+
+  test('cache and timing fields default to 0 / false / null / 0 when absent', () => {
+    const line = buildTranscriptLine(turn());
+    expect(line.cachedInputTokens).toBe(0);
+    expect(line.cacheReported).toBe(false);
+    expect(line.msToFirstChunk).toBeNull();
+    expect(line.msTotal).toBe(0);
+  });
+
+  test('cache and timing values pass through, after outputTokens', () => {
+    const line = buildTranscriptLine(
+      turn({ cachedInputTokens: 77_000, cacheReported: true, msToFirstChunk: 1234, msTotal: 5678 }),
+    );
+    expect(line).toMatchObject({ cachedInputTokens: 77_000, cacheReported: true, msToFirstChunk: 1234, msTotal: 5678 });
+    const keys = Object.keys(line);
+    expect(keys.slice(keys.indexOf('outputTokens'), keys.indexOf('sha'))).toEqual([
+      'outputTokens',
+      'cachedInputTokens',
+      'cacheReported',
+      'msToFirstChunk',
+      'msTotal',
+    ]);
+  });
+
+  test('a zero cachedInputTokens with cacheReported true is kept distinct from not reported', () => {
+    const line = buildTranscriptLine(turn({ cachedInputTokens: 0, cacheReported: true, msToFirstChunk: 0 }));
+    expect(line.cacheReported).toBe(true);
+    expect(line.msToFirstChunk).toBe(0);
   });
 
   test('joins only the text parts of the last user message', () => {
@@ -188,6 +222,17 @@ describe('logTranscript', () => {
     } finally {
       errors.mockRestore();
     }
+  });
+});
+
+describe('cacheReportedIn', () => {
+  test('true only when some raw usage has a numeric prompt_tokens_details.cached_tokens', () => {
+    expect(cacheReportedIn([{ prompt_tokens: 5, prompt_tokens_details: { cached_tokens: 0 } }])).toBe(true);
+    expect(cacheReportedIn([undefined, { prompt_tokens_details: { cached_tokens: 12 } }])).toBe(true);
+    expect(cacheReportedIn([{ prompt_tokens: 5 }])).toBe(false);
+    expect(cacheReportedIn([{ prompt_tokens_details: {} }, { prompt_tokens_details: { cached_tokens: null } }])).toBe(false);
+    expect(cacheReportedIn([undefined, null])).toBe(false);
+    expect(cacheReportedIn([])).toBe(false);
   });
 });
 
