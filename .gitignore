@@ -3,3 +3,4 @@ dist
 .angular
 .env
 .local
+evals/chat-cases.draft.json
