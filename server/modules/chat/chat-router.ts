@@ -7,6 +7,7 @@ import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { convertToModelMessages, stepCountIs, streamText, type UIMessage } from 'ai';
 import { Hono } from 'hono';
 import { createRateLimiter, getClientIp } from './rate-limit.js';
+import { logTranscript } from './transcript-log.js';
 import type { ToolRegistry } from './tools/registry.js';
 
 export interface ChatRouterConfig {
@@ -29,6 +30,14 @@ export interface ChatRouterConfig {
    */
   sendReasoning?: boolean;
   providerName?: string;
+  /**
+   * Write one `chat.transcript` JSON line per turn to stdout. Off by default; wired from
+   * CHAT_TRANSCRIPT_LOG in chat.routes.ts. See transcript-log.ts for what is (and is not)
+   * in the line.
+   */
+  transcriptLog?: boolean;
+  /** Build sha put in the transcript line. */
+  buildSha?: string;
 }
 
 export interface RequestLimits {
@@ -51,6 +60,8 @@ const DEFAULT_LIMITS: RequestLimits = {
 };
 
 interface ChatRequestBody {
+  /** The AI SDK chat id (DefaultChatTransport sends it); validated before it is logged. */
+  id?: unknown;
   messages?: UIMessage[];
   model?: string;
 }
@@ -96,6 +107,7 @@ export function createChatRouter(config: ChatRouterConfig): Hono {
       model: config.defaultModel,
       tools: config.tools.names(),
       toolLabels: config.toolLabels ?? {},
+      transcriptLog: config.transcriptLog === true,
     }),
   );
 
@@ -152,13 +164,24 @@ export function createChatRouter(config: ChatRouterConfig): Hono {
         // No spend-tracking DB — this logs to stdout so gateway cost/abuse trends show
         // up in whatever already ingests container logs (e.g. CloudWatch Logs). Actual
         // alarming on this is ops-owned infra, out of this repo's scope.
-        onFinish: ({ usage, totalUsage }) => {
+        onFinish: ({ usage, totalUsage, text, steps }) => {
           console.log('[chat] usage', {
             ip: getClientIp(c),
             model: modelId,
             inputTokens: totalUsage.inputTokens ?? usage.inputTokens,
             outputTokens: totalUsage.outputTokens ?? usage.outputTokens,
             totalTokens: totalUsage.totalTokens ?? usage.totalTokens,
+          });
+          // Separate from the usage line above, which stays as it is. Never throws.
+          logTranscript(config.transcriptLog, {
+            conversationId: body.id,
+            messages,
+            assistant: text || steps.map((step) => step.text).join(''),
+            steps,
+            model: modelId,
+            inputTokens: totalUsage.inputTokens ?? usage.inputTokens,
+            outputTokens: totalUsage.outputTokens ?? usage.outputTokens,
+            sha: config.buildSha ?? 'unknown',
           });
         },
       });

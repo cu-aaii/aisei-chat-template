@@ -79,6 +79,15 @@ rails you should keep: a per-IP rate limit (15 requests/minute), size caps on ea
 request, a CSRF check (`server/middleware/csrf.ts`), a system prompt that keeps the
 assistant on topic, and a `CHAT_ENABLED=false` kill switch.
 
+**Saving conversations (off by default).** Set `CHAT_TRANSCRIPT_LOG=true` and the server
+writes one JSON line per chat turn to stdout (`"event":"chat.transcript"`): a conversation id,
+the turn number, the visitor's last message, the assistant's answer (each cut at 8,000
+characters, with `"truncated":true`), the tools used, the model, token counts and the build
+sha. It never includes an IP address, NetID, email or request headers. If your host collects
+container logs, the lines show up there. Only turn it on where visitors are told their chats
+are saved; `GET /api/chat/config` reports it as `transcriptLog`. Clearing the chat starts a
+new conversation id.
+
 Only ever let the assistant read content you would publish. If you add a content root,
 don't point it at notes, source code, or anything internal.
 
@@ -109,7 +118,7 @@ missing fact and the wrong claims someone wrote down, not an invented one nobody
 ```
 server/
   index.ts, app.ts        Hono entry + middleware (order matters; comments say why)
-  app.config.ts           PORT / GATEWAY_API_KEY / CHAT_ENABLED / BUILD_SHA; everything else is a constant
+  app.config.ts           PORT / GATEWAY_API_KEY / CHAT_ENABLED / BUILD_SHA / CHAT_TRANSCRIPT_LOG; the rest is constant
   middleware/csrf.ts      CSRF protection for /api/chat
   modules/chat/           The assistant: router, prompt, rate limit, tools
 client/
