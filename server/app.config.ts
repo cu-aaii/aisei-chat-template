@@ -1,10 +1,18 @@
-// Only three things come from the environment: the port (genuinely differs between local
-// dev and the container), the gateway API key (a secret), and the chat kill switch (an
-// incident lever whose whole value is being changeable without a rebuild). Everything else
-// about the chat feature is plain configuration and lives in this file as a constant.
+// Only four things come from the environment: the port (genuinely differs between local
+// dev and the container), the gateway API key (a secret), the chat kill switch (an
+// incident lever whose whole value is being changeable without a rebuild), and the build
+// sha (baked into the image at build time, never set by hand). Everything else about the
+// chat feature is plain configuration and lives in this file as a constant.
 //
 // Keeping settings as constants means `.env` can never silently disagree with production.
 export interface EnvVars {
+  /**
+   * The git commit the image was built from, reported by `GET /health` as `sha`. The
+   * deploy pipeline passes it as a Docker build arg (`--build-arg BUILD_SHA=...`) and the
+   * Dockerfile's `app` stage sets it; unset locally, so `/health` says `unknown`. It is how
+   * you tell, after a merge, that the new build is the one serving.
+   */
+  BUILD_SHA?: string;
   /** 4318 locally, 8000 in the container (baked into the Dockerfile). */
   PORT?: string;
   /**
@@ -53,4 +61,5 @@ export const config = {
     maxRequests: RATE_LIMIT_MAX_REQUESTS,
     windowMs: RATE_LIMIT_WINDOW_MS,
   },
+  buildSha: typedEnv.BUILD_SHA?.trim() || 'unknown',
 } as const;

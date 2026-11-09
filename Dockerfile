@@ -34,6 +34,12 @@ COPY --from=build /app/dist ./dist
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./
 
+# The commit GET /health reports as `sha`. A deploy pipeline passes it
+# (`docker build --build-arg BUILD_SHA=<commit>`); a local build keeps `unknown`. Declared
+# last in this stage so a new sha re-runs nothing above it (npm ci, the COPYs).
+ARG BUILD_SHA=unknown
+ENV BUILD_SHA=$BUILD_SHA
+
 USER node
 
 EXPOSE 8000

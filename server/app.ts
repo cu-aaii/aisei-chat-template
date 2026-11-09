@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { config } from './app.config.js';
 import { compress } from 'hono/compress';
 import { etag, RETAINED_304_HEADERS } from 'hono/etag';
 import { logger } from 'hono/logger';
@@ -112,8 +113,11 @@ app.use('*', async (c, next) => {
 });
 
 // API routes
+// `/health` is the load balancer's target-group check and the deploy check: `sha` is the
+// commit this image was built from (BUILD_SHA, `unknown` locally), so after a merge it
+// should match the branch head. No secrets and no gateway call — it must stay cheap.
 app.get('/health', (c) => {
-  return c.json({ status: 'ok', uptime: process.uptime() });
+  return c.json({ status: 'ok', uptime: process.uptime(), sha: config.buildSha });
 });
 
 // Two-layer CSRF check (same-origin + double-submit cookie) on every method/route under
