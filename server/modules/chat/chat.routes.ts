@@ -73,5 +73,8 @@ export const chatRouter = !config.chatEnabled
         providerName: 'ai-gateway',
         transcriptLog: config.chatTranscriptLog,
         buildSha: config.buildSha,
+        // Fixed system prompt + tools, history re-sent verbatim: every turn after the
+        // first reads the conversation so far from cache (prompt-cache.ts).
+        promptCache: true,
       })
     : stubChatRouter(NOT_CONFIGURED_MESSAGE, true);
