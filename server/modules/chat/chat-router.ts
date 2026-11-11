@@ -8,6 +8,7 @@ import { convertToModelMessages, stepCountIs, streamText, type UIMessage } from 
 import { Hono } from 'hono';
 import { createRateLimiter, getClientIp } from './rate-limit.js';
 import { logTranscript } from './transcript-log.js';
+import { stampCacheBreakpoints, sumCacheUsage } from './prompt-cache.js';
 import type { ToolRegistry } from './tools/registry.js';
 
 export interface ChatRouterConfig {
@@ -38,6 +39,11 @@ export interface ChatRouterConfig {
   transcriptLog?: boolean;
   /** Build sha put in the transcript line. */
   buildSha?: string;
+  /**
+   * Add prompt-cache breakpoints (tools, system, last message) to Claude requests — see
+   * prompt-cache.ts. Off unless `true`; non-Claude models are never touched.
+   */
+  promptCache?: boolean;
 }
 
 export interface RequestLimits {
@@ -90,6 +96,7 @@ export function createChatRouter(config: ChatRouterConfig): Hono {
     // onFinish's usage/totalUsage below come back all-`undefined` — needed for the
     // spend logging.
     includeUsage: true,
+    ...(config.promptCache === true ? { transformRequestBody: stampCacheBreakpoints } : {}),
   });
 
   const maxRounds = config.maxToolRounds ?? 8;
@@ -171,6 +178,9 @@ export function createChatRouter(config: ChatRouterConfig): Hono {
             inputTokens: totalUsage.inputTokens ?? usage.inputTokens,
             outputTokens: totalUsage.outputTokens ?? usage.outputTokens,
             totalTokens: totalUsage.totalTokens ?? usage.totalTokens,
+            // Summed per step from the raw gateway usage: the SDK maps reads but not writes.
+            ...sumCacheUsage(steps),
+            steps: steps.length,
           });
           // Separate from the usage line above, which stays as it is. Never throws.
           logTranscript(config.transcriptLog, {
