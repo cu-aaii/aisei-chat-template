@@ -86,7 +86,8 @@ line in `STATIC_PAGES` (`generate-sitemap.mjs` warns if you forget the last one)
 stdout: `event: "chat.transcript"`, `conversationId`, `turn`, the last user message, the final
 assistant text (each capped at 8,000 characters, with `truncated`), tool names, model, token
 counts, `cachedInputTokens` and `cacheReported` (true only if the gateway sent
-`prompt_tokens_details.cached_tokens`; the SDK reports 0 otherwise), `msToFirstChunk` (request
+`prompt_tokens_details.cached_tokens` or
+`cache_read_input_tokens`; the SDK reports 0 otherwise), `msToFirstChunk` (request
 to first text chunk, `null` if none) and `msTotal`, `sha`, `ts`. Never add an IP, NetID, email or header to it,
 and never log earlier turns.
 The client sends a conversation id as `body.id`; `ChatEngineService.clear()` starts a new one.
