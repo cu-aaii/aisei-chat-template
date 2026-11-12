@@ -7,7 +7,7 @@ import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { convertToModelMessages, stepCountIs, streamText, type UIMessage } from 'ai';
 import { Hono } from 'hono';
 import { createRateLimiter, getClientIp } from './rate-limit.js';
-import { logTranscript } from './transcript-log.js';
+import { cacheReportedIn, logTranscript } from './transcript-log.js';
 import { stampCacheBreakpoints, sumCacheUsage } from './prompt-cache.js';
 import type { ToolRegistry } from './tools/registry.js';
 
@@ -119,6 +119,9 @@ export function createChatRouter(config: ChatRouterConfig): Hono {
   );
 
   app.post('/', async (c) => {
+    // Start of the timing in the transcript line: the request has reached the handler.
+    const startedAt = Date.now();
+    let firstChunkAt: number | null = null;
     if (checkRate && !checkRate(getClientIp(c))) {
       return c.json({ error: 'Too many requests. Please wait before sending another message.' }, 429);
     }
@@ -171,6 +174,10 @@ export function createChatRouter(config: ChatRouterConfig): Hono {
         // No spend-tracking DB — this logs to stdout so gateway cost/abuse trends show
         // up in whatever already ingests container logs (e.g. CloudWatch Logs). Actual
         // alarming on this is ops-owned infra, out of this repo's scope.
+        // First streamed text only (AI SDK 6 `text-delta`), recorded once, for the transcript line.
+        onChunk: ({ chunk }) => {
+          if (firstChunkAt === null && chunk.type === 'text-delta') firstChunkAt = Date.now();
+        },
         onFinish: ({ usage, totalUsage, text, steps }) => {
           console.log('[chat] usage', {
             ip: getClientIp(c),
@@ -191,6 +198,12 @@ export function createChatRouter(config: ChatRouterConfig): Hono {
             model: modelId,
             inputTokens: totalUsage.inputTokens ?? usage.inputTokens,
             outputTokens: totalUsage.outputTokens ?? usage.outputTokens,
+            // Same per-step raw sum as the usage line (reads both LiteLLM spellings).
+            cachedInputTokens: sumCacheUsage(steps).cacheReadTokens,
+            // totalUsage.raw is dropped when steps are summed, so look at each step's raw usage.
+            cacheReported: cacheReportedIn([usage.raw, ...steps.map((step) => step.usage?.raw)]),
+            msToFirstChunk: firstChunkAt === null ? null : firstChunkAt - startedAt,
+            msTotal: Date.now() - startedAt,
             sha: config.buildSha ?? 'unknown',
           });
         },
