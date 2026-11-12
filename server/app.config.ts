@@ -1,8 +1,9 @@
-// Only five things come from the environment: the port (genuinely differs between local
+// Only six things come from the environment: the port (genuinely differs between local
 // dev and the container), the gateway API key (a secret), the chat kill switch (an
 // incident lever whose whole value is being changeable without a rebuild), the build
-// sha (baked into the image at build time, never set by hand), and the transcript-log
-// switch (a privacy-relevant opt-in that must be flippable per deployment). Everything else about the
+// sha (baked into the image at build time, never set by hand), and two per-deployment
+// opt-ins for tester review — the transcript-log switch (privacy-relevant) and the
+// answer-rating switch (on for a test site, off for the live one). Everything else about the
 // chat feature is plain configuration and lives in this file as a constant.
 //
 // Keeping settings as constants means `.env` can never silently disagree with production.
@@ -29,6 +30,12 @@ export interface EnvVars {
    */
   CHAT_TRANSCRIPT_LOG?: string;
   /**
+   * Opt-in. Set to `true` to show good / partly / not-helpful buttons (and an optional
+   * note) under each assistant answer; each rating is one `chat.feedback` JSON line on
+   * stdout. Off unless exactly `true`. See modules/chat/feedback.ts.
+   */
+  CHAT_FEEDBACK?: string;
+  /**
    * Kill switch, kept in the environment on purpose: pulling the chat feature (gateway
    * abuse, a cost spike) should be a config change, not a rebuild. Set to `false`.
    */
@@ -46,6 +53,9 @@ const CHAT_MODEL = 'claude-sonnet-5';
 // If you deploy behind a WAF, add an edge rate rule there too.
 const RATE_LIMIT_MAX_REQUESTS = 15;
 const RATE_LIMIT_WINDOW_MS = 60_000;
+// Ratings are cheap (no gateway call) but still a public write to the log; a tester
+// rating every answer and changing their mind stays far below this.
+const FEEDBACK_RATE_LIMIT_MAX_REQUESTS = 30;
 
 const requiredEnvVars: (keyof EnvVars)[] = [];
 
@@ -70,4 +80,9 @@ export const config = {
   },
   buildSha: typedEnv.BUILD_SHA?.trim() || 'unknown',
   chatTranscriptLog: typedEnv.CHAT_TRANSCRIPT_LOG === 'true',
+  chatFeedback: typedEnv.CHAT_FEEDBACK === 'true',
+  feedbackRateLimit: {
+    maxRequests: FEEDBACK_RATE_LIMIT_MAX_REQUESTS,
+    windowMs: RATE_LIMIT_WINDOW_MS,
+  },
 } as const;

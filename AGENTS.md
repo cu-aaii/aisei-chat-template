@@ -26,13 +26,14 @@ server/
   app.ts                Middleware chain — ORDER IS LOAD-BEARING (ETag, compress,
                         cache-control, CSRF; /api/* is exempt from anything that buffers,
                         or SSE stops streaming). /health, /api/chat, static dist/client/browser
-  app.config.ts         Reads only PORT / GATEWAY_API_KEY / CHAT_ENABLED / BUILD_SHA / CHAT_TRANSCRIPT_LOG;
+  app.config.ts         Reads only PORT / GATEWAY_API_KEY / CHAT_ENABLED / BUILD_SHA / CHAT_TRANSCRIPT_LOG / CHAT_FEEDBACK;
                         model, gateway URL and rate limits are constants here
   middleware/csrf.ts    Same-origin check + double-submit cookie on /api/chat/*
   modules/chat/
     chat.routes.ts      Real router when GATEWAY_API_KEY is set, stub otherwise
     chat-router.ts      POST / (streaming) + GET /config; size caps, rate limit
     transcript-log.ts   CHAT_TRANSCRIPT_LOG: one `chat.transcript` JSON line per turn (off by default)
+    feedback.ts         CHAT_FEEDBACK: POST /api/chat/feedback → one `chat.feedback` line per rating (off by default)
     prompt.ts           System prompt (SITE_NAME, scope, refusals) + embedded site index
     content-roots.ts    What the tools may read — visitor-facing content ONLY
     tools/              search_content, read_content, ToolRegistry
@@ -93,6 +94,19 @@ and never log earlier turns.
 The client sends a conversation id as `body.id`; `ChatEngineService.clear()` starts a new one.
 `GET /api/chat/config` reports `transcriptLog` so the UI can say chats are saved. Tests:
 `evals/transcript-log.test.ts` (no key needed).
+
+## Answer ratings
+
+`CHAT_FEEDBACK=true` (default off) shows **Good / Partly / Not helpful** under each finished
+assistant answer, then an optional note ("What was missing or wrong?"). Each click is one POST
+to `/api/chat/feedback` (`server/modules/chat/feedback.ts`, behind the same CSRF check as the
+chat, its own 30/min rate limit, 404 when off) and one stdout line: `event: "chat.feedback"`,
+`conversationId`, `turn`, `messageId`, `rating`, `note` (≤1,000 chars), `sha`, `ts`. Join it to
+the answer with `conversationId` + `turn` from the `chat.transcript` line; when a tester
+re-rates, the newest line for that `messageId` wins. Same rule as the transcript: no IP, NetID,
+email or header. `GET /api/chat/config` reports `feedback`; the UI is
+`client/app/shared/components/chat/answer-feedback.component.ts`. Works on the stub router too,
+so it can be tried without a key. Tests: `evals/feedback.test.ts`.
 
 ## Docker
 

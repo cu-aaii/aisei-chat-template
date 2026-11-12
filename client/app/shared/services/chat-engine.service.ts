@@ -24,6 +24,14 @@ function csrfHeaders(): Record<string, string> {
   return token ? { 'X-XSRF-TOKEN': token } : {};
 }
 
+/** Must match FEEDBACK_RATINGS in server/modules/chat/feedback.ts. */
+export type FeedbackRating = 'good' | 'partly' | 'not-helpful';
+
+export interface SavedRating {
+  rating: FeedbackRating;
+  note: string;
+}
+
 /**
  * Angular signals-based `ChatState`. The AI SDK's default state implementation
  * mutates the in-progress assistant message in place and hands `replaceMessage`
@@ -131,6 +139,15 @@ export class ChatEngineService {
    */
   readonly transcriptLog = signal(false);
 
+  /**
+   * Whether testers may rate answers (`CHAT_FEEDBACK`), from `GET /api/chat/config`. Stays
+   * `false` until the config resolves, so a live site with it off never shows the buttons.
+   */
+  readonly feedback = signal(false);
+
+  /** This visit's ratings, by assistant message id. Cleared with the conversation. */
+  readonly ratings = signal<Record<string, SavedRating>>({});
+
   constructor() {
     // Prerendering runs this in Node with no origin to resolve a relative URL
     // against, and there's no server-rendered request to read config from anyway
@@ -139,9 +156,10 @@ export class ChatEngineService {
 
     fetch('/api/chat/config', { headers: csrfHeaders() })
       .then((res) => (res.ok ? res.json() : null))
-      .then((body: { enabled?: boolean; toolLabels?: Record<string, string>; transcriptLog?: boolean } | null) => {
+      .then((body: { enabled?: boolean; toolLabels?: Record<string, string>; transcriptLog?: boolean; feedback?: boolean } | null) => {
         if (body && body.enabled === false) this.enabled.set(false);
         if (body?.transcriptLog === true) this.transcriptLog.set(true);
+        if (body?.feedback === true) this.feedback.set(true);
         if (body?.toolLabels) this.toolLabels.set(body.toolLabels);
       })
       .catch(() => {
@@ -175,5 +193,28 @@ export class ChatEngineService {
     this.chat.messages = [];
     this.chat.clearError();
     this.conversationId = newConversationId();
+    this.ratings.set({});
+  }
+
+  /**
+   * Saves a tester's rating (and optional note) for one assistant answer: one POST to
+   * `/api/chat/feedback`, which writes a `chat.feedback` log line keyed by this
+   * conversation id and `turn` — the same pair as that answer's `chat.transcript` line.
+   * Re-rating posts again; the newest line for a `messageId` is the one that counts.
+   * Resolves `false` (and keeps the previous rating) when the server refuses or is unreachable.
+   */
+  async rate(messageId: string, turn: number, rating: FeedbackRating, note = ''): Promise<boolean> {
+    try {
+      const res = await fetch('/api/chat/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+        body: JSON.stringify({ conversationId: this.conversationId, turn, messageId, rating, note }),
+      });
+      if (!res.ok) return false;
+    } catch {
+      return false;
+    }
+    this.ratings.update((all) => ({ ...all, [messageId]: { rating, note } }));
+    return true;
   }
 }

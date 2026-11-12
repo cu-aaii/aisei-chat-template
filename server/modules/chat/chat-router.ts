@@ -37,6 +37,11 @@ export interface ChatRouterConfig {
    * in the line.
    */
   transcriptLog?: boolean;
+  /**
+   * Reported by GET /config so the UI shows the rating buttons. The endpoint itself is
+   * feedback.ts, mounted next to this router in chat.routes.ts.
+   */
+  feedback?: boolean;
   /** Build sha put in the transcript line. */
   buildSha?: string;
   /**
@@ -115,6 +120,7 @@ export function createChatRouter(config: ChatRouterConfig): Hono {
       tools: config.tools.names(),
       toolLabels: config.toolLabels ?? {},
       transcriptLog: config.transcriptLog === true,
+      feedback: config.feedback === true,
     }),
   );
 

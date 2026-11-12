@@ -10,6 +10,7 @@ import {
 import { Router } from '@angular/router';
 import { ChatEngineService } from '../../services/chat-engine.service';
 import { IconComponent } from '../icon/icon.component';
+import { AnswerFeedbackComponent } from './answer-feedback.component';
 import { MarkdownPipe } from './markdown.pipe';
 import { ThinkingIndicatorComponent } from './thinking-indicator.component';
 
@@ -32,12 +33,12 @@ interface MessagePart {
 @Component({
   selector: 'app-chat-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, MarkdownPipe, ThinkingIndicatorComponent],
+  imports: [IconComponent, MarkdownPipe, ThinkingIndicatorComponent, AnswerFeedbackComponent],
   host: { class: 'chat-panel', '(click)': 'onContentClick($event)' },
   template: `
     <div #scroller class="scroll" role="log" aria-live="polite" aria-label="Chat messages">
       @if (chatEngine.chat.messages.length > 0) {
-        @for (message of chatEngine.chat.messages; track message.id) {
+        @for (message of chatEngine.chat.messages; track message.id; let i = $index) {
           <div class="row" [class.user]="message.role === 'user'" [class.assistant]="message.role !== 'user'">
             <div class="bubble">
               @for (part of asParts(message.parts); track $index) {
@@ -72,6 +73,9 @@ interface MessagePart {
               }
               @if (isStreamingLast(message.id)) {
                 <span class="cursor" aria-hidden="true">▋</span>
+              }
+              @if (canRate(message)) {
+                <app-answer-feedback [messageId]="message.id" [turn]="turnAt(i)" />
               }
             </div>
           </div>
@@ -369,6 +373,26 @@ export class ChatPanelComponent {
       if (this.kind(parts[i]) === 'tool') return this.toolLabel(parts[i]);
     }
     return 'Thinking';
+  }
+
+  /**
+   * Rating buttons (CHAT_FEEDBACK) go under a finished assistant answer that has text —
+   * not while it streams, and not under an empty or errored reply.
+   */
+  protected canRate(message: { id: string; role: string; parts: unknown }): boolean {
+    if (!this.chatEngine.feedback() || message.role !== 'assistant') return false;
+    if (this.busy() && this.isLast(message.id)) return false;
+    return this.asParts(message.parts).some((p) => p.type === 'text' && !!p.text?.trim());
+  }
+
+  /** 1-based turn of the answer at `index`: user messages up to it, as the server counts. */
+  protected turnAt(index: number): number {
+    return this.chatEngine.chat.messages.slice(0, index + 1).filter((m) => m.role === 'user').length;
+  }
+
+  private isLast(id: string): boolean {
+    const messages = this.chatEngine.chat.messages;
+    return messages[messages.length - 1]?.id === id;
   }
 
   protected asParts(parts: unknown): MessagePart[] {

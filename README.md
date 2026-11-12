@@ -89,6 +89,13 @@ container logs, the lines show up there. Only turn it on where visitors are told
 are saved; `GET /api/chat/config` reports it as `transcriptLog`. Clearing the chat starts a
 new conversation id.
 
+**Letting testers rate answers (off by default).** Set `CHAT_FEEDBACK=true` and every finished
+answer gets three buttons — **Good**, **Partly**, **Not helpful** — then an optional note. Each
+rating is one JSON line on stdout (`"event":"chat.feedback"`) with the conversation id and turn
+number, so it lines up with that answer's `chat.transcript` line. Turn it on for a test site
+while people review answers; leave it off (or set it back to `false`) on the live site and the
+buttons disappear and the endpoint returns 404 — no rebuild needed.
+
 Only ever let the assistant read content you would publish. If you add a content root,
 don't point it at notes, source code, or anything internal.
 
@@ -119,7 +126,7 @@ missing fact and the wrong claims someone wrote down, not an invented one nobody
 ```
 server/
   index.ts, app.ts        Hono entry + middleware (order matters; comments say why)
-  app.config.ts           PORT / GATEWAY_API_KEY / CHAT_ENABLED / BUILD_SHA / CHAT_TRANSCRIPT_LOG; the rest is constant
+  app.config.ts           PORT / GATEWAY_API_KEY / CHAT_ENABLED / BUILD_SHA / CHAT_TRANSCRIPT_LOG / CHAT_FEEDBACK; the rest is constant
   middleware/csrf.ts      CSRF protection for /api/chat
   modules/chat/           The assistant: router, prompt, rate limit, tools
 client/
