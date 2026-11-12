@@ -12,6 +12,7 @@ import { ChatEngineService } from '../../services/chat-engine.service';
 import { IconComponent } from '../icon/icon.component';
 import { MarkdownPipe } from './markdown.pipe';
 import { ThinkingIndicatorComponent } from './thinking-indicator.component';
+import { TranscriptNoticeComponent } from './transcript-notice.component';
 
 interface MessagePart {
   type: string;
@@ -32,7 +33,7 @@ interface MessagePart {
 @Component({
   selector: 'app-chat-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, MarkdownPipe, ThinkingIndicatorComponent],
+  imports: [IconComponent, MarkdownPipe, ThinkingIndicatorComponent, TranscriptNoticeComponent],
   host: { class: 'chat-panel', '(click)': 'onContentClick($event)' },
   template: `
     <div #scroller class="scroll" role="log" aria-live="polite" aria-label="Chat messages">
@@ -96,6 +97,7 @@ interface MessagePart {
       @if (errorText()) {
         <div class="error-banner">{{ errorText() }}</div>
       }
+      <app-transcript-notice />
       <div class="input-row">
         <textarea
           #box
