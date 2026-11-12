@@ -44,6 +44,21 @@ export function capText(text: string, max: number = TRANSCRIPT_MAX_CHARS): { tex
   return { text: text.slice(0, end), cut: true };
 }
 
+/**
+ * Whether any of the provider's raw usage objects carried `prompt_tokens_details.cached_tokens`
+ * (or Anthropic's `cache_read_input_tokens`) as a number. The SDK reports `cacheReadTokens` as 0 when the gateway sends nothing, so a 0
+ * there alone does not prove \"no cache\"; this tells \"cache miss\" from \"not reported\".
+ */
+export function cacheReportedIn(raws: ReadonlyArray<unknown>): boolean {
+  return raws.some((raw) => {
+    const u = raw as
+      | { prompt_tokens_details?: { cached_tokens?: unknown }; cache_read_input_tokens?: unknown }
+      | null
+      | undefined;
+    return typeof u?.prompt_tokens_details?.cached_tokens === 'number' || typeof u?.cache_read_input_tokens === 'number';
+  });
+}
+
 export interface TranscriptTurn {
   /** Raw `body.id` from the request; validated here. */
   conversationId: unknown;
@@ -55,6 +70,14 @@ export interface TranscriptTurn {
   model: string;
   inputTokens?: number;
   outputTokens?: number;
+  /** Input tokens served from the provider's prompt cache (0 when none or not reported). */
+  cachedInputTokens?: number;
+  /** True only when the provider's raw usage carried `prompt_tokens_details.cached_tokens`. */
+  cacheReported?: boolean;
+  /** Ms from the request reaching the router to the first streamed text chunk; null if none. */
+  msToFirstChunk?: number | null;
+  /** Ms from the request reaching the router to the end of the turn. */
+  msTotal?: number;
   sha: string;
   /** Injectable for tests. */
   now?: Date;
@@ -70,6 +93,10 @@ export interface TranscriptLine {
   model: string;
   inputTokens: number;
   outputTokens: number;
+  cachedInputTokens: number;
+  cacheReported: boolean;
+  msToFirstChunk: number | null;
+  msTotal: number;
   sha: string;
   ts: string;
   truncated: boolean;
@@ -88,6 +115,10 @@ export function buildTranscriptLine(turn: TranscriptTurn): TranscriptLine {
     model: turn.model,
     inputTokens: turn.inputTokens ?? 0,
     outputTokens: turn.outputTokens ?? 0,
+    cachedInputTokens: turn.cachedInputTokens ?? 0,
+    cacheReported: turn.cacheReported ?? false,
+    msToFirstChunk: turn.msToFirstChunk ?? null,
+    msTotal: turn.msTotal ?? 0,
     sha: turn.sha,
     ts: (turn.now ?? new Date()).toISOString(),
     truncated: user.cut || assistant.cut,
