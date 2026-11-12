@@ -381,7 +381,7 @@ export class ChatPanelComponent {
    */
   protected canRate(message: { id: string; role: string; parts: unknown }): boolean {
     if (!this.chatEngine.feedback() || message.role !== 'assistant') return false;
-    if (this.busy() && this.isLast(message.id)) return false;
+    if (this.isLast(message.id) && (this.busy() || !!this.chatEngine.chat.error)) return false;
     return this.asParts(message.parts).some((p) => p.type === 'text' && !!p.text?.trim());
   }
 

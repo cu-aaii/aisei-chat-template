@@ -48,7 +48,9 @@ interface RatingOption {
             [id]="noteId()"
             [value]="current.note"
             placeholder="Optional"
+            [attr.aria-describedby]="noteId() + '-hint'"
           ></textarea>
+          <p class="note-hint" [id]="noteId() + '-hint'">Saved with this conversation for review. Please don't include personal details.</p>
           <div class="note-actions">
             <button type="submit" class="note-save" [disabled]="pending()">Save note</button>
             <button type="button" class="note-skip" (click)="noteOpen.set(false)">Skip</button>
@@ -99,6 +101,7 @@ interface RatingOption {
       resize: vertical;
       background: #fff;
     }
+    .note-hint { margin: 0; font-size: 12px; color: #666; }
     .note-actions { display: flex; gap: 8px; }
     .note-save, .note-skip {
       font: inherit;
