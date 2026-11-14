@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup: transcript-saved notice (library#40)</title>
+<style>
+  /* Tokens copied from client/app/shared/theme/variables.css */
+  :root {
+    --color-accent: #b31b1b;
+    --color-border: #e0e0e0;
+    --color-muted: #666666;
+    --body-font: "Open Sans", Arial, sans-serif;
+  }
+  body { font-family: var(--body-font); background: #fafafa; margin: 24px; color: #222; }
+  h1 { font-size: 20px; } h2 { font-size: 16px; margin: 32px 0 4px; }
+  .note { font-size: 13px; color: var(--color-muted); margin: 0 0 10px; }
+  .frame { border: 1px dashed #aaa; padding: 12px; background: #fff; }
+  .w-desktop { width: 420px; max-width: 100%; }
+  .w-320 { width: 320px; }
+
+  /* ---- chat-panel bottom: styles copied from chat-panel.component.ts ---- */
+  .panel-tail { font-family: var(--body-font); background: #fff; }
+  .scroll-stub { padding: 14px 16px; font-size: 14px; color: var(--color-muted); }
+  .composer { padding: 10px 12px 12px; border-top: 1px solid var(--color-border); }
+  .input-row {
+    display: flex; align-items: flex-end; gap: 6px;
+    border: 1px solid var(--color-border); border-radius: 18px;
+    padding: 4px 4px 4px 12px; background: #fff;
+  }
+  .field { flex: 1; align-self: stretch; border: none; outline: none; resize: none;
+    background: transparent; font: inherit; font-size: 16px; line-height: 1.5;
+    max-height: 160px; padding: 8px 0; min-width: 0; }
+  .action { flex: 0 0 auto; width: 38px; height: 38px; border: none; border-radius: 50%;
+    background: var(--color-accent); color: #fff; font-size: 16px; }
+
+  /* ---- NEW: transcript-notice (component styles) ---- */
+  .transcript-notice {
+    margin: 0 0 8px;
+    padding: 0 4px;
+    font-size: 13px;          /* >= 12.5px used elsewhere in panel; wraps, never truncates */
+    line-height: 1.4;
+    color: var(--color-muted); /* #666 on #fff = 5.74:1, WCAG AA */
+  }
+</style>
+</head>
+<body>
+<h1>library#40 — "Test version" transcript notice</h1>
+<p class="note">Static mockup. Notice is plain text in normal DOM order (no dismiss, no aria-hidden, no role=alert), between the optional error banner and <code>.input-row</code> inside <code>form.composer</code>.</p>
+
+<h2>(a) transcriptLog = true — desktop width (420 px dialog)</h2>
+<p class="note">Notice renders above the input row.</p>
+<div class="frame w-desktop">
+  <div class="panel-tail">
+    <div class="scroll-stub">… chat messages …</div>
+    <form class="composer" onsubmit="return false">
+      <p class="transcript-notice">Test version: conversations are saved for review.</p>
+      <div class="input-row">
+        <textarea class="field" rows="1" name="message" aria-label="Message" placeholder="Ask a question…"></textarea>
+        <button type="submit" class="action" aria-label="Send message">➤</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<h2>(b) transcriptLog = true — 320 px width</h2>
+<p class="note">Text wraps to two lines at most; input row is unchanged.</p>
+<div class="frame w-320">
+  <div class="panel-tail">
+    <div class="scroll-stub">… chat messages …</div>
+    <form class="composer" onsubmit="return false">
+      <p class="transcript-notice">Test version: conversations are saved for review.</p>
+      <div class="input-row">
+        <textarea class="field" rows="1" name="message" aria-label="Message" placeholder="Ask a question…"></textarea>
+        <button type="submit" class="action" aria-label="Send message">➤</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<h2>(c) transcriptLog = false (or config fetch failed) — nothing renders</h2>
+<p class="note">No notice element and no empty gap: the component template is wrapped in <code>@if</code>, so the input row sits exactly where it does today.</p>
+<div class="frame w-desktop">
+  <div class="panel-tail">
+    <div class="scroll-stub">… chat messages …</div>
+    <form class="composer" onsubmit="return false">
+      <!-- app-transcript-notice renders nothing -->
+      <div class="input-row">
+        <textarea class="field" rows="1" name="message" aria-label="Message" placeholder="Ask a question…"></textarea>
+        <button type="submit" class="action" aria-label="Send message">➤</button>
+      </div>
+    </form>
+  </div>
+</div>
+</body>
+</html>

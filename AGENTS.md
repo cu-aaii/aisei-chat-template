@@ -93,6 +93,9 @@ and never log earlier turns.
 The client sends a conversation id as `body.id`; `ChatEngineService.clear()` starts a new one.
 `GET /api/chat/config` reports `transcriptLog` so the UI can say chats are saved. Tests:
 `evals/transcript-log.test.ts` (no key needed).
+When `transcriptLog` is true the chat shows "Test version: conversations are saved for review." above the input
+(`client/app/shared/components/chat/transcript-notice.component.ts`, placed in `chat-panel.component.ts`); false or
+a failed config fetch shows nothing.
 
 ## Docker
 

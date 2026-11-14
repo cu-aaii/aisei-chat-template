@@ -89,6 +89,10 @@ container logs, the lines show up there. Only turn it on where visitors are told
 are saved; `GET /api/chat/config` reports it as `transcriptLog`. Clearing the chat starts a
 new conversation id.
 
+When it is on, the chat shows the notice "Test version: conversations are saved for review." directly above
+the message box (`<app-transcript-notice>`, which reads `transcriptLog` from `GET /api/chat/config`). When it is
+off, or the config can't be fetched, nothing is shown.
+
 Only ever let the assistant read content you would publish. If you add a content root,
 don't point it at notes, source code, or anything internal.
 
