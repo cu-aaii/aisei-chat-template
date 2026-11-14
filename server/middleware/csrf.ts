@@ -1,3 +1,5 @@
+// Opt-in: mounted only when CSRF_ENABLED=true (server/app.config.ts, server/app.ts).
+//
 // Two independent layers against forged requests to /api/*, neither of which needs a
 // session/data layer (this app deliberately has none — see AGENTS.md):
 //

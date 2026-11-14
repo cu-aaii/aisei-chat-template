@@ -1,10 +1,20 @@
-// Only three things come from the environment: the port (genuinely differs between local
-// dev and the container), the gateway API key (a secret), and the chat kill switch (an
-// incident lever whose whole value is being changeable without a rebuild). Everything else
-// about the chat feature is plain configuration and lives in this file as a constant.
+// Only six things come from the environment: the port (genuinely differs between local
+// dev and the container), the gateway API key (a secret), the chat kill switch (an
+// incident lever whose whole value is being changeable without a rebuild), the build
+// sha (baked into the image at build time, never set by hand), the transcript-log
+// switch (a privacy-relevant opt-in that must be flippable per deployment), and the
+// CSRF opt-in (a deployment choice, so it must not depend on how the app was started). Everything else about the
+// chat feature is plain configuration and lives in this file as a constant.
 //
 // Keeping settings as constants means `.env` can never silently disagree with production.
 export interface EnvVars {
+  /**
+   * The git commit the image was built from, reported by `GET /health` as `sha`. The
+   * deploy pipeline passes it as a Docker build arg (`--build-arg BUILD_SHA=...`) and the
+   * Dockerfile's `app` stage sets it; unset locally, so `/health` says `unknown`. It is how
+   * you tell, after a merge, that the new build is the one serving.
+   */
+  BUILD_SHA?: string;
   /** 4318 locally, 8000 in the container (baked into the Dockerfile). */
   PORT?: string;
   /**
@@ -14,10 +24,28 @@ export interface EnvVars {
    */
   GATEWAY_API_KEY?: string;
   /**
+   * Opt-in. Set to `true` to write one JSON line per chat turn to stdout (the user's last
+   * message, the assistant's answer, tool names, token counts) so it lands in the container
+   * log. Off unless exactly `true`. See modules/chat/transcript-log.ts.
+   */
+  CHAT_TRANSCRIPT_LOG?: string;
+  /**
    * Kill switch, kept in the environment on purpose: pulling the chat feature (gateway
    * abuse, a cost spike) should be a config change, not a rebuild. Set to `false`.
    */
   CHAT_ENABLED?: string;
+  /**
+   * Opt-in. Set to `true` to mount the CSRF check on /api/chat/* and issue its
+   * XSRF-TOKEN cookie (server/middleware/csrf.ts). Off unless exactly `true`.
+   *
+   * Off by default because the double-submit half broke legitimate browsers: under
+   * `npm run dev` the pages come from `ng serve`, so no cookie is ever issued and every
+   * chat request 403s, and a browser that kept a cached page but lost its session
+   * cookie was stranded until a hard reload. An explicit flag rather than NODE_ENV,
+   * so dev, `run:local`, the eval gate and the container all behave the same and the
+   * choice is visible in one place. The rate limit and size caps are unaffected.
+   */
+  CSRF_ENABLED?: string;
 }
 
 // Non-secret chat configuration. Changing any of these is an ordinary code change,
@@ -53,4 +81,7 @@ export const config = {
     maxRequests: RATE_LIMIT_MAX_REQUESTS,
     windowMs: RATE_LIMIT_WINDOW_MS,
   },
+  buildSha: typedEnv.BUILD_SHA?.trim() || 'unknown',
+  chatTranscriptLog: typedEnv.CHAT_TRANSCRIPT_LOG === 'true',
+  csrfEnabled: typedEnv.CSRF_ENABLED === 'true',
 } as const;

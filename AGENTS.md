@@ -26,12 +26,13 @@ server/
   app.ts                Middleware chain — ORDER IS LOAD-BEARING (ETag, compress,
                         cache-control, CSRF; /api/* is exempt from anything that buffers,
                         or SSE stops streaming). /health, /api/chat, static dist/client/browser
-  app.config.ts         Reads only PORT / GATEWAY_API_KEY / CHAT_ENABLED; model, gateway URL
-                        and rate limits are constants here
-  middleware/csrf.ts    Same-origin check + double-submit cookie on /api/chat/*
+  app.config.ts         Reads only PORT / GATEWAY_API_KEY / CHAT_ENABLED / BUILD_SHA / CHAT_TRANSCRIPT_LOG / CSRF_ENABLED;
+                        model, gateway URL and rate limits are constants here
+  middleware/csrf.ts    Same-origin check + double-submit cookie on /api/chat/* (opt-in: CSRF_ENABLED=true)
   modules/chat/
     chat.routes.ts      Real router when GATEWAY_API_KEY is set, stub otherwise
     chat-router.ts      POST / (streaming) + GET /config; size caps, rate limit
+    transcript-log.ts   CHAT_TRANSCRIPT_LOG: one `chat.transcript` JSON line per turn (off by default)
     prompt.ts           System prompt (SITE_NAME, scope, refusals) + embedded site index
     content-roots.ts    What the tools may read — visitor-facing content ONLY
     tools/              search_content, read_content, ToolRegistry
@@ -50,7 +51,7 @@ scripts/
   export-chat-content.mjs  Build step: dist/content/site-index.json (STATIC_PAGES)
   generate-sitemap.mjs     Build step: sitemap.xml + robots.txt Sitemap: line ($SITE_URL)
 evals/
-  chat.test.ts          The gate: asks the real assistant every case via app.request() (CSRF,
+  chat.test.ts          The gate: asks the real assistant every case via app.request() (CSRF if on,
                         rate limit, prompt, tools, gateway); fails on any wrong answer
   chat-cases.ts         Case schema + deterministic grader (substring/regex, no second model)
   chat-cases.json       Reviewed cases. A person reads every one; a model only drafts them
@@ -79,6 +80,23 @@ key needed), so a grader edit that makes it pass everything fails `check`.
 output in `dist/`. Adding a page = route in `app.routes.ts` + link in `nav-items.ts` + a
 line in `STATIC_PAGES` (`generate-sitemap.mjs` warns if you forget the last one).
 
+## Transcript log
+
+`CHAT_TRANSCRIPT_LOG=true` (default off) makes the chat router write one JSON line per turn to
+stdout: `event: "chat.transcript"`, `conversationId`, `turn`, the last user message, the final
+assistant text (each capped at 8,000 characters, with `truncated`), tool names, model, token
+counts, `cachedInputTokens` and `cacheReported` (true only if the gateway sent
+`prompt_tokens_details.cached_tokens` or
+`cache_read_input_tokens`; the SDK reports 0 otherwise), `msToFirstChunk` (request
+to first text chunk, `null` if none) and `msTotal`, `sha`, `ts`. Never add an IP, NetID, email or header to it,
+and never log earlier turns.
+The client sends a conversation id as `body.id`; `ChatEngineService.clear()` starts a new one.
+`GET /api/chat/config` reports `transcriptLog` so the UI can say chats are saved. Tests:
+`evals/transcript-log.test.ts` (no key needed).
+When `transcriptLog` is true the chat shows "Test version: conversations are saved for review." above the input
+(`client/app/shared/components/chat/transcript-notice.component.ts`, placed in `chat-panel.component.ts`); false or
+a failed config fetch shows nothing.
+
 ## Docker
 
 ```bash
@@ -98,8 +116,9 @@ Don't pass `--env-file .env` to `docker run`: its `PORT=4318` overrides the imag
   — it must not run during prerender
 - Server imports use `.js` extensions (ESM)
 - Reuse the shared components and CSS variables before writing new styles
-- `/api/chat` is public and paid per request: keep the rate limit, size caps, CSRF check
-  and prompt guard rails; never register a content root holding anything internal;
+- `/api/chat` is public and paid per request: keep the rate limit, size caps and prompt
+  guard rails. The CSRF check is opt-in (`CSRF_ENABLED=true`, off by default) — don't
+  remove it, and don't key it on NODE_ENV; never register a content root holding anything internal;
   never commit a key (`.env` is git-ignored)
 - `evals/chat-cases.json` is what a person signed off on. When `test:chat` fails, fix the
   prompt or the pages, not the case, unless the person agrees the case is wrong; never replace

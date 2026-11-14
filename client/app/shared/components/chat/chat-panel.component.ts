@@ -12,6 +12,7 @@ import { ChatEngineService } from '../../services/chat-engine.service';
 import { IconComponent } from '../icon/icon.component';
 import { MarkdownPipe } from './markdown.pipe';
 import { ThinkingIndicatorComponent } from './thinking-indicator.component';
+import { TranscriptNoticeComponent } from './transcript-notice.component';
 
 interface MessagePart {
   type: string;
@@ -32,7 +33,7 @@ interface MessagePart {
 @Component({
   selector: 'app-chat-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent, MarkdownPipe, ThinkingIndicatorComponent],
+  imports: [IconComponent, MarkdownPipe, ThinkingIndicatorComponent, TranscriptNoticeComponent],
   host: { class: 'chat-panel', '(click)': 'onContentClick($event)' },
   template: `
     <div #scroller class="scroll" role="log" aria-live="polite" aria-label="Chat messages">
@@ -76,6 +77,13 @@ interface MessagePart {
             </div>
           </div>
         }
+        @if (awaitingReply()) {
+          <div class="row assistant">
+            <div class="bubble">
+              <app-thinking-indicator />
+            </div>
+          </div>
+        }
       } @else {
         <div class="empty">
           <app-icon name="chat" />
@@ -89,6 +97,7 @@ interface MessagePart {
       @if (errorText()) {
         <div class="error-banner">{{ errorText() }}</div>
       }
+      <app-transcript-notice />
       <div class="input-row">
         <textarea
           #box
@@ -319,6 +328,20 @@ export class ChatPanelComponent {
 
   protected errorText(): string | undefined {
     return this.chatEngine.chat.error?.message;
+  }
+
+  /**
+   * True from the moment a question is sent until the first chunk of the reply
+   * arrives. In that window there is no assistant message yet, so `showThinking`
+   * (which lives inside a message) has nothing to attach to, and the visitor sees
+   * a silent pause. With a large system prompt that pause is most of the wait:
+   * the model reads the whole prompt before it streams a word.
+   */
+  protected awaitingReply(): boolean {
+    if (!this.busy()) return false;
+    const messages = this.chatEngine.chat.messages;
+    const last = messages[messages.length - 1];
+    return !last || last.role !== 'assistant';
   }
 
   protected isStreamingLast(id: string): boolean {

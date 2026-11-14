@@ -13,6 +13,11 @@ function readCookie(name: string): string | undefined {
   return match ? decodeURIComponent(match[1]) : undefined;
 }
 
+/** A fresh conversation id: a UUID, which fits the server's `^[A-Za-z0-9_-]{1,64}$`. */
+function newConversationId(): string {
+  return globalThis.crypto?.randomUUID?.() ?? `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+}
+
 /** Echoes the double-submit cookie back as a header — see `readCookie` above. */
 function csrfHeaders(): Record<string, string> {
   const token = readCookie('XSRF-TOKEN');
@@ -120,6 +125,12 @@ export class ChatEngineService {
    */
   readonly toolLabels = signal<Record<string, string>>({});
 
+  /**
+   * Whether the server saves conversations (`CHAT_TRANSCRIPT_LOG`), from `GET /api/chat/config`.
+   * Lets the UI tell visitors their chats are saved; stays `false` until the config resolves.
+   */
+  readonly transcriptLog = signal(false);
+
   constructor() {
     // Prerendering runs this in Node with no origin to resolve a relative URL
     // against, and there's no server-rendered request to read config from anyway
@@ -128,8 +139,9 @@ export class ChatEngineService {
 
     fetch('/api/chat/config', { headers: csrfHeaders() })
       .then((res) => (res.ok ? res.json() : null))
-      .then((body: { enabled?: boolean; toolLabels?: Record<string, string> } | null) => {
+      .then((body: { enabled?: boolean; toolLabels?: Record<string, string>; transcriptLog?: boolean } | null) => {
         if (body && body.enabled === false) this.enabled.set(false);
+        if (body?.transcriptLog === true) this.transcriptLog.set(true);
         if (body?.toolLabels) this.toolLabels.set(body.toolLabels);
       })
       .catch(() => {
@@ -137,10 +149,21 @@ export class ChatEngineService {
       });
   }
 
+  /**
+   * Id of the current conversation, sent to the server as `id` on every request (the AI
+   * SDK's own chat id never changes, so it cannot tell a cleared chat from a continuing
+   * one). Only letters, digits, `-` and `_`, at most 64 characters — the server accepts
+   * nothing else. `clear()` replaces it, so a cleared chat is a new conversation.
+   */
+  private conversationId = newConversationId();
+
   readonly chat = new SiteChat<UIMessage>({
     transport: new DefaultChatTransport({
       api: '/api/chat',
       headers: csrfHeaders,
+      prepareSendMessagesRequest: ({ body, messages, trigger, messageId }) => ({
+        body: { ...body, id: this.conversationId, messages, trigger, messageId },
+      }),
     }),
   });
 
@@ -151,5 +174,6 @@ export class ChatEngineService {
     }
     this.chat.messages = [];
     this.chat.clearError();
+    this.conversationId = newConversationId();
   }
 }

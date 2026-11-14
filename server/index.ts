@@ -5,5 +5,5 @@ import { app } from './app.js';
 const port = config.port;
 
 serve({ fetch: app.fetch, port }, (info) => {
-  console.log(`[server] listening on http://localhost:${info.port}`);
+  console.log(`[server] listening on http://localhost:${info.port} build=${config.buildSha.slice(0, 7)}`);
 });

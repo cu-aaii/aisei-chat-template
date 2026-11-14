@@ -7,6 +7,8 @@ import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { convertToModelMessages, stepCountIs, streamText, type UIMessage } from 'ai';
 import { Hono } from 'hono';
 import { createRateLimiter, getClientIp } from './rate-limit.js';
+import { cacheReportedIn, logTranscript } from './transcript-log.js';
+import { stampCacheBreakpoints, sumCacheUsage } from './prompt-cache.js';
 import type { ToolRegistry } from './tools/registry.js';
 
 export interface ChatRouterConfig {
@@ -29,6 +31,19 @@ export interface ChatRouterConfig {
    */
   sendReasoning?: boolean;
   providerName?: string;
+  /**
+   * Write one `chat.transcript` JSON line per turn to stdout. Off by default; wired from
+   * CHAT_TRANSCRIPT_LOG in chat.routes.ts. See transcript-log.ts for what is (and is not)
+   * in the line.
+   */
+  transcriptLog?: boolean;
+  /** Build sha put in the transcript line. */
+  buildSha?: string;
+  /**
+   * Add prompt-cache breakpoints (tools, system, last message) to Claude requests — see
+   * prompt-cache.ts. Off unless `true`; non-Claude models are never touched.
+   */
+  promptCache?: boolean;
 }
 
 export interface RequestLimits {
@@ -51,6 +66,8 @@ const DEFAULT_LIMITS: RequestLimits = {
 };
 
 interface ChatRequestBody {
+  /** The AI SDK chat id (DefaultChatTransport sends it); validated before it is logged. */
+  id?: unknown;
   messages?: UIMessage[];
   model?: string;
 }
@@ -79,6 +96,7 @@ export function createChatRouter(config: ChatRouterConfig): Hono {
     // onFinish's usage/totalUsage below come back all-`undefined` — needed for the
     // spend logging.
     includeUsage: true,
+    ...(config.promptCache === true ? { transformRequestBody: stampCacheBreakpoints } : {}),
   });
 
   const maxRounds = config.maxToolRounds ?? 8;
@@ -96,10 +114,14 @@ export function createChatRouter(config: ChatRouterConfig): Hono {
       model: config.defaultModel,
       tools: config.tools.names(),
       toolLabels: config.toolLabels ?? {},
+      transcriptLog: config.transcriptLog === true,
     }),
   );
 
   app.post('/', async (c) => {
+    // Start of the timing in the transcript line: the request has reached the handler.
+    const startedAt = Date.now();
+    let firstChunkAt: number | null = null;
     if (checkRate && !checkRate(getClientIp(c))) {
       return c.json({ error: 'Too many requests. Please wait before sending another message.' }, 429);
     }
@@ -152,13 +174,37 @@ export function createChatRouter(config: ChatRouterConfig): Hono {
         // No spend-tracking DB — this logs to stdout so gateway cost/abuse trends show
         // up in whatever already ingests container logs (e.g. CloudWatch Logs). Actual
         // alarming on this is ops-owned infra, out of this repo's scope.
-        onFinish: ({ usage, totalUsage }) => {
+        // First streamed text only (AI SDK 6 `text-delta`), recorded once, for the transcript line.
+        onChunk: ({ chunk }) => {
+          if (firstChunkAt === null && chunk.type === 'text-delta') firstChunkAt = Date.now();
+        },
+        onFinish: ({ usage, totalUsage, text, steps }) => {
           console.log('[chat] usage', {
             ip: getClientIp(c),
             model: modelId,
             inputTokens: totalUsage.inputTokens ?? usage.inputTokens,
             outputTokens: totalUsage.outputTokens ?? usage.outputTokens,
             totalTokens: totalUsage.totalTokens ?? usage.totalTokens,
+            // Summed per step from the raw gateway usage: the SDK maps reads but not writes.
+            ...sumCacheUsage(steps),
+            steps: steps.length,
+          });
+          // Separate from the usage line above, which stays as it is. Never throws.
+          logTranscript(config.transcriptLog, {
+            conversationId: body.id,
+            messages,
+            assistant: text || steps.map((step) => step.text).join(''),
+            steps,
+            model: modelId,
+            inputTokens: totalUsage.inputTokens ?? usage.inputTokens,
+            outputTokens: totalUsage.outputTokens ?? usage.outputTokens,
+            // Same per-step raw sum as the usage line (reads both LiteLLM spellings).
+            cachedInputTokens: sumCacheUsage(steps).cacheReadTokens,
+            // totalUsage.raw is dropped when steps are summed, so look at each step's raw usage.
+            cacheReported: cacheReportedIn([usage.raw, ...steps.map((step) => step.usage?.raw)]),
+            msToFirstChunk: firstChunkAt === null ? null : firstChunkAt - startedAt,
+            msTotal: Date.now() - startedAt,
+            sha: config.buildSha ?? 'unknown',
           });
         },
       });
