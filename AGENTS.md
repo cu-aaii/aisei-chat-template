@@ -26,9 +26,9 @@ server/
   app.ts                Middleware chain — ORDER IS LOAD-BEARING (ETag, compress,
                         cache-control, CSRF; /api/* is exempt from anything that buffers,
                         or SSE stops streaming). /health, /api/chat, static dist/client/browser
-  app.config.ts         Reads only PORT / GATEWAY_API_KEY / CHAT_ENABLED / BUILD_SHA / CHAT_TRANSCRIPT_LOG;
+  app.config.ts         Reads only PORT / GATEWAY_API_KEY / CHAT_ENABLED / BUILD_SHA / CHAT_TRANSCRIPT_LOG / CSRF_ENABLED;
                         model, gateway URL and rate limits are constants here
-  middleware/csrf.ts    Same-origin check + double-submit cookie on /api/chat/*
+  middleware/csrf.ts    Same-origin check + double-submit cookie on /api/chat/* (opt-in: CSRF_ENABLED=true)
   modules/chat/
     chat.routes.ts      Real router when GATEWAY_API_KEY is set, stub otherwise
     chat-router.ts      POST / (streaming) + GET /config; size caps, rate limit
@@ -51,7 +51,7 @@ scripts/
   export-chat-content.mjs  Build step: dist/content/site-index.json (STATIC_PAGES)
   generate-sitemap.mjs     Build step: sitemap.xml + robots.txt Sitemap: line ($SITE_URL)
 evals/
-  chat.test.ts          The gate: asks the real assistant every case via app.request() (CSRF,
+  chat.test.ts          The gate: asks the real assistant every case via app.request() (CSRF if on,
                         rate limit, prompt, tools, gateway); fails on any wrong answer
   chat-cases.ts         Case schema + deterministic grader (substring/regex, no second model)
   chat-cases.json       Reviewed cases. A person reads every one; a model only drafts them
@@ -116,8 +116,9 @@ Don't pass `--env-file .env` to `docker run`: its `PORT=4318` overrides the imag
   — it must not run during prerender
 - Server imports use `.js` extensions (ESM)
 - Reuse the shared components and CSS variables before writing new styles
-- `/api/chat` is public and paid per request: keep the rate limit, size caps, CSRF check
-  and prompt guard rails; never register a content root holding anything internal;
+- `/api/chat` is public and paid per request: keep the rate limit, size caps and prompt
+  guard rails. The CSRF check is opt-in (`CSRF_ENABLED=true`, off by default) — don't
+  remove it, and don't key it on NODE_ENV; never register a content root holding anything internal;
   never commit a key (`.env` is git-ignored)
 - `evals/chat-cases.json` is what a person signed off on. When `test:chat` fails, fix the
   prompt or the pages, not the case, unless the person agrees the case is wrong; never replace

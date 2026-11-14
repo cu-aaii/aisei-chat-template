@@ -1,8 +1,9 @@
-// Only five things come from the environment: the port (genuinely differs between local
+// Only six things come from the environment: the port (genuinely differs between local
 // dev and the container), the gateway API key (a secret), the chat kill switch (an
 // incident lever whose whole value is being changeable without a rebuild), the build
-// sha (baked into the image at build time, never set by hand), and the transcript-log
-// switch (a privacy-relevant opt-in that must be flippable per deployment). Everything else about the
+// sha (baked into the image at build time, never set by hand), the transcript-log
+// switch (a privacy-relevant opt-in that must be flippable per deployment), and the
+// CSRF opt-in (a deployment choice, so it must not depend on how the app was started). Everything else about the
 // chat feature is plain configuration and lives in this file as a constant.
 //
 // Keeping settings as constants means `.env` can never silently disagree with production.
@@ -33,6 +34,18 @@ export interface EnvVars {
    * abuse, a cost spike) should be a config change, not a rebuild. Set to `false`.
    */
   CHAT_ENABLED?: string;
+  /**
+   * Opt-in. Set to `true` to mount the CSRF check on /api/chat/* and issue its
+   * XSRF-TOKEN cookie (server/middleware/csrf.ts). Off unless exactly `true`.
+   *
+   * Off by default because the double-submit half broke legitimate browsers: under
+   * `npm run dev` the pages come from `ng serve`, so no cookie is ever issued and every
+   * chat request 403s, and a browser that kept a cached page but lost its session
+   * cookie was stranded until a hard reload. An explicit flag rather than NODE_ENV,
+   * so dev, `run:local`, the eval gate and the container all behave the same and the
+   * choice is visible in one place. The rate limit and size caps are unaffected.
+   */
+  CSRF_ENABLED?: string;
 }
 
 // Non-secret chat configuration. Changing any of these is an ordinary code change,
@@ -70,4 +83,5 @@ export const config = {
   },
   buildSha: typedEnv.BUILD_SHA?.trim() || 'unknown',
   chatTranscriptLog: typedEnv.CHAT_TRANSCRIPT_LOG === 'true',
+  csrfEnabled: typedEnv.CSRF_ENABLED === 'true',
 } as const;

@@ -92,7 +92,8 @@ app.use('*', async (c, next) => {
   }
 });
 
-// Hands every browser a random XSRF-TOKEN cookie — see server/middleware/csrf.ts.
+// Hands every browser a random XSRF-TOKEN cookie — see server/middleware/csrf.ts. Only
+// when CSRF_ENABLED=true (app.config.ts): with the check off there is nothing to echo.
 //
 // Only HTML responses carry it, because an HTML document is the only response that
 // bootstraps a browser: the cookie has to exist before the app's first /api/chat call,
@@ -107,10 +108,12 @@ app.use('*', async (c, next) => {
 // issuing side is a no-op once the request arrives carrying the cookie, so later
 // navigations add nothing. No /api/* response ever sets it — a client that loses its
 // cookie mid-session gets a 403 and recovers on the next page load, not on retry.
-app.use('*', async (c, next) => {
-  await next();
-  if (c.res.headers.get('content-type')?.startsWith('text/html')) issueCsrfCookie(c);
-});
+if (config.csrfEnabled) {
+  app.use('*', async (c, next) => {
+    await next();
+    if (c.res.headers.get('content-type')?.startsWith('text/html')) issueCsrfCookie(c);
+  });
+}
 
 // API routes
 // `/health` is the load balancer's target-group check and the deploy check: `sha` is the
@@ -122,7 +125,14 @@ app.get('/health', (c) => {
 
 // Two-layer CSRF check (same-origin + double-submit cookie) on every method/route under
 // /api/chat, including GET /api/chat/config — see server/middleware/csrf.ts.
-app.use('/api/chat/*', verifyCsrfToken());
+//
+// Opt-in with CSRF_ENABLED=true; off by default everywhere, container included. Not keyed
+// on NODE_ENV: only the Dockerfile sets that, so `npm start`, `run:local` and the eval
+// gate would silently have run without the check while the container ran with it. See
+// app.config.ts for why it is off. The rate limit and size caps stay on regardless.
+if (config.csrfEnabled) {
+  app.use('/api/chat/*', verifyCsrfToken());
+}
 
 app.route('/api/chat', chatRouter);
 
