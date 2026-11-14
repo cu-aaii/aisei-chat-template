@@ -72,16 +72,23 @@ import { IconComponent } from '../../components/icon/icon.component';
             (focusout)="onDropdownFocusOut($event, item.label)"
           >
             @if (item.children) {
-              <button
-                #dropdownButton
-                type="button"
-                [attr.aria-expanded]="openDropdown() === item.label"
-                [attr.aria-controls]="'nav-menu-' + $index"
-                (click)="toggleDropdown(item.label, dropdownButton)"
-              >
-                {{ item.label }}
-                <app-icon class="caret" name="expand_more" />
-              </button>
+              <div class="parent">
+                <a
+                  [routerLink]="item.path"
+                  routerLinkActive="active"
+                >{{ item.label }}</a>
+                <button
+                  #dropdownButton
+                  type="button"
+                  class="caret-toggle"
+                  [attr.aria-label]="item.label + ' submenu'"
+                  [attr.aria-expanded]="openDropdown() === item.label"
+                  [attr.aria-controls]="'nav-menu-' + $index"
+                  (click)="toggleDropdown(item.label, dropdownButton)"
+                >
+                  <app-icon class="caret" name="expand_more" />
+                </button>
+              </div>
               <ul class="dropdown" [id]="'nav-menu-' + $index">
                 @for (child of item.children; track child.path) {
                   <li>
@@ -108,7 +115,7 @@ import { IconComponent } from '../../components/icon/icon.component';
       <nav id="mobile-menu-panel" class="mobile-panel" aria-label="Primary">
         @for (item of nav; track item.label) {
           @if (item.children) {
-            <span class="group-label">{{ item.label }}</span>
+            <a class="group-label" [routerLink]="item.path" (click)="closeMenu()">{{ item.label }}</a>
             @for (child of item.children; track child.path) {
               <a class="child" [routerLink]="child.path" (click)="closeMenu()">{{ child.label }}</a>
             }
@@ -194,12 +201,19 @@ import { IconComponent } from '../../components/icon/icon.component';
       line-height: 1.2;
     }
     .primary-nav .caret { font-size: 18px; }
+    /* A parent is its label link plus a chevron toggle, highlighted as one tab. */
+    .primary-nav .parent { display: flex; align-items: stretch; }
+    .primary-nav .parent > a { padding-right: 2px; }
+    .primary-nav .parent > .caret-toggle { padding-left: 2px; padding-right: 20px; }
     .primary-nav li:hover > a,
-    .primary-nav li:hover > button,
-    .primary-nav li.open > button,
+    .primary-nav li:hover > .parent,
+    .primary-nav li.open > .parent,
+    .primary-nav .parent:has(> a.active),
     .primary-nav a:focus-visible,
     .primary-nav button:focus-visible,
     .primary-nav a.active { background: rgba(255, 255, 255, .14); }
+    /* The tab background sits on .parent; do not stack it again on the link. */
+    .primary-nav .parent > a.active { background: none; }
     .primary-nav a.highlight { background: #fff; color: var(--color-accent); font-weight: 700; }
 
     .primary-nav .dropdown {
