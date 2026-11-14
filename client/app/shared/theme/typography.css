@@ -58,3 +58,11 @@ h4 {
   letter-spacing: normal;
   margin: 0 0 16px;
 }
+
+/* Inline code (a file path, a command) wraps anywhere instead of forcing the page wider than a
+   phone: a long path in a sentence is one unbreakable word, and at 320px it pushed the layout
+   viewport out to 468px (WCAG 1.4.10 Reflow). Code blocks are left alone — a <pre> keeps its
+   lines and scrolls inside itself. */
+:not(pre) > code {
+  overflow-wrap: anywhere;
+}
