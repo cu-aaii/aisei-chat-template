@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { filter } from 'rxjs';
 import { PRIMARY_NAV } from './nav-items';
 import { LabWordmarkComponent } from '../../components/lab-wordmark/lab-wordmark.component';
 import { IconComponent } from '../../components/icon/icon.component';
@@ -8,12 +10,23 @@ import { IconComponent } from '../../components/icon/icon.component';
  * Public site chrome: red masthead with wordmark + seal, and
  * the primary navigation (hover dropdowns on desktop, hamburger panel on
  * mobile). Links come from nav-items.ts.
+ *
+ * Desktop dropdowns are disclosure buttons, not CSS alone. Hover still opens one
+ * for a mouse, but the button also toggles it on click (Safari does not focus a
+ * clicked button, so a CSS `:focus-within` menu never opened there), reports
+ * `aria-expanded`, and closes on Escape, an outside click, focus leaving it, or
+ * a navigation. The old `:focus-within` rule also kept a dropdown open over the
+ * next page after one of its links was clicked, because focus stayed on the link.
  */
 @Component({
   selector: 'app-public-masthead',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, RouterLinkActive, LabWordmarkComponent, IconComponent],
-  host: { class: 'public-masthead' },
+  host: {
+    class: 'public-masthead',
+    '(document:click)': 'onDocumentClick($event)',
+    '(document:keydown.escape)': 'onEscape()',
+  },
   template: `
     <a class="skip-link" href="#main" (click)="skipToMain($event)">Skip to main content</a>
 
@@ -54,16 +67,26 @@ import { IconComponent } from '../../components/icon/icon.component';
       <div class="container-fluid">
         <ul class="nav-list">
         @for (item of nav; track item.label) {
-          <li [class.has-children]="!!item.children">
+          <li
+            [class.has-children]="!!item.children"
+            [class.open]="openDropdown() === item.label"
+            (focusout)="onDropdownFocusOut($event, item.label)"
+          >
             @if (item.children) {
-              <button type="button" [attr.aria-haspopup]="true">
+              <button
+                type="button"
+                [id]="'nav-btn-' + $index"
+                [attr.aria-expanded]="openDropdown() === item.label"
+                [attr.aria-controls]="'nav-menu-' + $index"
+                (click)="toggleDropdown(item.label)"
+              >
                 {{ item.label }}
                 <app-icon class="caret" name="expand_more" />
               </button>
-              <ul class="dropdown">
+              <ul class="dropdown" [id]="'nav-menu-' + $index">
                 @for (child of item.children; track child.path) {
                   <li>
-                    <a [routerLink]="child.path">{{ child.label }}</a>
+                    <a [routerLink]="child.path" (click)="closeDropdown()">{{ child.label }}</a>
                   </li>
                 }
               </ul>
@@ -174,8 +197,9 @@ import { IconComponent } from '../../components/icon/icon.component';
     .primary-nav .caret { font-size: 18px; }
     .primary-nav li:hover > a,
     .primary-nav li:hover > button,
-    .primary-nav li:focus-within > a,
-    .primary-nav li:focus-within > button,
+    .primary-nav li.open > button,
+    .primary-nav a:focus-visible,
+    .primary-nav button:focus-visible,
     .primary-nav a.active { background: rgba(255, 255, 255, .14); }
     .primary-nav a.highlight { background: #fff; color: var(--color-accent); font-weight: 700; }
 
@@ -193,8 +217,13 @@ import { IconComponent } from '../../components/icon/icon.component';
       box-shadow: none;
       z-index: 40;
     }
+    /* Hover opens for a mouse; .open (click, Enter/Space) for everything else. Not
+       :focus-within: focus stays on a clicked link after navigation, which kept
+       the dropdown open over the next page. */
     .primary-nav li.has-children:hover .dropdown,
-    .primary-nav li.has-children:focus-within .dropdown { display: block; }
+    .primary-nav li.has-children.open .dropdown { display: block; }
+    .primary-nav .caret { transition: transform .15s ease; }
+    .primary-nav li.open .caret { transform: rotate(180deg); }
     .primary-nav .dropdown a { color: #fff; padding: 19px 28px; font-size: 17px; white-space: nowrap; }
     .primary-nav .dropdown a:hover,
     .primary-nav .dropdown a:focus { background: rgba(255, 255, 255, .1); }
@@ -259,8 +288,52 @@ import { IconComponent } from '../../components/icon/icon.component';
   `,
 })
 export class PublicMastheadComponent {
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
   readonly nav = PRIMARY_NAV;
   readonly menuOpen = signal(false);
+  /** Label of the desktop dropdown that is open, or null. One at a time. */
+  readonly openDropdown = signal<string | null>(null);
+
+  constructor() {
+    // Any navigation closes both menus, however it was started (link, back button, search).
+    inject(Router)
+      .events.pipe(filter((e) => e instanceof NavigationEnd), takeUntilDestroyed(inject(DestroyRef)))
+      .subscribe(() => {
+        this.openDropdown.set(null);
+        this.menuOpen.set(false);
+      });
+  }
+
+  toggleDropdown(label: string) {
+    this.openDropdown.update((open) => (open === label ? null : label));
+  }
+
+  closeDropdown() {
+    this.openDropdown.set(null);
+  }
+
+  /** Tabbing out of a dropdown (to the next nav item or beyond) closes it. */
+  onDropdownFocusOut(event: FocusEvent, label: string) {
+    const li = event.currentTarget as HTMLElement;
+    const next = event.relatedTarget as Node | null;
+    if (this.openDropdown() === label && next && !li.contains(next)) this.closeDropdown();
+  }
+
+  onDocumentClick(event: MouseEvent) {
+    if (this.openDropdown() === null) return;
+    const nav = this.host.nativeElement.querySelector('.primary-nav');
+    if (nav && !nav.contains(event.target as Node)) this.closeDropdown();
+  }
+
+  /** Escape closes an open dropdown and returns focus to its button (WAI-ARIA disclosure). */
+  onEscape() {
+    const open = this.openDropdown();
+    if (open === null) return;
+    const i = this.nav.findIndex((item) => item.label === open);
+    this.closeDropdown();
+    this.host.nativeElement.querySelector<HTMLButtonElement>(`#nav-btn-${i}`)?.focus();
+  }
 
   toggleMenu() {
     this.menuOpen.update((v) => !v);

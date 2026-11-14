@@ -36,7 +36,7 @@ interface FooterLink {
 
           <div class="primary">
             <div>
-              <h4>Pages</h4>
+              <h2>Pages</h2>
               <ul>
                 @for (a of pages; track a.path) {
                   <li><a [routerLink]="a.path">{{ a.label }}</a></li>
@@ -45,11 +45,11 @@ interface FooterLink {
             </div>
 
             <div>
-              <h4>Resources</h4>
+              <h2>Resources</h2>
               <ul>
                 <li><a href="https://ai.cornell.edu" target="_blank" rel="noopener">Cornell AI Initiative</a></li>
               </ul>
-              <h4 class="part-of">Built with</h4>
+              <h2 class="part-of">Built with</h2>
               <ul>
                 <li><a href="https://github.com/cu-aaii/aisei-chat-template" target="_blank" rel="noopener">aisei-chat-template</a></li>
               </ul>
@@ -86,11 +86,15 @@ interface FooterLink {
     .primary { flex: 1; display: flex; gap: 34px; padding-left: 15px; }
     .primary > div { flex: 1; min-width: 0; }
 
-    h4 {
+    /* h2, not h4: the footer's column titles follow page content whose deepest level is
+       h2, so h4 skipped a level (Lighthouse/axe heading-order). Sized and spaced as the
+       h4s were, line-height included, so nothing moves. */
+    h2 {
       color: #bbb;
       font-family: var(--heading-font);
       font-weight: 500;
       font-size: 18px;
+      line-height: 0.875rem;
       margin: 0 0 14px;
     }
     ul { list-style: none; padding: 0; margin: 0; }
