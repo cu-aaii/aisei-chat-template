@@ -76,8 +76,10 @@ replies that it isn't configured. Get a key from the Cornell AI Platform
 
 `/api/chat` is public and costs money per request, so the template ships with guard
 rails you should keep: a per-IP rate limit (15 requests/minute), size caps on each
-request, a CSRF check (`server/middleware/csrf.ts`), a system prompt that keeps the
-assistant on topic, and a `CHAT_ENABLED=false` kill switch.
+request, a system prompt that keeps the assistant on topic, and a `CHAT_ENABLED=false`
+kill switch. A CSRF check (`server/middleware/csrf.ts`) is available but **off by default**:
+set `CSRF_ENABLED=true` to turn it on. It relies on the page being served by this app, so it
+fails under `npm run dev`, where `ng serve` serves the pages.
 
 **Saving conversations (off by default).** Set `CHAT_TRANSCRIPT_LOG=true` and the server
 writes one JSON line per chat turn to stdout (`"event":"chat.transcript"`): a conversation id,
@@ -119,8 +121,8 @@ missing fact and the wrong claims someone wrote down, not an invented one nobody
 ```
 server/
   index.ts, app.ts        Hono entry + middleware (order matters; comments say why)
-  app.config.ts           PORT / GATEWAY_API_KEY / CHAT_ENABLED / BUILD_SHA / CHAT_TRANSCRIPT_LOG; the rest is constant
-  middleware/csrf.ts      CSRF protection for /api/chat
+  app.config.ts           PORT / GATEWAY_API_KEY / CHAT_ENABLED / BUILD_SHA / CHAT_TRANSCRIPT_LOG / CSRF_ENABLED; the rest is constant
+  middleware/csrf.ts      CSRF protection for /api/chat (opt-in: CSRF_ENABLED=true)
   modules/chat/           The assistant: router, prompt, rate limit, tools
 client/
   app/app.routes.ts       Routes

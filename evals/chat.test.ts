@@ -2,7 +2,7 @@
 // fails on any wrong answer. Run `npm run build` first, then `npm run test:chat`.
 //
 // It drives the whole app in-process through Hono's `app.request()`, not just the chat router:
-// the CSRF check, the rate limiter and size caps, the real system prompt, the real tools reading
+// the CSRF check when CSRF_ENABLED=true, the rate limiter and size caps, the real system prompt, the real tools reading
 // the prerendered pages, and a real call to the gateway with GATEWAY_API_KEY. Nothing is mocked,
 // so a pass means the thing a visitor talks to answered correctly. It also means every run is
 // billed like a visitor's message, which is why RUNS_PER_CASE stays low.
@@ -50,11 +50,15 @@ beforeAll(async () => {
   if (!config.chatEnabled || !config.gatewayApiKey) {
     throw new Error('Set GATEWAY_API_KEY in .env and leave CHAT_ENABLED on: the gate asks the real assistant.');
   }
-  // Fetch a page first, as a browser does, to be handed the double-submit cookie (server/app.ts).
+  // Fetch a page first, as a browser does: it proves the prerendered pages exist, and with
+  // CSRF_ENABLED=true it is where the double-submit cookie comes from (server/app.ts).
   const page = await app.request('/', { headers: { accept: 'text/html' } });
-  csrfToken = /XSRF-TOKEN=([^;]+)/.exec(page.headers.get('set-cookie') ?? '')?.[1] ?? '';
-  if (!csrfToken) {
-    throw new Error('GET / set no XSRF-TOKEN cookie. Run `npm run build` first: the gate needs the prerendered pages.');
+  if (!page.ok || !page.headers.get('content-type')?.startsWith('text/html')) {
+    throw new Error('GET / returned no page. Run `npm run build` first: the gate needs the prerendered pages.');
+  }
+  if (config.csrfEnabled) {
+    csrfToken = /XSRF-TOKEN=([^;]+)/.exec(page.headers.get('set-cookie') ?? '')?.[1] ?? '';
+    if (!csrfToken) throw new Error('CSRF_ENABLED=true but GET / set no XSRF-TOKEN cookie.');
   }
 });
 
@@ -74,8 +78,7 @@ async function ask(question: string, signal: AbortSignal): Promise<Reply> {
     headers: {
       'content-type': 'application/json',
       origin: ORIGIN,
-      cookie: `XSRF-TOKEN=${csrfToken}`,
-      'x-xsrf-token': csrfToken,
+      ...(csrfToken ? { cookie: `XSRF-TOKEN=${csrfToken}`, 'x-xsrf-token': csrfToken } : {}),
     },
     // The body DefaultChatTransport sends from client/app/shared/services/chat-engine.service.ts.
     body: JSON.stringify({
