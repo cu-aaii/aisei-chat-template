@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { ChangeDetectionStrategy, Component, ElementRef, inject, linkedSignal, viewChildren } from '@angular/core';
+import { Navigation, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { PRIMARY_NAV } from './nav-items';
 import { LabWordmarkComponent } from '../../components/lab-wordmark/lab-wordmark.component';
 import { IconComponent } from '../../components/icon/icon.component';
@@ -8,12 +8,24 @@ import { IconComponent } from '../../components/icon/icon.component';
  * Public site chrome: red masthead with wordmark + seal, and
  * the primary navigation (hover dropdowns on desktop, hamburger panel on
  * mobile). Links come from nav-items.ts.
+ *
+ * Desktop dropdowns are disclosure buttons, not CSS alone: hover still opens one
+ * for a mouse, and the button toggles `openDropdown` and reports `aria-expanded`.
+ * Focus is the single source of truth for "the user has left the menu": the
+ * button takes focus when clicked (Safari does not give it focus on its own), so
+ * an outside click, Tab, or choosing a link all arrive as one `focusout`, and that
+ * is the only thing that closes it, apart from Escape (heard on this component's
+ * host, so it never takes an Escape from elsewhere on the page) and a navigation:
+ * `openDropdown` is a `linkedSignal` of `router.currentNavigation`, so it resets to
+ * closed whenever one starts or ends. No document listeners and no RxJS: under
+ * zone.js a document listener runs change detection for every click on the page. The old `:focus-within` rule kept a dropdown open over
+ * the next page after one of its links was clicked, because focus stayed on it.
  */
 @Component({
   selector: 'app-public-masthead',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, RouterLinkActive, LabWordmarkComponent, IconComponent],
-  host: { class: 'public-masthead' },
+  host: { class: 'public-masthead', '(keydown.escape)': 'onEscape()' },
   template: `
     <a class="skip-link" href="#main" (click)="skipToMain($event)">Skip to main content</a>
 
@@ -54,13 +66,23 @@ import { IconComponent } from '../../components/icon/icon.component';
       <div class="container-fluid">
         <ul class="nav-list">
         @for (item of nav; track item.label) {
-          <li [class.has-children]="!!item.children">
+          <li
+            [class.has-children]="!!item.children"
+            [class.open]="openDropdown() === item.label"
+            (focusout)="onDropdownFocusOut($event, item.label)"
+          >
             @if (item.children) {
-              <button type="button" [attr.aria-haspopup]="true">
+              <button
+                #dropdownButton
+                type="button"
+                [attr.aria-expanded]="openDropdown() === item.label"
+                [attr.aria-controls]="'nav-menu-' + $index"
+                (click)="toggleDropdown(item.label, dropdownButton)"
+              >
                 {{ item.label }}
                 <app-icon class="caret" name="expand_more" />
               </button>
-              <ul class="dropdown">
+              <ul class="dropdown" [id]="'nav-menu-' + $index">
                 @for (child of item.children; track child.path) {
                   <li>
                     <a [routerLink]="child.path">{{ child.label }}</a>
@@ -174,8 +196,9 @@ import { IconComponent } from '../../components/icon/icon.component';
     .primary-nav .caret { font-size: 18px; }
     .primary-nav li:hover > a,
     .primary-nav li:hover > button,
-    .primary-nav li:focus-within > a,
-    .primary-nav li:focus-within > button,
+    .primary-nav li.open > button,
+    .primary-nav a:focus-visible,
+    .primary-nav button:focus-visible,
     .primary-nav a.active { background: rgba(255, 255, 255, .14); }
     .primary-nav a.highlight { background: #fff; color: var(--color-accent); font-weight: 700; }
 
@@ -193,8 +216,13 @@ import { IconComponent } from '../../components/icon/icon.component';
       box-shadow: none;
       z-index: 40;
     }
+    /* Hover opens for a mouse; .open (click, Enter/Space) for everything else. Not
+       :focus-within: focus stays on a clicked link after navigation, which kept
+       the dropdown open over the next page. */
     .primary-nav li.has-children:hover .dropdown,
-    .primary-nav li.has-children:focus-within .dropdown { display: block; }
+    .primary-nav li.has-children.open .dropdown { display: block; }
+    .primary-nav .caret { transition: transform .15s ease; }
+    .primary-nav li.open .caret { transform: rotate(180deg); }
     .primary-nav .dropdown a { color: #fff; padding: 19px 28px; font-size: 17px; white-space: nowrap; }
     .primary-nav .dropdown a:hover,
     .primary-nav .dropdown a:focus { background: rgba(255, 255, 255, .1); }
@@ -259,8 +287,58 @@ import { IconComponent } from '../../components/icon/icon.component';
   `,
 })
 export class PublicMastheadComponent {
+  private readonly router = inject(Router);
+  /** The dropdown buttons, in nav order: where Escape sends focus back to. */
+  private readonly dropdownButtons = viewChildren<ElementRef<HTMLButtonElement>>('dropdownButton');
+
   readonly nav = PRIMARY_NAV;
-  readonly menuOpen = signal(false);
+  /** The mobile panel. Linked to navigation like openDropdown, so the back button closes it too. */
+  readonly menuOpen = linkedSignal<Navigation | null, boolean>({
+    source: this.router.currentNavigation,
+    computation: () => false,
+  });
+  /**
+   * Label of the desktop dropdown that is open, or null; one at a time. Linked to
+   * the router's current navigation, so any navigation closes it: that is what
+   * closes it when one of its links is chosen (focus stays inside the item then,
+   * so focusout does not fire), and it covers the back button too.
+   */
+  readonly openDropdown = linkedSignal<Navigation | null, string | null>({
+    source: this.router.currentNavigation,
+    computation: () => null,
+  });
+
+  /**
+   * Focus first: Safari and Firefox on macOS do not focus a clicked button, and
+   * focusout is what closes the dropdown, so without focus an outside click could
+   * not close it there.
+   */
+  toggleDropdown(label: string, button: HTMLButtonElement) {
+    button.focus();
+    this.openDropdown.update((open) => (open === label ? null : label));
+  }
+
+  /**
+   * Focus left the item: an outside click, Tab past the last link, or a link
+   * click that navigated. The window itself losing focus (switching apps) also
+   * fires focusout, with no relatedTarget; that keeps the dropdown open.
+   */
+  onDropdownFocusOut(event: FocusEvent, label: string) {
+    if (this.openDropdown() !== label) return;
+    const next = event.relatedTarget as Node | null;
+    if (next === null && !document.hasFocus()) return;
+    if (next && (event.currentTarget as HTMLElement).contains(next)) return;
+    this.openDropdown.set(null);
+  }
+
+  /** Escape inside the nav closes the open dropdown and returns focus to its button. */
+  onEscape() {
+    const open = this.openDropdown();
+    if (open === null) return;
+    const i = this.nav.filter((item) => item.children).findIndex((item) => item.label === open);
+    this.openDropdown.set(null);
+    this.dropdownButtons()[i]?.nativeElement.focus();
+  }
 
   toggleMenu() {
     this.menuOpen.update((v) => !v);
