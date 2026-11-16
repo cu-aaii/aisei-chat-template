@@ -8,6 +8,6 @@ if (existsSync('.env')) process.loadEnvFile('.env');
 
 export default defineConfig({
   test: {
-    include: ['evals/**/*.test.ts'],
+    include: ['evals/**/*.test.ts', 'server/**/*.test.ts'],
   },
 });
