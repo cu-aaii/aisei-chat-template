@@ -1,0 +1,104 @@
+/* Blocks — notice (callout) and badge. Status is never colour alone: each variant has its own
+   symbol, a border, and (in the markup) a title or label.
+   <div class="cu-notice cu-notice--ok" role="status"><p class="cu-notice__title">Saved</p>…</div>
+   Use role="alert" for errors that appear after an action, role="status" for the rest. */
+@layer blocks {
+  .cu-notice {
+    --_c: var(--color-info);
+    --_t: var(--color-info-ink);
+    --_bg: var(--color-info-tint);
+    --_symbol: 'i';
+
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background-color: var(--_bg);
+    color: var(--color-ink);
+    border: var(--border-thin) solid var(--_c);
+    border-inline-start-width: 0.3rem;
+    border-radius: var(--radius-card);
+  }
+  /* space before whatever follows, so the next heading does not sit against it */
+  .cu-notice:not(:last-child) { margin-block-end: var(--space-5); }
+  .cu-notice::before {
+    content: var(--_symbol);
+    display: grid;
+    place-items: center;
+    inline-size: 1.5rem;
+    block-size: 1.5rem;
+    border: var(--border-thick) solid var(--_c);
+    border-radius: var(--radius-pill);
+    color: var(--_c);
+    font-weight: var(--weight-bold);
+    font-size: 0.9rem;
+    line-height: 1;
+  }
+  .cu-notice > * {
+    grid-column: 2;
+    margin-block: 0;
+  }
+  .cu-notice__title {
+    font-weight: var(--weight-semibold);
+    color: var(--_t);
+  }
+  .cu-notice--ok {
+    --_c: var(--color-ok);
+    --_t: var(--color-ok-ink);
+    --_bg: var(--color-ok-tint);
+    --_symbol: '\2713';
+  }
+  .cu-notice--warn {
+    --_c: var(--color-warn);
+    --_t: var(--color-warn-ink);
+    --_bg: var(--color-warn-tint);
+    --_symbol: '!';
+  }
+  .cu-notice--err {
+    --_c: var(--color-err);
+    --_t: var(--color-err-ink);
+    --_bg: var(--color-err-tint);
+    --_symbol: '\00d7';
+  }
+
+  .cu-badge {
+    --_c: var(--color-idle);
+    --_bg: var(--color-idle-tint);
+
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.1em 0.7em;
+    background-color: var(--_bg);
+    color: var(--_c);
+    border: var(--border-thin) solid var(--_c);
+    border-radius: var(--radius-pill);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+  .cu-badge::before {
+    content: '';
+    inline-size: 0.5em;
+    block-size: 0.5em;
+    background-color: currentcolor;
+    border-radius: var(--radius-pill);
+  }
+  .cu-badge--ok {
+    --_c: var(--color-ok-ink);
+    --_bg: var(--color-ok-tint);
+  }
+  .cu-badge--warn {
+    --_c: var(--color-warn-ink);
+    --_bg: var(--color-warn-tint);
+  }
+  .cu-badge--err {
+    --_c: var(--color-err-ink);
+    --_bg: var(--color-err-tint);
+  }
+  .cu-badge--info {
+    --_c: var(--color-info-ink);
+    --_bg: var(--color-info-tint);
+  }
+}

@@ -1,0 +1,133 @@
+/* Block — lists. Native lists keep browser markers (base). Variants:
+   <ul class="cu-list">              red square bullets (CDS .custom)
+   <ul class="cu-list cu-list--chevrons">   red chevrons
+   <ul class="cu-list cu-list--inline">     items run in a wrapping row
+   <ol class="cu-list cu-list--numbered">   numbers in tinted circles   (+ --large for the big version)
+   <ul class="cu-list cu-list--menu">       a row of links, no markers   (+ --vertical, --dividers)
+   <ul class="cu-list cu-list--disc|square|circle">  <ol class="cu-list--lower-alpha|upper-alpha|lower-roman|upper-roman|zero">
+   <dl class="cu-deflist"> term in medium weight, definition with a left rule */
+@layer blocks {
+  .cu-list--disc > li { list-style-type: disc; }
+  .cu-list--square > li { list-style-type: square; }
+  .cu-list--circle > li { list-style-type: circle; }
+  .cu-list--zero > li { list-style-type: decimal-leading-zero; }
+  .cu-list--lower-alpha > li { list-style-type: lower-alpha; }
+  .cu-list--upper-alpha > li { list-style-type: upper-alpha; }
+  .cu-list--lower-roman > li { list-style-type: lower-roman; }
+  .cu-list--upper-roman > li { list-style-type: upper-roman; }
+
+  ul.cu-list:not([class*='cu-list--']),
+  ul.cu-list--chevrons, ul.cu-list--inline {
+    padding-inline-start: 0.8em;
+    list-style: none;
+  }
+  ul.cu-list:not([class*='cu-list--']) > li,
+  ul.cu-list--chevrons > li, ul.cu-list--inline > li {
+    list-style: none;
+    position: relative;
+    padding-inline-start: 1.4em;
+  }
+  ul.cu-list:not([class*='cu-list--']) > li::before,
+  ul.cu-list--inline > li::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: 0.1em;
+    inset-block-start: 0.62em;
+    inline-size: 0.5em;
+    block-size: 0.5em;
+    background-color: var(--color-rule-red);
+  }
+  ul.cu-list--chevrons > li::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: 0.2em;
+    inset-block-start: 0.62em;
+    inline-size: 0.5em;
+    block-size: 0.5em;
+    border-block-start: 2px solid var(--color-rule-red);
+    border-inline-end: 2px solid var(--color-rule-red);
+    transform: rotate(45deg);
+  }
+  ul.cu-list li > ul { padding-inline-start: 0; margin-block: 0.5em 1em; }
+
+  ul.cu-list--inline {
+    display: flex;
+    flex-wrap: wrap;
+    padding-inline-start: 0;
+  }
+  ul.cu-list--inline > li { padding-inline-end: 0.9375rem; margin-block-start: 0; }
+  @media (min-width: 1024px) {
+    ul.cu-list--inline > li { padding-inline-end: 1.875rem; }
+  }
+
+  ol.cu-list--numbered {
+    list-style: none;
+    padding-inline-start: 0;
+    counter-reset: cu-ol;
+  }
+  ol.cu-list--numbered > li {
+    position: relative;
+    padding-inline-start: 3em;
+    min-block-size: 2.2em;
+    margin-block: 0 1em;
+  }
+  ol.cu-list--numbered > li::before {
+    counter-increment: cu-ol;
+    content: counter(cu-ol);
+    position: absolute;
+    inset-inline-start: 0;
+    inset-block-start: -0.3em;
+    inline-size: 2.2em;
+    block-size: 2.2em;
+    line-height: 2.2em;
+    text-align: center;
+    border-radius: 50%;
+    font-family: var(--font-serif);
+    font-variant-numeric: lining-nums;
+    background-color: color-mix(in srgb, var(--gray-400) 20%, var(--color-surface));
+  }
+  ol.cu-list--numbered.cu-list--large { margin-block: 3em 2em; }
+  ol.cu-list--numbered.cu-list--large > li { padding-inline-start: 5.5em; min-block-size: 4.4em; margin-block-end: 2em; }
+  ol.cu-list--numbered.cu-list--large > li::before { font-size: 200%; }
+
+  ul.cu-list--menu, ol.cu-list--menu {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 0 1.5em;
+    padding: 0;
+  }
+  .cu-list--menu > li { margin: 0 1em 0.6em 0; padding: 0; }
+  .cu-list--menu.cu-list--vertical { display: block; }
+  .cu-list--menu.cu-list--vertical > li { inline-size: 100%; margin-inline-end: 0; }
+  .cu-list--menu.cu-list--dividers > li {
+    margin: 0;
+    padding-block: 0.45em;
+    border-block-end: var(--border-thin) solid var(--color-line);
+  }
+  .cu-list--menu.cu-list--dividers:not(.cu-list--vertical) > li {
+    padding-inline: 0 1em;
+    margin-inline-end: 1em;
+    border-block-end: 0;
+    border-inline-end: var(--border-thin) solid var(--color-line);
+  }
+  .cu-list--menu.cu-list--dividers:not(.cu-list--vertical) > li:last-child { border-inline-end: 0; }
+  .cu-list--menu.cu-list--buttons > li > a {
+    display: inline-block;
+    padding: 0.4em 0.9em;
+    background-color: color-mix(in srgb, var(--gray-400) 14%, var(--color-surface));
+    text-decoration: none;
+    line-height: 1.3;
+  }
+  .cu-list--menu.cu-list--buttons > li > a:hover { background-color: var(--color-primary-tint); text-decoration: underline; }
+  .cu-list--nobullet > li { padding-inline-start: 0; }
+  .cu-list--nobullet > li::before { content: none; }
+
+  .cu-deflist dt { font-weight: var(--weight-medium); margin-block-end: 0.5em; }
+  .cu-deflist dt + dt { margin-block-start: -0.5em; }
+  .cu-deflist dd {
+    border-inline-start: 2px solid var(--quote-line);
+    padding-inline-start: 1.375rem;
+    margin: 0 0 1.25em 2px;
+  }
+}

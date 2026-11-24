@@ -6,7 +6,7 @@ assistant that can answer questions about your own pages. Then make it yours.
 
 What's in the box:
 
-- **Two pages** — a landing page and an About page — inside the Hub's header and footer.
+- **Two pages** — a landing page and an About page — inside the Cornell design system's header and footer, in light and dark.
 - **A chat assistant** in the bottom-right corner. It streams answers from a model on
   Cornell's AI gateway and can search and read the site's own pages to answer from them.
 - **An embedded events widget** on the home page, as a worked example of dropping a
@@ -42,7 +42,9 @@ replies that it isn't configured. Get a key from the Cornell AI Platform
 | `npm run build` | Production build into `dist/` (prerendered pages, compiled server, chat index, sitemap) |
 | `npm start` | Run the production build on `PORT` from `.env` |
 | `npm run run:local` | Build, then start |
-| `npm run check` | Type-check the server and `evals/`, test the chat grader, and build the client |
+| `npm run check` | Check the design system copy and its contrast, find raw colours, type-check, run the unit tests (no key needed), and build the client |
+| `npm test` | The unit tests that need no gateway key |
+| `npm run sync:design-system -- --ref <sha>` | Re-sync `design-system/` from cu-aaii/cornell-design-system (needs `gh auth login`) |
 | `npm run lint` | ESLint over the client |
 | `npm run test:chat` | Ask the real assistant every question in `evals/chat-cases.json`; fails on any wrong answer |
 | `npm run test:chat:draft` | Have the model draft those questions from your prompt and pages, for you to review |
@@ -55,8 +57,9 @@ replies that it isn't configured. Get a key from the Cornell AI Platform
 | Change the home page | `client/app/features/public/home/home.component.ts` |
 | Change the About page | `client/app/features/public/about/about.component.ts` |
 | Add a page | Copy the About component, add a route in `client/app/app.routes.ts`, a link in `client/app/shared/layout/public/nav-items.ts`, and a line in `STATIC_PAGES` in `scripts/export-chat-content.mjs` |
-| Change the header or footer | `client/app/shared/layout/public/public-masthead.component.ts`, `site-footer.component.ts` |
-| Change colours and fonts | `client/app/shared/theme/variables.css` |
+| Change the header or footer | The site title: `SITE_TITLE` in `client/app/shared/layout/public/public-layout.component.ts`; links: `nav-items.ts`; footer text: `site-footer.component.ts` |
+| Change the look (header style, navigation, light/dark) | Open `design-system/showcase/customizer.html` in a browser, then paste its line over `provideLook(...)` in `client/app/app.config.ts` |
+| Style a page | Use the Cornell design system's blocks and tokens: `design-system/COMPONENTS.md`. No raw colours (`npm run check:colours`) |
 | Change what the assistant says and refuses | `server/modules/chat/prompt.ts` — start with `SITE_NAME` and the `<scope>` block |
 | Change the model or rate limit | `server/app.config.ts` |
 | Give the assistant structured data | `scripts/export-chat-content.mjs` + `server/modules/chat/content-roots.ts` (comments in both explain how) |
@@ -131,9 +134,11 @@ server/
 client/
   app/app.routes.ts       Routes
   app/features/public/    home/, about/
-  app/shared/layout/      Header, footer, page shells
-  app/shared/components/  hero, button, icon, wordmark, chat panel + widget, events widget
-  app/shared/theme/       CSS variables, fonts, typography, utilities
+  app/shared/layout/      CDS site header, footer, page shells
+  app/shared/look/        provideLook(): the site's Cornell look
+  app/shared/components/  hero, icon, back to top, chat panel + widget, events widget
+  app/shared/theme/       layers.css and the few app-wide rules around the design system
+design-system/            The Cornell design system (tokens, blocks, themes): a read-only pinned copy
 scripts/                  Build steps: chat page index, sitemap
 evals/                    Pre-launch chat test: reviewed questions, grader, draft script
 .claude/skills/           Longer task guides for AI coding agents (plain Markdown)
@@ -152,11 +157,11 @@ If you change how the project works, update `AGENTS.md` so the next agent knows.
 
 The code is MIT — see `LICENSE`. That grant covers the code only:
 
-- **Branding.** The Cornell name, seal, and logos in `client/assets/branding/` are
+- **Branding.** The Cornell name, seal, and logos (the sprite in `client/index.html`, from
+  `design-system/assets/`) are
   Cornell trademarks and are not covered by the MIT license. This theme is meant for
   Cornell applications; follow Cornell's brand guidelines (https://brand.cornell.edu).
   If you are building something that is not a Cornell application, replace them.
 - **Fonts.** `client/index.html` loads freight-sans-pro from Cornell's Adobe Fonts
   (Typekit) kit. The fonts are licensed by Adobe to Cornell, not by this repository.
-  Outside Cornell, swap the `<link>` for your own kit or a free font; the metric-matched
-  fallback in `client/app/shared/theme/fonts.css` keeps the layout stable either way.
+  Outside Cornell, swap the `<link>` for your own kit or a free font.

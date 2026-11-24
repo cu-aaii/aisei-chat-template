@@ -2,6 +2,7 @@ import {
   afterNextRender,
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   inject,
   input,
@@ -20,14 +21,20 @@ import {
  *
  * To show a different calendar, change the query parameters below; Localist's
  * widget builder (events.cornell.edu/help/widget) generates them.
+ *
+ * Localist's markup gives each event's picture no `alt` (axe: image-alt). The picture is decoration: the event's
+ * title link beside it, and the dates in the same link, name the event. So any image the script inserts without
+ * an `alt` gets an empty one, from a MutationObserver on this container only, disconnected with the component.
  */
 @Component({
   selector: 'app-localist-events-widget',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<div [id]="containerId()" class="localist-widget"></div>`,
+  // data-mode="light": Localist paints its own light cards (#fafafa) but lets some text inherit the page colour, which
+  // in dark mode is near-white (1.3:1). The design system's per-region mode keeps this region light in both modes.
+  template: `<div [id]="containerId()" class="localist-widget" data-mode="light"></div>`,
   styles: `
     :host { display: block; }
-    .localist-widget { min-height: 120px; }
+    .localist-widget { min-height: 120px; color: var(--color-ink); }
   `,
 })
 export class LocalistEventsWidgetComponent {
@@ -36,6 +43,7 @@ export class LocalistEventsWidgetComponent {
   readonly days = input(31);
 
   private readonly host = inject(ElementRef<HTMLElement>);
+  private readonly destroyRef = inject(DestroyRef);
 
   constructor() {
     afterNextRender(() => {
@@ -49,9 +57,15 @@ export class LocalistEventsWidgetComponent {
         container: this.containerId(),
         template: 'modern',
       });
+      const host: HTMLElement = this.host.nativeElement;
+      const decorate = () => host.querySelectorAll<HTMLImageElement>('img:not([alt])').forEach((img) => img.setAttribute('alt', ''));
+      const observer = new MutationObserver(decorate);
+      observer.observe(host, { childList: true, subtree: true });
+      this.destroyRef.onDestroy(() => observer.disconnect());
+
       const script = document.createElement('script');
       script.src = `https://events.cornell.edu/widget/view?${params.toString()}`;
-      this.host.nativeElement.appendChild(script);
+      host.appendChild(script);
     });
   }
 }

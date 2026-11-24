@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en" data-theme="cornell">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="../assets/favicon.ico" sizes="16x16">
+  <title>Choose a look · Cornell design system</title>
+  <link rel="stylesheet" href="https://use.typekit.net/nwp2wku.css">
+  <link rel="stylesheet" href="../index.css">
+  <link rel="stylesheet" href="showcase.css">
+</head>
+<body class="cz">
+<a class="cu-skip" href="#cz-options">Skip to the options</a>
+<main class="cz-layout">
+  <aside class="cz-panel" aria-labelledby="cz-title">
+    <h1 class="cz-title" id="cz-title">Choose a look</h1>
+    <p class="cz-lead">Every option keeps the Cornell brand and passes the design system's contrast checks. Start from a combination, change any option, and watch both previews. When it looks right, copy the result for your app.</p>
+
+    <h2 class="cz-h">Combinations</h2>
+    <ul class="cz-presets" role="list" id="cz-presets"></ul>
+
+    <h2 class="cz-h" id="cz-options">Options</h2>
+    <div id="cz-fields"></div>
+
+    <h2 class="cz-h">Your look</h2>
+    <p class="cz-small" id="cz-summary" aria-live="polite"></p>
+    <pre class="cz-code"><code id="cz-code"></code></pre>
+    <div class="cz-actions">
+      <button class="cu-button" type="button" id="cz-copy">Copy for app.config.ts</button>
+      <button class="cu-button cu-button--secondary" type="button" id="cz-download">Download for your agent</button>
+      <button class="cu-button cu-button--secondary" type="button" id="cz-link">Copy a link to this look</button>
+    </div>
+    <p class="cz-small" id="cz-status" role="status"></p>
+  </aside>
+
+  <section class="cz-preview" aria-labelledby="cz-preview-title">
+    <h2 class="cu-sr-only" id="cz-preview-title">Preview</h2>
+    <div class="cz-toolbar">
+      <fieldset class="cu-mode-switch">
+        <legend>Preview</legend>
+        <span class="cu-mode-switch__options">
+          <label><input type="radio" name="cz-page" value="public" checked><span>Home page</span></label>
+          <label><input type="radio" name="cz-page" value="page"><span>Content page</span></label>
+          <label><input type="radio" name="cz-page" value="app"><span>Admin app</span></label>
+        </span>
+      </fieldset>
+      <fieldset class="cu-mode-switch">
+        <legend>Width</legend>
+        <span class="cu-mode-switch__options">
+          <label><input type="radio" name="cz-width" value="100%" checked><span>Desktop</span></label>
+          <label><input type="radio" name="cz-width" value="768px"><span>Tablet</span></label>
+          <label><input type="radio" name="cz-width" value="390px"><span>Phone</span></label>
+        </span>
+      </fieldset>
+      <fieldset class="cu-mode-switch">
+        <legend>Show in</legend>
+        <span class="cu-mode-switch__options">
+          <label><input type="radio" name="cz-showmode" value="light" checked><span>Light</span></label>
+          <label><input type="radio" name="cz-showmode" value="dark"><span>Dark</span></label>
+        </span>
+      </fieldset>
+      <fieldset class="cu-mode-switch" id="cz-picture-set" hidden>
+        <legend>Sample picture</legend>
+        <span class="cu-mode-switch__options">
+          <label><input type="radio" name="cz-picture" value="1" checked><span>Dusk</span></label>
+          <label><input type="radio" name="cz-picture" value="2"><span>Gorge</span></label>
+          <label><input type="radio" name="cz-picture" value="3"><span>Arches</span></label>
+        </span>
+      </fieldset>
+    </div>
+    <div class="cz-stage"><div class="cz-device" id="cz-device"><iframe id="cz-frame" title="Preview of the chosen look" tabindex="-1"></iframe></div></div>
+  </section>
+</main>
+
+<script>
+(function () {
+  // The options: the same names and values as client/app/shared/look/look.ts (the Look interface).
+  // scope: where the option shows (public site, admin app, or both); the preview switches to it when you change one.
+  // needs/why/fix*: an option that only works when another is chosen. It stays visible but unavailable, says why, and
+  // offers one button that turns the missing prerequisite on.
+  var OPTIONS = [
+    { key: 'publicHeader', scope: 'public', label: 'Public site header', help: 'The banner colour, or the colour of the top bar, on the public pages.',
+      values: [['cornell', 'White banner'], ['red-header', 'Red banner'], ['dark-header', 'Dark banner'], ['light-bar', 'Light grey bar'], ['dark-bar', 'Charcoal bar'], ['blue-bar', 'Navy bar']],
+      note: function (s) { return /-bar$/.test(s.publicHeader) && s.topBar === 'line' ? 'A bar colour needs a top bar. With the thin line there is no bar on the home page, so this colour only shows on inner pages. Choose "Top bar with links" below to see it here.' : null; } },
+    { key: 'topBar', scope: 'public', label: 'Top of the home page', help: 'The thin line is the CDS website look: only the 4px red line, with the Search tab hanging from it. A top bar holds utility links (Help, Contact) and search, which your app passes in. Inner pages always have the bar, with the Cornell wordmark.',
+      values: [['line', 'Thin line'], ['bar', 'Top bar with links']] },
+    { key: 'logoSide', scope: 'public', label: 'Seal position', help: 'The Cornell seal on the home page banner sits on the left, with the title on the right (the CDS default), or the other way round. Inner pages carry the wordmark instead, so they do not change. On a phone the seal is centred above the title either way.',
+      values: [['left', 'Left'], ['right', 'Right']] },
+    { key: 'bannerPhoto', scope: 'public', label: 'Picture behind the banner', help: 'One photograph, or a slideshow of several, behind the title and navigation. Keep each one dark where the text sits: contrast depends on your pictures. A slideshow has a headline, text and link on each slide, Previous / Next / Pause buttons and a dot per slide; it fades by itself, and people who prefer reduced motion get the first picture without autoplay.',
+      values: [['none', 'None'], ['photo', 'One picture'], ['slides', 'Slideshow']],
+      needs: function (s) { return s.publicHeader === 'dark-header'; },
+      why: 'It needs the Dark banner, so the white title and links stay readable over the photo.',
+      fixLabel: 'Use the Dark banner', fix: function (s) { s.publicHeader = 'dark-header'; }, fixDone: 'Dark banner chosen. The photo option is available now.' },
+    { key: 'bannerHeight', scope: 'public', label: 'Banner height', help: 'Short is the plain banner. Medium and Tall give the picture room, and the navigation stays under the logo, with the picture below. The height follows the width of the window, so on a phone the sizes are close.',
+      values: [['short', 'Short'], ['medium', 'Medium'], ['tall', 'Tall']],
+      needs: function (s) { return s.publicHeader === 'dark-header' && s.bannerPhoto !== 'none'; },
+      why: 'It needs a banner picture (and so the Dark banner): a banner without a picture stays slim, because a tall block of flat colour adds nothing.',
+      note: function (s) { return s.bannerPhoto === 'slides' && s.bannerHeight === 'short' ? 'A slideshow holds captions and controls, so it is never shorter than Medium. Short shows as Medium here.' : null; },
+      fixLabel: 'Turn on the Dark banner and a picture', fix: function (s) { s.publicHeader = 'dark-header'; if (s.bannerPhoto === 'none') s.bannerPhoto = 'photo'; }, fixDone: 'Dark banner and picture are on. The height can change now.' },
+    { key: 'slideVideo', scope: 'public', label: 'A video on a slide', help: 'The second slide plays a short silent video over its picture (WebM first, MP4 for older Safari). It plays only while its slide shows, never by itself with reduced motion, and a Pause video button appears in the slideshow controls. Keep the clip small and calm: the caption and navigation sit on it.',
+      values: [['none', 'No video'], ['second', 'Video on slide 2']],
+      needs: function (s) { return s.publicHeader === 'dark-header' && s.bannerPhoto === 'slides'; },
+      why: 'It needs a slideshow (and so the Dark banner): the video is one of the slides.',
+      fixLabel: 'Turn on the Dark banner and a slideshow', fix: function (s) { s.publicHeader = 'dark-header'; s.bannerPhoto = 'slides'; }, fixDone: 'Dark banner and slideshow are on. The video can be added now.' },
+    { key: 'navAlign', scope: 'public', label: 'Navigation links', help: 'Where the public header’s links sit.',
+      values: [['start', 'Left'], ['center', 'Centre'], ['end', 'Right'], ['even', 'Spread']] },
+    { key: 'navStyle', scope: 'public', label: 'Current page', help: 'How the public navigation marks the page you are on. Buttons gives every link space above and below, so each one reads as a button.',
+      values: [['tint', 'Tint'], ['underlines', 'Underline'], ['red-bar', 'Red fill'], ['red-button', 'Buttons, red current page']] },
+    { key: 'navOverlay', scope: 'public', label: 'Navigation bar', help: 'A solid bar, or a see-through bar that fades at both ends and sits on the banner photo.',
+      values: [['solid', 'Solid'], ['overlay', 'Over the photo']],
+      needs: function (s) { return s.publicHeader === 'dark-header' && s.bannerPhoto !== 'none'; },
+      why: 'It needs the banner photo (and so the Dark banner): the see-through bar is made to sit on a photograph, and on a plain colour it would be hard to read.',
+      fixLabel: 'Turn on the Dark banner and photo', fix: function (s) { s.publicHeader = 'dark-header'; s.bannerPhoto = 'photo'; }, fixDone: 'Dark banner and photo are on. The navigation can sit over the photo now.' },
+    { key: 'appHeader', scope: 'app', label: 'Admin app top bar', help: 'The bar above the app shell. The app has no banner, so only bars.',
+      values: [['cornell', 'Cornell red'], ['light-bar', 'Light grey'], ['dark-bar', 'Charcoal'], ['blue-bar', 'Navy']] },
+    { key: 'headings', scope: 'both', label: 'Headings', help: 'Freight Text (serif) is the CDS default; Freight Sans reads more modern.',
+      values: [['serif', 'Serif'], ['sans', 'Sans']] },
+    { key: 'mode', scope: 'both', label: 'Colour mode at first visit', help: 'Automatic follows the visitor’s device.',
+      values: [['auto', 'Automatic'], ['light', 'Light'], ['dark', 'Dark']] },
+    { key: 'modeSwitch', scope: 'public', label: 'Light/dark switch in the footer', help: 'Lets visitors choose for themselves.',
+      values: [['true', 'Show'], ['false', 'Hide']] },
+    { key: 'appDensity', scope: 'app', label: 'Admin app scale', help: 'Compact fits more on screen; the website scale is roomier.',
+      values: [['compact', 'Compact'], ['website', 'Website']] }
+  ];
+  var DEFAULTS = { publicHeader: 'cornell', topBar: 'line', logoSide: 'left', bannerPhoto: 'none', bannerHeight: 'short', slideVideo: 'none', navAlign: 'start', navStyle: 'tint', navOverlay: 'solid', appHeader: 'cornell', headings: 'serif', mode: 'auto', modeSwitch: 'true', appDensity: 'compact' };
+  var SCOPE_TEXT = { public: 'Changes the public site.', app: 'Changes the admin app.', both: 'Changes the public site and the admin app.' };
+  // Combinations we recommend: each one tested together, light and dark.
+  var PRESETS = [
+    { name: 'Cornell classic', note: 'The CDS website look: white banner, the thin red line, serif headings.', look: {} },
+    { name: 'With a top bar', note: 'The same white banner under a red top bar for links and search.', look: { topBar: 'bar' } },
+    { name: 'Red banner', note: 'The whole banner in Cornell red, with the thin line.', look: { publicHeader: 'red-header' } },
+    { name: 'Quiet grey', note: 'A light grey bar for a calm, text-first site.', look: { publicHeader: 'light-bar', topBar: 'bar', appHeader: 'light-bar', navStyle: 'underlines' } },
+    { name: 'Charcoal', note: 'A dark bar and sans headings for a tool-like feel.', look: { publicHeader: 'dark-bar', topBar: 'bar', appHeader: 'dark-bar', headings: 'sans' } },
+    { name: 'Navy', note: 'The navy bar, links to the right, underlined current page.', look: { publicHeader: 'blue-bar', topBar: 'bar', appHeader: 'blue-bar', headings: 'sans', navAlign: 'end', navStyle: 'underlines' } },
+    { name: 'Dark banner', note: 'A strong dark banner, centred links as buttons with a red current page.', look: { publicHeader: 'dark-header', topBar: 'bar', appHeader: 'dark-bar', navAlign: 'center', navStyle: 'red-button' } },
+    { name: 'Photo banner', note: 'The dark banner over a photograph, with the navigation sitting on it.', look: { publicHeader: 'dark-header', bannerPhoto: 'photo', navOverlay: 'overlay', navStyle: 'red-button', appHeader: 'dark-bar' } },
+    { name: 'Slideshow banner', note: 'A tall banner whose pictures fade one into the next, with the navigation sitting on them.', look: { publicHeader: 'dark-header', bannerPhoto: 'slides', bannerHeight: 'tall', navOverlay: 'overlay', navStyle: 'red-button', appHeader: 'dark-bar' } }
+  ];
+  var state = Object.assign({}, DEFAULTS), view = { page: 'public', width: '100%', showmode: 'light', picture: '1' };
+  var hash = new URLSearchParams(location.hash.slice(1));
+  Object.keys(DEFAULTS).forEach(function (k) { if (hash.get(k)) state[k] = hash.get(k); });
+
+  // What the app really gets: an option whose prerequisite is off falls back to its default (the choice is kept, so it
+  // comes back when the prerequisite does). Walked in order, so a later option sees the earlier ones as they are used.
+  function resolve(s) {
+    var eff = Object.assign({}, s), ok = {};
+    OPTIONS.forEach(function (o) {
+      ok[o.key] = !o.needs || o.needs(eff);
+      if (!ok[o.key]) eff[o.key] = DEFAULTS[o.key];
+    });
+    return { eff: eff, ok: ok };
+  }
+  function option(key) { return OPTIONS.filter(function (x) { return x.key === key; })[0]; }
+  // The preview shows one side at a time: changing an option that lives on the other side switches the preview to it.
+  function showFor(scope) {
+    if (scope === 'both' || view.page === scope || (scope === 'public' && view.page === 'page')) return;
+    view.page = scope;
+    var r = document.querySelector('input[name=cz-page][value=' + scope + ']'); if (r) r.checked = true;
+    setStatus('Showing the ' + (scope === 'app' ? 'Admin app' : 'Public site') + ' preview, because that is where this option shows.');
+  }
+
+  function el(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    Object.keys(attrs || {}).forEach(function (a) { if (a === 'text') e.textContent = attrs[a]; else e.setAttribute(a, attrs[a]); });
+    (kids || []).forEach(function (k) { e.appendChild(k); });
+    return e;
+  }
+  // Fields: each option is a CDS segmented control (real radios: one Tab stop, arrow keys between choices).
+  // An option that needs another one is shown unavailable (aria-disabled, with the reason and a fix button), never hidden.
+  var fields = document.getElementById('cz-fields');
+  OPTIONS.forEach(function (o) {
+    var opts = el('span', { class: 'cu-mode-switch__options' });
+    o.values.forEach(function (v) {
+      var input = el('input', { type: 'radio', name: 'cz-' + o.key, value: v[0] });
+      input.addEventListener('change', function () {
+        if (!resolve(state).ok[o.key]) { // not available: keep the choice as it was, and say why
+          update();
+          setStatus(o.label + ' is not available yet. ' + o.why + ' Use the button under it: "' + o.fixLabel + '".');
+          return;
+        }
+        state[o.key] = v[0]; showFor(o.scope); update();
+      });
+      opts.appendChild(el('label', {}, [input, el('span', { text: v[1] })]));
+    });
+    var kids = [el('legend', { text: o.label }), el('p', { class: 'cz-help', id: 'cz-help-' + o.key, text: o.help }), el('p', { class: 'cz-scope', id: 'cz-scope-' + o.key, text: SCOPE_TEXT[o.scope] })];
+    if (o.needs) {
+      var fixBtn = el('button', { class: 'cu-button cu-button--secondary cu-button--sm', type: 'button', text: o.fixLabel });
+      fixBtn.addEventListener('click', function () { o.fix(state); showFor(o.scope); update(); setStatus(o.fixDone); });
+      kids.push(el('div', { class: 'cz-why', id: 'cz-why-' + o.key, hidden: '' }, [el('p', { class: 'cz-why__text' }, [el('strong', { text: 'Not available yet. ' }), el('span', { text: o.why })]), fixBtn]));
+    }
+    if (o.note) kids.push(el('p', { class: 'cz-note', id: 'cz-note-' + o.key, hidden: '' }));
+    kids.push(el('div', { class: 'cu-mode-switch cz-seg' }, [opts]));
+    fields.appendChild(el('fieldset', { class: 'cz-field', id: 'cz-field-' + o.key }, kids));
+  });
+  // Presets: a small swatch drawn with the real tokens (data-theme on the swatch), and a button to apply it.
+  var presets = document.getElementById('cz-presets');
+  PRESETS.forEach(function (p, i) {
+    var look = Object.assign({}, DEFAULTS, p.look);
+    var swatch = el('span', { class: 'cz-swatch', 'aria-hidden': 'true' }, [
+      el('span', { class: 'cz-swatch__bar' + (look.topBar === 'line' ? ' is-line' : ''), 'data-theme': look.publicHeader }),
+      el('span', { class: 'cz-swatch__brand', 'data-theme': look.publicHeader }, [el('span', { class: 'cz-swatch__aa' + (look.headings === 'sans' ? ' is-sans' : ''), text: 'Aa' })])
+    ]);
+    var btn = el('button', { class: 'cz-preset', type: 'button', 'aria-describedby': 'cz-pn-' + i }, [swatch, el('span', { class: 'cz-preset__name', text: p.name })]);
+    btn.addEventListener('click', function () { state = Object.assign({}, look); update(); setStatus(p.name + ' applied.'); });
+    presets.appendChild(el('li', {}, [btn, el('span', { class: 'cz-preset__note', id: 'cz-pn-' + i, text: p.note })]));
+  });
+  document.querySelectorAll('input[name=cz-page], input[name=cz-width], input[name=cz-showmode]').forEach(function (r) {
+    r.addEventListener('change', function () { view[r.name.slice(3)] = r.value; update(); });
+  });
+
+  // A slideshow is never shorter than Medium (it holds captions and controls): what the app really gets.
+  function effHeight(e) { return e.bannerPhoto === 'slides' && e.bannerHeight === 'short' ? 'medium' : e.bannerHeight; }
+  function lookObject() {
+    var e = resolve(state).eff, out = {};
+    ['publicHeader', 'appHeader', 'headings', 'mode', 'appDensity', 'topBar', 'logoSide'].forEach(function (k) { if (e[k] !== DEFAULTS[k]) out[k] = e[k]; });
+    if (e.bannerPhoto === 'photo') out.bannerPhoto = '/images/banner.jpg';
+    if (e.bannerPhoto === 'slides') out.bannerPhoto = [1, 2, 3].map(function (n) {
+      var slide = { src: '/images/banner-' + n + '.jpg', title: 'Slide ' + n + ' headline', text: 'One line about this slide.', href: '/page-' + n, linkLabel: 'Link text' };
+      if (e.slideVideo === 'second' && n === 2) slide.video = ['/images/banner-2.webm', '/images/banner-2.mp4'];
+      return slide;
+    });
+    if (effHeight(e) !== DEFAULTS.bannerHeight) out.bannerHeight = effHeight(e);
+    if (e.modeSwitch !== DEFAULTS.modeSwitch) out.modeSwitch = e.modeSwitch === 'true';
+    if (e.navAlign !== DEFAULTS.navAlign || e.navStyle !== DEFAULTS.navStyle || e.navOverlay === 'overlay') {
+      out.nav = { align: e.navAlign, style: e.navStyle };
+      if (e.navOverlay === 'overlay') out.nav.overlay = true;
+    }
+    return out;
+  }
+  function code() {
+    var o = lookObject(), parts = Object.keys(o).map(function (k) {
+      var v = o[k];
+      if (k === 'nav') return "nav: { align: '" + v.align + "', style: '" + v.style + "'" + (v.overlay ? ', overlay: true' : '') + ' }';
+      if (Array.isArray(v)) return k + ': [' + v.map(function (u) {
+        return '{ ' + Object.keys(u).map(function (f) {
+          return f + ': ' + (Array.isArray(u[f]) ? '[' + u[f].map(function (x) { return "'" + x + "'"; }).join(', ') + ']' : "'" + u[f] + "'");
+        }).join(', ') + ' }';
+      }).join(', ') + ']';
+      return k + ': ' + (typeof v === 'boolean' ? v : "'" + v + "'");
+    });
+    return '...provideLook({' + (parts.length ? ' ' + parts.join(', ') + ' ' : '') + '}),';
+  }
+  // The label of what the app really uses (an unavailable option reads as its default).
+  function label(key) {
+    var e = resolve(state).eff;
+    return option(key).values.filter(function (v) { return v[0] === e[key]; })[0][1];
+  }
+  function previewUrl() {
+    var e = resolve(state).eff, nav = [];
+    if (e.navAlign !== 'start') nav.push(e.navAlign);
+    if (e.navStyle === 'underlines') nav.push('underlines');
+    if (e.navStyle === 'red-bar') nav.push('active-red');
+    if (e.navStyle === 'red-button') nav.push('tall', 'active-red');
+    if (e.navOverlay === 'overlay') nav.push('gradient');
+    var q = new URLSearchParams({ mode: view.showmode });
+    if (e.headings === 'sans') q.set('headings', 'sans');
+    if (view.page === 'public' || view.page === 'page') {
+      q.set('header', e.publicHeader);
+      q.set('topbar', e.topBar);
+      if (e.logoSide === 'right') q.set('logo', 'right');
+      if (e.bannerPhoto === 'photo') q.set('photo', view.picture);
+      if (e.bannerPhoto === 'slides') q.set('photo', 'slides');
+      if (e.bannerPhoto === 'slides' && e.slideVideo === 'second') q.set('video', '2');
+      if (effHeight(e) !== 'short') q.set('height', effHeight(e));
+      if (nav.length) q.set('nav', nav.join(','));
+      if (e.modeSwitch === 'false') q.set('modeswitch', '0');
+      return (view.page === 'page' ? 'page.html?' : 'public.html?') + q.toString();
+    }
+    q.set('theme', e.appHeader);
+    q.set('density', e.appDensity);
+    return 'dashboard.html?' + q.toString();
+  }
+  var frame = document.getElementById('cz-frame'), device = document.getElementById('cz-device');
+  function update() {
+    var r = resolve(state);
+    OPTIONS.forEach(function (o) {
+      document.querySelectorAll('input[name=cz-' + o.key + ']').forEach(function (i) {
+        i.checked = i.value === state[o.key];
+        if (r.ok[o.key]) i.removeAttribute('aria-disabled'); else i.setAttribute('aria-disabled', 'true');
+      });
+      var fs = document.getElementById('cz-field-' + o.key), ids = ['cz-help-' + o.key, 'cz-scope-' + o.key];
+      fs.toggleAttribute('data-unavailable', !r.ok[o.key]);
+      var why = document.getElementById('cz-why-' + o.key);
+      if (why) { why.hidden = r.ok[o.key]; if (!r.ok[o.key]) ids.push(why.id); }
+      var note = document.getElementById('cz-note-' + o.key);
+      if (note) { var t = o.note(r.eff); note.hidden = !t; note.textContent = t || ''; if (t) ids.push(note.id); }
+      fs.setAttribute('aria-describedby', ids.join(' '));
+    });
+    document.getElementById('cz-code').textContent = code();
+    document.getElementById('cz-summary').textContent = 'Public header: ' + label('publicHeader') + ', ' + label('topBar').toLowerCase() + (r.eff.bannerPhoto === 'photo' ? ', with a photo' : r.eff.bannerPhoto === 'slides' ? ', with a slideshow' : '') + (effHeight(r.eff) !== 'short' ? ', ' + effHeight(r.eff) + ' height' : '') + '. App bar: ' + label('appHeader') + '. Headings: ' + label('headings') + '. Navigation: ' + label('navAlign') + ', ' + label('navStyle').toLowerCase() + (r.eff.navOverlay === 'overlay' ? ', over the photo' : '') + '.';
+    // The sample picture only stands in for the real one (preview only, not part of the look), so it shows only with a photo.
+    document.getElementById('cz-picture-set').hidden = !(r.eff.bannerPhoto === 'photo' && view.page !== 'app');
+    var url = previewUrl();
+    if (frame.getAttribute('src') !== url) frame.setAttribute('src', url);
+    device.style.setProperty('--w', view.width);
+    device.classList.toggle('is-full', view.width === '100%');
+    var h = new URLSearchParams();
+    Object.keys(state).forEach(function (k) { if (state[k] !== DEFAULTS[k]) h.set(k, state[k]); });
+    history.replaceState(null, '', h.toString() ? '#' + h.toString() : location.pathname);
+  }
+  function setStatus(t) { var s = document.getElementById('cz-status'); s.textContent = t; }
+  function copy(text, done) {
+    var ok = function () { setStatus(done); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok, function () { setStatus('Copying was blocked: select the text and copy it.'); });
+    else setStatus('Copying is not available here: select the text and copy it.');
+  }
+  // The brief an implementing agent follows: what was chosen, the one line to change, and how to check it.
+  function brief() {
+    var lines = ['# Cornell look for this app', '', 'Chosen in design-system/showcase/customizer.html' + (location.hash ? ' (' + location.hash + ')' : '') + '.', '', '| Option | Choice |', '| --- | --- |'];
+    var ok = resolve(state).ok;
+    OPTIONS.forEach(function (o) { if (ok[o.key]) lines.push('| ' + o.label + ' | ' + label(o.key) + ' |'); });
+    lines.push('', '## Apply it', '', 'In `client/app/app.config.ts`, replace the existing `...provideLook(...)` entry with:', '', '```ts', code(), '```', '',
+(resolve(state).eff.bannerPhoto !== 'none' ? 'Put the real ' + (resolve(state).eff.bannerPhoto === 'slides' ? 'pictures at the `bannerPhoto` paths, and write each slide’s real headline, text and link (two to six slides; `title`, `text`, `href` and `linkLabel` are optional)' + (resolve(state).eff.slideVideo === 'second' ? ', and the real video files at the `video` paths on slide 2 (WebM first, MP4 second, a few hundred KB each; the picture shows until the video has a frame and with reduced motion)' : '') : 'picture at the `bannerPhoto` path (or change the path)') + '. Keep it dark behind the title and the navigation and check the contrast on the real image: the design system cannot test a photograph.' : ''),
+      (resolve(state).eff.topBar === 'bar' ? 'The top bar shows the utility links the public layout is given (`[utility]`); with none, the home page falls back to the thin line.' : ''), '',
+            'Nothing else changes: the public header, navigation, footer switch, app shell and ThemeService all read this one object (`client/app/shared/look/look.ts`). Do not set `data-theme` or `data-headings` by hand, and do not add colours: every option here already passes the design system’s contrast checks.', '',
+      '## Check it', '', '- `npm run verify`', '- Open the public home page and /admin, in light and dark mode, and compare with the customizer’s preview.');
+    return lines.join('\n');
+  }
+  document.getElementById('cz-copy').addEventListener('click', function () { copy(code(), 'Copied. Paste it into app.config.ts in place of the existing provideLook line.'); });
+  document.getElementById('cz-link').addEventListener('click', function () { copy(location.href, 'Link copied: it opens this page with these choices.'); });
+  document.getElementById('cz-download').addEventListener('click', function () {
+    var a = el('a', { href: URL.createObjectURL(new Blob([brief()], { type: 'text/markdown' })), download: 'cornell-look.md' });
+    document.body.appendChild(a); a.click(); a.remove();
+    setStatus('Downloaded cornell-look.md: give it to the agent that implements the app.');
+  });
+  update();
+})();
+</script>
+</body>
+</html>

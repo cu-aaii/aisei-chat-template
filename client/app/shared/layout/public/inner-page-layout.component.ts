@@ -2,16 +2,17 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { NgOptimizedImage } from '@angular/common';
 
 /**
- * Shell for public inner pages: a page-title header band (with an optional
- * background photo) over a single, centered content column. Latest articles /
- * selected projects / featured tools live in the site footer, not a sidebar.
+ * Shell for public inner pages: a page-title band (with an optional background photo) over a single content
+ * column. The site header above it is the CDS inner kind (the wordmark bar); this band holds the page's one `h1`.
  *
- * The header photo is a real `<img priority>`, not a CSS `background-image`. It's the LCP
- * element on all nine inner pages, and a background image is invisible to the browser's
- * preload scanner — it can't start downloading until the stylesheet has been fetched,
- * parsed and matched against the DOM. `priority` emits both `fetchpriority="high"` and a
- * `<link rel="preload">`, and because every route is prerendered (`RenderMode.Prerender`)
- * that preload ships in the static HTML `<head>`, so the fetch starts on the first byte.
+ * The band is a dark design-system band (`cu-band cu-band--near-black`: `color-scheme: dark`, so its text and any
+ * block inside take their dark values in either page mode). With a photo, the design system's scrim token sits
+ * between the photo and the title; keep the photo dark where the title sits (cornell-look: a photograph's contrast
+ * cannot be tested, so look at the page).
+ *
+ * The header photo is a real `<img priority>`, not a CSS `background-image`: it's the LCP element, and a
+ * background image is invisible to the browser's preload scanner. `priority` emits `fetchpriority="high"` and a
+ * `<link rel="preload">`, which ships in the prerendered HTML `<head>`.
  */
 @Component({
   selector: 'app-inner-page',
@@ -19,11 +20,11 @@ import { NgOptimizedImage } from '@angular/common';
   host: { class: 'inner-page' },
   imports: [NgOptimizedImage],
   template: `
-    <header class="page-head" [class.has-image]="!!headerImage()">
+    <header class="page-head cu-band cu-band--near-black" [class.has-image]="!!headerImage()">
       @if (headerImage()) {
         <img [ngSrc]="headerImage()" fill priority sizes="100vw" alt="" />
       }
-      <div class="inner container-fluid">
+      <div class="inner cu-container">
         <h1>{{ title() }}</h1>
         @if (subtitle()) {
           <p>{{ subtitle() }}</p>
@@ -31,52 +32,32 @@ import { NgOptimizedImage } from '@angular/common';
       </div>
     </header>
 
-    <div class="page-body container-fluid">
+    <div class="page-body cu-container">
       <ng-content />
     </div>
   `,
   styles: `
     :host { display: block; }
 
-    /* position: relative is load-bearing — NgOptimizedImage's fill mode needs a
-       positioned ancestor, and the scrim/title stack against it. */
-    .page-head {
-      background-color: var(--color-hero-bg);
-      color: #fff;
-      position: relative;
-    }
-    /* The three layers are explicitly ordered: ::before would otherwise paint over a real
-       child element at equal z-index, hiding the photo behind an opaque scrim. */
-    .page-head img {
-      object-fit: cover;
-      object-position: center;
-      z-index: 0;
-    }
-    /* Dark scrim so the title stays readable over a photo */
+    /* position: relative is load-bearing: NgOptimizedImage's fill mode needs a positioned ancestor, and the
+       scrim and title stack against it. */
+    .page-head { position: relative; }
+    .page-head img { object-fit: cover; object-position: center; z-index: 0; }
+    /* The design system's scrim, so the title stays readable over a photo. ::before would otherwise paint over
+       a real child at equal z-index, so the three layers are ordered explicitly. */
     .page-head.has-image::before {
       content: "";
       position: absolute;
       inset: 0;
       z-index: 1;
-      background: linear-gradient(90deg, rgba(26, 26, 26, .82) 0%, rgba(26, 26, 26, .5) 100%);
+      background: color-mix(in srgb, var(--color-scrim) 75%, transparent);
     }
-    .page-head .inner {
-      position: relative;
-      z-index: 2;
-      padding-top: 52px;
-      padding-bottom: 52px;
-    }
-    .page-head h1 { font-family: var(--heading-font); font-size: 40px; font-weight: 700; margin: 0; }
-    .page-head p { margin: 12px 0 0; opacity: .9; font-size: 17px; max-width: 640px; }
+    .page-head.has-image .inner { color: var(--color-on-scrim); }
+    .page-head .inner { position: relative; z-index: 2; padding-block: var(--space-10); }
+    .page-head h1 { margin: 0; color: inherit; }
+    .page-head p { margin: var(--space-3) 0 0; font-size: var(--text-intro); max-width: 40rem; }
 
-    .page-body {
-      padding-top: 48px;
-      padding-bottom: 72px;
-    }
-
-    @media (max-width: 767px) {
-      .page-head h1 { font-size: 32px; }
-    }
+    .page-body { padding-block: var(--space-8) var(--space-12); }
   `,
 })
 export class InnerPageLayoutComponent {

@@ -1,0 +1,71 @@
+/* Block — form, form item, form actions, fieldset (CDS "custom forms" and "fieldsets").
+   <form class="cu-form">
+     <fieldset class="cu-fieldset cu-fieldset--semantic">
+       <legend>Contact</legend>
+       <div class="cu-form-item">…</div>
+       <div class="cu-form-actions"><button class="cu-button">Send</button></div>
+     </fieldset>
+   </form>
+   Fieldset: default is outlined with a small legend on the line; --semantic drops the outline and shows the legend as a
+   heading with a red left edge. Hide a legend visually with class cu-sr-only on the <legend> (a legend is still required).
+   Fieldsets nest: an inner fieldset is borderless and its legend is a full-width underlined caption.
+   Side by side: put form items in a .cu-grid with .cu-col-* (blocks/grid.css). Rows of items align at the bottom. */
+@layer blocks {
+  .cu-form {
+    margin: 0 0 1.5em;
+    font-size: 1rem; /* form controls are standardised for 16px */
+  }
+  .cu-form .cu-description { margin-block-end: 0.9em; }
+
+  .cu-form-item, .cu-form-actions { margin-block-end: 1em; }
+  .cu-form-item:last-child, .cu-form-actions:last-child { margin-block-end: 0; }
+  .cu-form-item > :last-child, .cu-form-actions > :last-child { margin-block-end: 0.4em; }
+  .cu-form-actions { margin-block-start: 1.65em; }
+  .cu-form-actions .cu-button { min-inline-size: 6em; margin: 0 0.1em 0.4em 0; }
+  .cu-grid > .cu-form-actions { margin-block-start: 0.65em; }
+  .cu-form-item--tint {
+    padding: 0.8em;
+    background-color: color-mix(in srgb, var(--gray-400) 14%, transparent);
+  }
+  .cu-form hr { margin-block: 1.25em; }
+  .cu-form hr.cu-rule--invisible { border-color: transparent; }
+
+  /* ---- Fieldset ---- */
+  .cu-fieldset {
+    min-inline-size: 0;
+    margin: 0 0 1.5em;
+    padding: 0.8em 0.8em 1em;
+    border: 1px solid var(--fieldset-line);
+  }
+  .cu-fieldset:last-child { margin-block-end: 0; }
+  .cu-fieldset > legend {
+    margin: 0 0 0.2em -0.4em;
+    padding: 0 0.4em;
+    font-size: var(--text-sm);
+    color: var(--color-dim);
+  }
+  .cu-fieldset .cu-fieldset {
+    margin-block-start: 1.25em;
+    padding: 0;
+    border: 0;
+  }
+  .cu-fieldset .cu-fieldset > legend {
+    inline-size: 100%;
+    margin: 0 0 1.2em;
+    padding: 0;
+    border-block-end: 1px solid var(--fieldset-line);
+  }
+  .cu-fieldset--semantic { padding: 0; border: 0; }
+  .cu-fieldset--semantic > legend:not(.cu-sr-only) {
+    display: block;
+    inline-size: 100%;
+    margin: 0 0 1.5em;
+    padding: 0 0 3px 10px;
+    font-family: var(--font-serif);
+    font-size: 1.125em;
+    color: var(--color-soft);
+    border-block-end: 1px solid var(--fieldset-line-strong);
+    border-inline-start: 3px solid var(--color-rule-red);
+  }
+  .cu-fieldset > legend.cu-sr-only { margin: 0; padding: 0; }
+}

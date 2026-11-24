@@ -1,0 +1,107 @@
+/* Block — layout primitives. Small, composable, and unaware of colour beyond the band surfaces.
+   .cu-container  centred max-width column with responsive side padding
+   .cu-stack      vertical rhythm between children        (--stack-gap)
+   .cu-cluster    wrapping row of inline items            (--cluster-gap)
+   .cu-auto-grid  responsive auto-fill grid, e.g. for cards (--grid-min, --grid-gap). Not .cu-grid: that name is
+                  the CDS 12-column flex grid in blocks/grid.css, which gives each child a 15px gutter
+   .cu-band       full-width section with its own surface
+   .cu-with-sidebar  article + sidebar; one column on phones
+   .cu-shell      app shell: side navigation + main (the admin layout)
+   .cu-layout     the page body under the header: gives the first thing on the page (usually the breadcrumb) its top space */
+@layer blocks {
+  .cu-container {
+    width: 100%;
+    max-width: var(--container-max);
+    margin-inline: auto;
+    padding-inline: var(--container-pad);
+  }
+  /* Opt-in widths from CDS (container-full, -small, -medium, -large, -journal, -journal-wide). Nothing narrows text by default. */
+  .cu-container--full { max-width: none; }
+  .cu-container--small { max-width: 81.3ch; }
+  .cu-container--medium { max-width: 100ch; }
+  .cu-container--large { max-width: 120ch; }
+  .cu-container--journal { max-width: 47.625rem; }
+  .cu-container--journal-wide { max-width: 70rem; }
+
+  .cu-layout {
+    padding-block-start: var(--layout-pad);
+  }
+
+  .cu-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--stack-gap, var(--space-4));
+  }
+  .cu-stack > * {
+    margin-block: 0;
+  }
+
+  .cu-cluster {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--cluster-gap, var(--space-3));
+  }
+
+  .cu-auto-grid {
+    display: grid;
+    gap: var(--grid-gap, var(--space-6));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--grid-min, 16rem)), 1fr));
+  }
+
+  .cu-band {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    padding-block: var(--space-8);
+  }
+  .cu-band--canvas {
+    background-color: var(--color-canvas);
+  }
+  .cu-band--tint {
+    background-color: var(--color-primary-tint);
+  }
+
+  .cu-with-sidebar {
+    display: grid;
+    align-items: start; /* the sidebar is as tall as its own content, not as the article beside it */
+    gap: var(--space-8);
+  }
+  .cu-with-sidebar > * {
+    min-width: 0;
+  }
+  @media (min-width: 768px) {
+    .cu-with-sidebar {
+      grid-template-columns: minmax(0, 1fr) 18rem;
+    }
+    .cu-with-sidebar--left {
+      grid-template-columns: 18rem minmax(0, 1fr);
+    }
+  }
+
+  .cu-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 100vh;
+    grid-template-rows: auto 1fr;
+  }
+  .cu-shell__side {
+    background-color: var(--sidenav-bg);
+    border-block-end: var(--border-thin) solid var(--color-line);
+  }
+  .cu-shell__main {
+    min-width: 0;
+    padding: var(--layout-pad) var(--container-pad) var(--space-12);
+  }
+  @media (min-width: 960px) {
+    .cu-shell {
+      grid-template-columns: 15rem minmax(0, 1fr);
+    }
+    .cu-shell > .cu-toolbar {
+      grid-column: 1 / -1;
+    }
+    .cu-shell__side {
+      border-block-end: 0;
+      border-inline-end: var(--border-thin) solid var(--color-line);
+    }
+  }
+}

@@ -1,0 +1,233 @@
+/* Block — hover tabs (CDS "Hover Tabs"): a vertical set of labels beside a picture panel; pointing at a label
+   (after 100ms) or focusing it shows its panel. Deliberately NOT a tablist: the labels are not tab roles, they
+   are ordinary focusable elements that reveal content, so a keyboard or screen-reader user meets a label, then
+   (when it is the current one) its content, then the next label. Behaviour: initHoverTabs() in showcase/showcase.js.
+   Below 768px the labels are hidden and the panels simply stack, as CDS does (a link label stays, laid over its panel).
+   Improvement on CDS: panels that are not showing are visibility:hidden, so their links are neither tab stops nor read.
+   Two kinds; either sits on the left (default) or --right, in --small, with a --red current label:
+   content tabs  <button class="cu-hovertabs__label">First</button>
+                 <div class="cu-hovertabs__panel" style="background-image:url(…)"><div class="cu-hovertabs__content">heading, text, button</div></div>
+   link tabs     <a class="cu-hovertabs__label [cu-hovertabs__label--rad]" href="…">Go here</a>
+                 <div class="cu-hovertabs__panel" style="background-image:url(…)"></div>   (picture only: no tint, not a tab stop)
+   The reference script sets data-count on the root and classes is-current, --compact and --ultra on the labels. */
+@layer blocks {
+  .cu-hovertabs {
+    position: relative; /* on phones a link label is placed against this box, so it stays inside its picture */
+    container-type: inline-size;
+    margin-block-end: 1.5em;
+    gap: 0 1.25rem;
+    grid-template-columns: calc(37% - 10px) calc(63% - 10px);
+  }
+  :where(button).cu-hovertabs__label {
+    font: inherit;
+    text-align: start;
+    border: 0;
+    inline-size: 100%;
+  }
+  .cu-hovertabs__label {
+    display: none;
+    align-items: center;
+    padding: 4% 3.5%;
+    background-color: var(--hovertab-bg);
+    color: var(--hovertab-ink);
+    line-height: 1.4;
+    cursor: default;
+    transition: background-color var(--duration-base) var(--ease), color var(--duration-base) var(--ease);
+  }
+  .cu-hovertabs__label.is-compact { padding-block: 3%; }
+  .cu-hovertabs__label.is-ultra { padding-block: 2%; }
+  .cu-hovertabs__label.is-current {
+    background-color: var(--hovertab-active-bg);
+    color: var(--hovertab-active-ink);
+  }
+  .cu-hovertabs--red .cu-hovertabs__label.is-current {
+    background-color: var(--btn-red);
+    color: var(--btn-red-ink);
+  }
+  .cu-hovertabs__label > * { pointer-events: none; }
+  /* --small: CDS "small" size, 15px type and tighter labels */
+  .cu-hovertabs--small { font-size: 0.9375rem; }
+  .cu-hovertabs--small .cu-hovertabs__label { font-size: 0.9375rem; }
+  .cu-hovertabs__panel {
+    position: relative;
+    grid-area: 1 / 2 / span 50 / 2;
+    min-block-size: 56.25vw;
+    margin-block-end: 2.5em;
+    padding: 8% 7.5%;
+    background-color: var(--hovertab-stage);
+    background-position: 50% 50%;
+    background-repeat: no-repeat;
+    background-size: cover;
+    color: var(--hovertab-stage-ink);
+  }
+  .cu-hovertabs__panel:focus-visible { outline-offset: -3px; }
+  /* .content is deliberately not positioned: its ::before tint then fills the whole panel, as in CDS.
+     A panel with no .content (the link version) has no tint; --plain on .content (CDS no-bg-tint) removes it. */
+  .cu-hovertabs__content > * { position: relative; }
+  .cu-hovertabs__content::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: color-mix(in srgb, var(--hovertab-active-bg) 55%, transparent);
+  }
+  .cu-hovertabs__content--plain::before { content: none; }
+  .cu-hovertabs__content :is(h2, h3, h4, h5, h6) { color: inherit; font-weight: var(--weight-semibold); }
+  .cu-hovertabs__content h3 { margin-block-end: 0.9em; }
+  .cu-hovertabs__content p { margin-block-end: 1.75em; }
+  .cu-hovertabs__content a:not(.cu-button) { color: inherit; }
+  .cu-hovertabs__content .cu-button { text-transform: uppercase; font-weight: var(--weight-semibold); }
+
+  /* A label that is a link: sits over its picture on phones, a quiet link on the strip from 768px */
+  a.cu-hovertabs__label {
+    display: block;
+    position: absolute;
+    inset-inline: 40% 0.5rem;
+    margin-block-start: 40vw;
+    z-index: var(--z-raised);
+    background-color: var(--hovertab-active-bg);
+    color: var(--hovertab-active-ink);
+    text-align: center;
+    text-decoration-color: color-mix(in srgb, currentcolor 50%, transparent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.125em;
+    cursor: pointer;
+  }
+  a.cu-hovertabs__label:active { opacity: 0.75; }
+
+  /* Link labels (CDS "Tabs with Links"). The text sits in __text (the script adds it), which carries the
+     carnelian underline that grows in under the current label from 768px. --rad: the underline stops 1em short and
+     an arrow slides in after it on hover; without it a small boxed arrow fades in at the right from 960px. */
+  a.cu-hovertabs__label {
+    --_boxed-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill-rule='evenodd' d='M0 0h24v24H0zM13 6l-1.4 1.4 3.6 3.6H5v2h10.2l-3.6 3.6L13 18l6-6z'/%3E%3C/svg%3E");
+    --_arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Cpath d='M14.35 18.1l7.3-7.35-7.3-7.35-1.29 1.29 5.11 5.16H7v1.8h11.17l-5.11 5.16z'/%3E%3C/svg%3E");
+  }
+  a.cu-hovertabs__label::after {
+    content: '';
+    position: absolute;
+    inset-block-start: calc(50% - 0.4em);
+    inset-inline-end: 7px;
+    inline-size: 1em;
+    block-size: 1em;
+    background-color: var(--hovertab-active-ink);
+    -webkit-mask-image: var(--_boxed-arrow);
+    -webkit-mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask: var(--_boxed-arrow) center / 100% 100% no-repeat;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .cu-hovertabs__text { pointer-events: none; }
+  a.cu-hovertabs__label--rad::after { content: none; }
+  .cu-hovertabs__label--rad .cu-hovertabs__text { position: relative; padding-inline-end: 1em; }
+  .cu-hovertabs__label--rad .cu-hovertabs__text::after {
+    content: '';
+    position: absolute;
+    inset-inline-end: 0;
+    inset-block-end: 0.08em;
+    inline-size: 1em;
+    block-size: 1em;
+    background-color: color-mix(in srgb, var(--hovertab-active-ink) 60%, transparent);
+    -webkit-mask-image: var(--_arrow);
+    -webkit-mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask: var(--_arrow) center / 100% 100% no-repeat;
+    opacity: 0;
+  }
+  @keyframes cu-hovertab-arrow {
+    0%, 60% { opacity: 0; transform: translateX(-5px); }
+    100% { opacity: 1; transform: none; }
+  }
+
+  @media (min-width: 768px) {
+    .cu-hovertabs {
+      display: grid;
+      position: relative;
+    }
+    .cu-hovertabs::before {
+      content: '';
+      position: absolute;
+      inset-block: 0;
+      inset-inline: calc(37% + 10px) 0;
+      background-color: var(--hovertab-stage);
+    }
+    .cu-hovertabs__label {
+      display: flex;
+      padding: 8% 7%;
+      border-block-start: var(--border-thin) solid var(--hovertab-active-bg);
+    }
+    .cu-hovertabs__label.is-compact { padding-block: 6%; }
+    .cu-hovertabs__label.is-ultra { padding-block: 4%; }
+    .cu-hovertabs__label:first-child { border-block-start: 0; }
+    .cu-hovertabs__label:not(.is-current):hover { background-color: var(--hovertab-hover); }
+    a.cu-hovertabs__label {
+      position: relative;
+      inset: auto;
+      margin: 0;
+      z-index: var(--z-base);
+      background-color: var(--hovertab-bg);
+      color: var(--hovertab-ink);
+      text-align: start;
+      text-decoration: none;
+    }
+    a.cu-hovertabs__label.is-current { background-color: var(--hovertab-active-bg); color: var(--hovertab-active-ink); }
+    a.cu-hovertabs__label .cu-hovertabs__text {
+      padding-block-end: 2px;
+      background-image: linear-gradient(to right, var(--hovertab-rule), var(--btn-red));
+      background-position: 0 100%;
+      background-repeat: no-repeat;
+      background-size: 0 2px;
+    }
+    a.cu-hovertabs__label.is-current .cu-hovertabs__text {
+      background-size: 100% 2px;
+      transition: background-size 0.25s var(--ease) 0.2s;
+    }
+    a.cu-hovertabs__label--rad.is-current .cu-hovertabs__text { background-size: calc(100% - 1em) 2px; }
+    a.cu-hovertabs__label--rad.is-current:hover .cu-hovertabs__text::after {
+      opacity: 1;
+      animation: cu-hovertab-arrow 0.4s ease-out;
+    }
+    .cu-hovertabs--red a.cu-hovertabs__label.is-current { background-color: var(--btn-red); color: var(--btn-red-ink); }
+    .cu-hovertabs__panel {
+      min-block-size: 21em;
+      margin-block-end: 0;
+      background-color: transparent;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.4s var(--ease), visibility 0s linear 0.4s;
+    }
+    .cu-hovertabs__panel.is-current {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transition: opacity 0.8s var(--ease), visibility 0s;
+    }
+    .cu-hovertabs--right { grid-template-columns: calc(63% - 10px) calc(37% - 10px); }
+    .cu-hovertabs--right::before { inset-inline: 0 calc(37% + 10px); }
+    .cu-hovertabs--right .cu-hovertabs__panel { grid-area: 1 / 1 / span 50 / 1; }
+    .cu-hovertabs--right .cu-hovertabs__label { grid-column: 2; }
+    .cu-hovertabs[data-count='1'] .cu-hovertabs__panel { grid-row-end: span 1; }
+    .cu-hovertabs[data-count='2'] .cu-hovertabs__panel { grid-row-end: span 2; }
+    .cu-hovertabs[data-count='3'] .cu-hovertabs__panel { grid-row-end: span 3; }
+    .cu-hovertabs[data-count='4'] .cu-hovertabs__panel { grid-row-end: span 4; }
+    .cu-hovertabs[data-count='5'] .cu-hovertabs__panel { grid-row-end: span 5; }
+    .cu-hovertabs[data-count='6'] .cu-hovertabs__panel { grid-row-end: span 6; }
+    .cu-hovertabs[data-count='7'] .cu-hovertabs__panel { grid-row-end: span 7; }
+    .cu-hovertabs[data-count='8'] .cu-hovertabs__panel { grid-row-end: span 8; }
+  }
+  @media (min-width: 960px) {
+    a.cu-hovertabs__label.is-current:hover::after { opacity: 0.35; transition: opacity 0.25s var(--ease) 0.2s; }
+  }
+  @media (min-width: 1200px) {
+    .cu-hovertabs__panel { min-block-size: 23em; }
+  }
+  @container (min-width: 1085px) {
+    .cu-hovertabs__label { font-size: var(--text-lg); }
+    .cu-hovertabs__panel { font-size: var(--text-lg); min-block-size: 24em; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cu-hovertabs__panel, .cu-hovertabs__panel.is-current { transition: none; }
+    a.cu-hovertabs__label .cu-hovertabs__text { transition: none; }
+    .cu-hovertabs__label--rad .cu-hovertabs__text::after { animation: none; }
+  }
+}

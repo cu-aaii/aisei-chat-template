@@ -1,0 +1,55 @@
+/* Block — back to top (CDS "Back-to-Top Button"): a carnelian circle with an up arrow and the word "Top".
+   Floating, it appears once the page is scrolled well past the top (the reference script, initBackToTop() in
+   showcase/showcase.js, removes `hidden` after 800px) and, when pressed, moves focus to the page's <main> and scrolls
+   there (smoothly unless the reader prefers reduced motion). Without script it simply stays hidden.
+   <button class="cu-back-to-top cu-back-to-top--floating" type="button" hidden data-back-to-top="#main">
+     <svg class="cu-icon" aria-hidden="true" focusable="false"><use href="#cu-i-arrow_upward"/></svg><span>Top</span></button>
+   Without --floating it is an ordinary button placed in the flow, aligned right (as CDS does at the foot of long content). */
+@layer blocks {
+  @keyframes cu-reveal {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .cu-back-to-top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.125em;
+    box-sizing: border-box;
+    inline-size: 4em;
+    block-size: 4em;
+    margin: 1em 0 0 auto;
+    padding: 0;
+    background-color: var(--btn-red);
+    color: var(--btn-red-ink);
+    border: 0;
+    border-radius: 100%;
+    font: inherit;
+    font-size: 0.875rem;
+    line-height: 1.1;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color var(--duration-fast) var(--ease);
+  }
+  .cu-back-to-top[hidden] { display: none; }
+  .cu-back-to-top:hover { background-color: var(--btn-red-hover); }
+  .cu-back-to-top:active { background-color: var(--btn-red-active); }
+  .cu-back-to-top .cu-icon { font-size: 1.85em; }
+  .cu-back-to-top--floating {
+    position: fixed;
+    inset-block-end: 1.125rem;
+    inset-inline-end: 1.125rem;
+    z-index: var(--z-nav);
+    margin: 0;
+    box-shadow: 0 0 0 2px var(--float-ring), var(--shadow-float); /* the ring only shows on dark pages (1.4.11) */
+    opacity: 0.9;
+    animation: cu-reveal var(--duration-base) linear;
+  }
+  @media (min-width: 768px) {
+    .cu-back-to-top--floating { inset-block-end: 2rem; inset-inline-end: 2rem; }
+  }
+  @media (forced-colors: active) {
+    .cu-back-to-top { border: var(--border-thin) solid CanvasText; }
+  }
+}

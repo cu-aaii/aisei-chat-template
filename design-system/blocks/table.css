@@ -1,0 +1,115 @@
+/* Block — data table. Two phone strategies, chosen by markup:
+   1. scroll   wrap in .cu-table-wrap (labelled region; a tab stop only while it scrolls) — keeps columns, scrolls sideways
+   2. stack    add .cu-table--stack and a data-label on every <td> — rows become labelled cards when the
+               table's own container is narrower than 48rem. Put it inside .cu-table-wrap. It reacts to the
+               container, not the screen, so it also stacks when text is enlarged or in a narrow sidebar.
+   Sorting is expressed with aria-sort on <th>; the arrow is drawn, the state is announced.
+   Server-side paging/filtering is the app's job (see CLAUDE.md); this is presentation only.
+   <div class="cu-table-wrap" role="region" aria-label="Users" tabindex="0">
+     <table class="cu-table"><caption class="cu-sr-only">Users</caption>… */
+@layer blocks {
+  .cu-table-wrap {
+    container-type: inline-size;
+    position: relative;
+    overflow-x: auto;
+    background-color: var(--color-surface);
+    border: var(--border-thin) solid var(--color-line);
+    margin-block-end: var(--space-6);
+  }
+  .cu-table-wrap > .cu-table {
+    margin: 0;
+  }
+
+  .cu-table {
+    inline-size: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+  }
+  .cu-table caption {
+    padding: var(--space-3) var(--space-4);
+    text-align: start;
+    font-weight: var(--weight-semibold);
+  }
+  .cu-table th,
+  .cu-table td {
+    padding: var(--space-3) var(--space-4);
+    text-align: start;
+    vertical-align: top;
+  }
+  .cu-table thead th {
+    background-color: var(--color-table-head);
+    color: var(--color-ink);
+    font-weight: var(--weight-semibold);
+    border-block-end: var(--border-thick) solid var(--color-line);
+    white-space: nowrap;
+  }
+  .cu-table tbody th {
+    font-weight: var(--weight-semibold);
+  }
+  .cu-table tbody tr + tr > * {
+    border-block-start: var(--border-thin) solid var(--color-row-line);
+  }
+  .cu-table tbody tr:hover > * {
+    background-color: var(--color-primary-tint);
+  }
+
+  .cu-table th[aria-sort] {
+    cursor: pointer;
+  }
+  .cu-table th[aria-sort]::after {
+    content: '\2195';
+    margin-inline-start: 0.4em;
+    color: var(--color-muted);
+  }
+  .cu-table th[aria-sort='ascending']::after {
+    content: '\2191';
+    color: var(--color-ink);
+  }
+  .cu-table th[aria-sort='descending']::after {
+    content: '\2193';
+    color: var(--color-ink);
+  }
+
+  .cu-table__num {
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+  }
+
+  @container (max-width: 48rem) {
+    .cu-table--stack thead {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+    }
+    .cu-table--stack,
+    .cu-table--stack tbody,
+    .cu-table--stack tr,
+    .cu-table--stack td,
+    .cu-table--stack tbody th {
+      display: block;
+    }
+    .cu-table--stack tr {
+      padding: var(--space-3) 0;
+      border-block-end: var(--border-thin) solid var(--color-line);
+    }
+    .cu-table--stack tbody tr + tr > * {
+      border-block-start: 0;
+    }
+    .cu-table--stack td {
+      display: grid;
+      grid-template-columns: 8rem minmax(0, 1fr);
+      gap: var(--space-3);
+      padding-block: var(--space-1);
+    }
+    .cu-table--stack td > * {
+      justify-self: start;
+    }
+    .cu-table--stack td::before {
+      content: attr(data-label);
+      font-weight: var(--weight-semibold);
+      color: var(--color-muted);
+    }
+  }
+}

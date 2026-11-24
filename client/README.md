@@ -24,10 +24,10 @@ takes the handshake off that second hop.
 Cornell freight-sans-pro Typekit kit. The kit ships
 `font-display: auto`, which Chrome treats as block — that's set in the Adobe
 Fonts kit settings, not overridable from here, so this link has to stay
-blocking or text goes invisible rather than merely unstyled. What paints
-during the block period is `freight-fallback` from
-`app/shared/theme/fonts.css`, metric-matched so the swap doesn't move
-anything.
+blocking or text goes invisible rather than merely unstyled. The font stacks
+are the design system's (`--font-sans`, `--font-serif`); the app's old
+metric-matched `freight-fallback` face was retired in #22, because those
+stacks never name it.
 
 A Source Sans 3 stylesheet used to sit here as an off-domain fallback.
 Removed: the kit turned out not to be domain-restricted (font files return
@@ -35,3 +35,19 @@ Removed: the kit turned out not to be domain-restricted (font files return
 match anyway, so Source Sans 3's font files were never once requested — it
 was a render-blocking request that changed nothing. The Google Fonts
 preconnects went with it.
+
+## `assets/pre-paint.js`
+
+Applies the stored colour mode (`cu-mode`) and theme before first paint, so a
+dark-mode visitor never sees a light flash. A file, not an inline script: a
+Content-Security-Policy without `'unsafe-inline'` would block an inline one.
+`pre-paint.test.ts` keeps its names in step with `ThemeService`.
+
+## The two sprites
+
+The official Cornell seal and wordmark (`#cu-seal`, `#cu-wordmark`), copied
+from `design-system/assets/cornell-logos.sprite.html`, and the icons the site
+uses (`#cu-i-*`), copied symbol by symbol from
+`design-system/assets/icons.sprite.html`. `logo-sprite.test.ts` and
+`icon-sprite.test.ts` fail if either drifts. To add an icon, copy its symbol
+element here and its name into `shared/components/icon/icon-names.ts`.

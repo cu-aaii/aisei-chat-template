@@ -56,13 +56,8 @@
               "client/assets"
             ],
             "styles": [
-              "client/app/shared/theme/variables.css",
-              "client/app/shared/theme/fonts.css",
-              "client/app/shared/theme/typography.css",
-              "client/app/shared/theme/styles.css",
-              "client/app/shared/theme/flex.css",
-              "client/app/shared/theme/spacing.css",
-              "client/app/shared/theme/accessability.css"
+              "client/app/shared/theme/layers.css",
+              "design-system/index.css"
             ],
             "scripts": [],
             "allowedCommonJsDependencies": [
@@ -77,7 +72,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "1mb",
+                  "maximumWarning": "1.25mb",
                   "maximumError": "2mb"
                 },
                 {

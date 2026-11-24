@@ -1,0 +1,12 @@
+/* Cornell.edu custom glyph font (CDS), unchanged: the brand and social marks, weather and the clocktower, which Material Symbols
+   does not have (.icon .icon-facebook). Opt in where needed:
+     <link rel="stylesheet" href="design-system/assets/fonts/icon-fonts.css">
+   Every general-purpose icon (search, menu, arrows, info, mail…) comes from ONE set so the line weight is consistent:
+   Material Symbols, assets/icons.sprite.html + blocks/icon.css. FontAwesome 4 and Material Design Iconic (also in CDS) are
+   not shipped: they are heavier and differ in weight and style from each other.
+   Icon fonts are decorative: aria-hidden="true", and give a standalone icon button a text label. */
+@import url('cornell-custom.css');
+
+/* CDS spacing next to link text */
+a > .icon { opacity: 0.8; margin: 0 0.25em 0 0; }
+a > * + .icon { margin: 0.1em 0 0 0.35em; }

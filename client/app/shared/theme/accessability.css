@@ -1,3 +1,5 @@
+/* In the app-utilities layer (layers.css), above the design system. Spelled with the extra `a`, as in base-template. */
+
 /* minimum size so that inputs don't auto-zoom on mobile */
 input,
 select:focus,
@@ -6,10 +8,13 @@ textarea {
   line-height: 16px !important;
 }
 
-/* Global focus-visible style for keyboard navigation */
+/* Global focus-visible style for keyboard navigation. The colour is the design system's focus token, which flips in
+   dark mode and inside the header, nav and footer blocks, with a halo of the surface colour, so the ring is at least
+   3:1 against whatever it sits on. A fixed colour here (#2e5690 until #22) left it at about 1.9:1 on dark pages. */
 :focus-visible {
-  outline: 3px solid #2e5690; /* @todo var outline-color */
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--color-focus-halo);
 }
 
 /* Respect prefers-reduced-motion */
@@ -19,8 +24,3 @@ textarea {
     animation: none !important;
   }
 }
-
-/* Remove focus outline for mouse users, keep for keyboard */
-/* #main:focus:not(:focus-visible) { */
-/*   outline: none; */
-/* } */

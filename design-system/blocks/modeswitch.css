@@ -1,0 +1,80 @@
+/* Block — mode switch: Automatic / Light / Dark as one small segmented control. Not in CDS (CDS has no visitor
+   control for dark mode); built from CDS form behaviour: real radio buttons in a fieldset, so it is one Tab stop,
+   arrows move between the choices, and the legend names the group.
+   <fieldset class="cu-mode-switch">
+     <legend>Appearance</legend>
+     <span class="cu-mode-switch__options">
+       <label><input type="radio" name="cu-mode" value="auto" checked><span>Automatic</span></label>
+       <label><input type="radio" name="cu-mode" value="light"><span>Light</span></label>
+       <label><input type="radio" name="cu-mode" value="dark"><span>Dark</span></label>
+     </span>
+   </fieldset>
+   Choosing sets data-mode on <html> and remembers it (the app: ThemeService; the showcase: initModeSwitch()).
+   Colours come from the surrounding text, so it fits a light page and the dark footer alike; inside .cu-footer it
+   takes the footer's colours (it lives in cu-footer__prefs, in the content band above the sub-footer). */
+@layer blocks {
+  .cu-mode-switch {
+    --_fill: var(--mode-switch-fill);
+    --_on-fill: var(--mode-switch-on-fill);
+    display: inline-flex;
+    flex-wrap: wrap; /* on a narrow screen the choices drop under the legend (reflow at 320px) */
+    align-items: center;
+    gap: var(--space-1) 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: var(--text-sm);
+  }
+  .cu-mode-switch legend {
+    float: left; /* puts the legend on the same line as the choices */
+    margin-inline-end: var(--space-3);
+    padding: 0;
+  }
+  .cu-mode-switch__options {
+    display: inline-flex;
+    flex-wrap: nowrap;
+  }
+  .cu-mode-switch label {
+    position: relative;
+    display: inline-flex;
+    margin: 0;
+  }
+  .cu-mode-switch label:has(input:focus-visible) { z-index: var(--z-raised); }
+  .cu-mode-switch label + label { margin-inline-start: -1px; }
+  .cu-mode-switch input {
+    position: absolute;
+    inset: 0;
+    z-index: var(--z-raised); /* the invisible radio sits on top, so the focused control is never covered */
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .cu-mode-switch label > span {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 2rem; /* 32px: over the 24px AA target, and it sits on the footer's text line */
+    padding: 0 0.75em;
+    white-space: nowrap;
+    border: var(--border-thin) solid color-mix(in srgb, var(--_fill) 45%, transparent);
+    color: inherit;
+    line-height: 1;
+  }
+  .cu-mode-switch input:hover + span { background-color: color-mix(in srgb, var(--_fill) 12%, transparent); }
+  .cu-mode-switch input:checked + span {
+    background-color: var(--_fill);
+    border-color: var(--_fill);
+    color: var(--_on-fill);
+  }
+  .cu-mode-switch input:focus-visible + span {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+  .cu-footer .cu-mode-switch {
+    --_fill: var(--footer-link);
+    --_on-fill: var(--footer-sub-bg);
+  }
+  @media (forced-colors: active) {
+    .cu-mode-switch label > span { border-color: CanvasText; }
+    .cu-mode-switch input:checked + span { background-color: Highlight; color: HighlightText; forced-color-adjust: none; }
+  }
+}

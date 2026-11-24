@@ -1,0 +1,22 @@
+/* Block — icons: Google Material Symbols (Outlined, weight 300), named exactly as the app's <mat-icon> names
+   (expand_more, verified_user, …), so a name from data or a signal maps straight to an id: href="#cu-i-" + name.
+   One sprite (assets/icons.sprite.html, pasted once per page like the logo sprite);
+   icons are drawn with currentColor so they follow text and mode, and are decorative (aria-hidden)
+   unless they stand alone, in which case the control carries the label.
+   <svg class="cu-icon" aria-hidden="true" focusable="false"><use href="#cu-i-search"/></svg>
+   Sizes: --sm --lg --xl. Place beside text with --lead (margin after) or --trail (margin before). */
+@layer blocks {
+  .cu-icon {
+    inline-size: 1em;
+    block-size: 1em;
+    fill: currentcolor;
+    vertical-align: -0.125em;
+    flex: none;
+  }
+  .cu-icon--sm { font-size: 0.875em; }
+  .cu-icon--lg { font-size: 1.5em; }
+  .cu-icon--xl { font-size: 2.5em; }
+  .cu-icon--lead { margin-inline-end: 0.35em; }
+  .cu-icon--trail { margin-inline-start: 0.35em; }
+  a > .cu-icon { opacity: 0.85; }
+}

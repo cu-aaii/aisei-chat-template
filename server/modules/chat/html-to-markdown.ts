@@ -9,7 +9,7 @@ const BOILERPLATE_SELECTORS = [
   'nav',
   'header',
   'footer',
-  'app-public-masthead',
+  'app-site-header',
   'app-site-footer',
   'app-scroll-to-top',
   'app-chat-dialog',

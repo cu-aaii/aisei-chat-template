@@ -7,7 +7,7 @@ only imports this file, so edit here.
 ## What this is
 
 `aisei-chat-template` — a starter site from the Cornell AI Innovation Hub: two public
-pages (`/` and `/about`) inside the Hub's header/footer theme, plus a streaming AI chat
+pages (`/` and `/about`) inside the Cornell design system's header and footer, plus a streaming AI chat
 assistant that answers from the site's own pages. No database, no auth. Students clone
 it as a starting point, so keep changes simple and explained.
 
@@ -15,6 +15,8 @@ it as a starting point, so keep changes simple and explained.
 
 - **Server**: Hono on Node 24 (`@hono/node-server`), ESM only (`"type": "module"`)
 - **Client**: Angular 22 — standalone components, signals, OnPush, every route prerendered
+- **Look**: the Cornell design system (`design-system/`, a pinned read-only copy of cu-aaii/cornell-design-system);
+  plain CSS, no Angular Material
 - **Chat**: Vercel AI SDK (`ai`, `@ai-sdk/openai-compatible`) → Cornell LiteLLM gateway
 - **Dev**: Angular on :4200 proxies `/api/*` to Hono on :4318 (the container uses :8000)
 
@@ -40,14 +42,18 @@ client/app/
   app.routes.ts         Routes (AppRoute; data.menu, title, description)
   app.routes.server.ts  Prerender config (`**`)
   features/public/      home/, about/
-  shared/layout/public/ Masthead, nav-items.ts, footer, public-layout (mounts the chat
-                        widget), inner-page-layout (title band + body)
-  shared/components/    hero, button (a[appButton]), icon, lab-wordmark, scroll-to-top,
-                        chat/ (panel, markdown pipe), chat-dialog/ (floating widget),
+  shared/layout/public/ public-layout (CDS header + footer, mounts the chat widget), nav-items.ts,
+                        site-footer (.cu-footer + the Appearance switch), inner-page-layout (title band + body)
+  shared/layout/site-header/  The CDS site banner (.cu-header + .cu-nav, phone menu overlay)
+  shared/look/          provideLook(): the site's Cornell look (header style, nav, mode)
+  shared/components/    hero, icon (svg[appIcon], from the sprite in index.html), scroll-to-top
+                        (.cu-back-to-top), chat/ (panel, markdown pipe), chat-dialog/ (.cu-chat widget),
                         localist-events-widget/ (third-party script embed example)
-  shared/services/      ChatEngineService (conversation state singleton)
-  shared/theme/         variables.css (tokens), fonts, typography, utilities
+  shared/services/      ChatEngineService (conversation state); theme/ (ThemeService: light/dark, CssColorProbe)
+  shared/theme/         layers.css (cascade layers), styles.css, accessability.css, app.css
+design-system/          Cornell design system: tokens, blocks, themes. READ-ONLY (design-system.lock.json)
 scripts/
+  sync-design-system.mjs, check-design-system.mjs, check-raw-colours.mjs  The design system's lock + colour checks
   export-chat-content.mjs  Build step: dist/content/site-index.json (STATIC_PAGES)
   generate-sitemap.mjs     Build step: sitemap.xml + robots.txt Sitemap: line ($SITE_URL)
 evals/
@@ -64,8 +70,11 @@ evals/
 npm run dev      # Angular :4200 + Hono :4318
 npm run build    # Angular prerender + tsc server + chat index + sitemap
 npm start        # Serve the production build
-npm run check    # tsc --noEmit + ng build — run before every commit
+npm run check    # design-system lock + contrast, raw colours, tsc, unit tests, ng build — run before every commit
 npm run lint
+npm test         # the key-free unit tests (scripts/, client/)
+npm run check:design-system  # the vendored copy matches its lock; 2,412 contrast pairs
+npm run check:colours        # no #hex / rgb() / hsl() in client/ (use design-system tokens)
 npm run test:chat        # After a build: ask the real assistant every case in evals/chat-cases.json
 npm run test:chat:draft  # After a build: model drafts cases into evals/chat-cases.draft.json
 ```
@@ -79,6 +88,24 @@ key needed), so a grader edit that makes it pass everything fails `check`.
 (so no sitemap afterwards). After touching either script, run it by hand and look at the
 output in `dist/`. Adding a page = route in `app.routes.ts` + link in `nav-items.ts` + a
 line in `STATIC_PAGES` (`generate-sitemap.mjs` warns if you forget the last one).
+
+## Cornell design system
+
+The look is the Cornell design system, vendored in `design-system/` with its skills in
+`.claude/skills/cornell-*`: a byte-identical copy of cu-aaii/cornell-design-system at the commit in
+`design-system.lock.json`. Start at `design-system/COMPONENTS.md` (every block and its markup).
+
+- **Never edit `design-system/` or `.claude/skills/cornell-*`.** `check` fails on any change. Fix it upstream,
+  then `npm run sync:design-system -- --ref <sha>`. After a template starts or stops using a `cu-*` class, run
+  `node design-system/tools/inventory.mjs` (COMPONENTS.md lists this app's uses; `check` fails until you do).
+- **The look** (header style, navigation, headings, first-visit colour mode, the footer's Appearance switch) is
+  one object, `provideLook({...})` in `client/app/app.config.ts`. Pick it in
+  `design-system/showcase/customizer.html` (open it in a browser). No theme files of the app's own.
+- **Use a block before writing CSS**: `cu-button`, `cu-container`, `cu-notice`, `cu-band`, … Component CSS uses
+  the design system's tokens only (`var(--color-ink)`, `var(--space-4)`): no raw colours, so dark mode works.
+- **Global CSS** goes in a layer (`client/app/shared/theme/layers.css`): never an unlayered file in `angular.json`.
+- **Logos and icons** come from the sprites in `client/index.html` (`<use href="#cu-seal">`,
+  `<svg appIcon="send">`). Never redraw "Cornell University"; the seal and the wordmark never appear together.
 
 ## Transcript log
 
@@ -115,7 +142,8 @@ Don't pass `--env-file .env` to `docker run`: its `PORT=4318` overrides the imag
 - Browser-only DOM work (third-party scripts, canvas, `window`) goes in `afterNextRender`
   — it must not run during prerender
 - Server imports use `.js` extensions (ESM)
-- Reuse the shared components and CSS variables before writing new styles
+- Reuse the design system's blocks and tokens, then the shared components, before writing new styles;
+  never a raw colour (`npm run check:colours`)
 - `/api/chat` is public and paid per request: keep the rate limit, size caps and prompt
   guard rails. The CSRF check is opt-in (`CSRF_ENABLED=true`, off by default) — don't
   remove it, and don't key it on NODE_ENV; never register a content root holding anything internal;
@@ -132,3 +160,7 @@ Code's convention; the files are plain Markdown any agent can read):
 | Guide | Read it when |
 |---|---|
 | [Angular Component](.claude/skills/angular-component/SKILL.md) | Creating or refactoring a component (signals, host bindings, a11y) |
+| [Cornell Components](.claude/skills/cornell-components/SKILL.md) | Building any page or UI: which design-system block to use |
+| [Cornell Branding](.claude/skills/cornell-branding/SKILL.md) | Colours, logos, header, footer, dark mode |
+| [Cornell Accessibility](.claude/skills/cornell-accessibility/SKILL.md) | Any interactive element, focus, ARIA, an axe finding |
+| [Cornell Look](.claude/skills/cornell-look/SKILL.md) | Changing the header style, navigation, headings or colour mode |

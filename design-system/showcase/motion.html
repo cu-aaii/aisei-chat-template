@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="../assets/favicon.ico" sizes="16x16">
+  <title>Motion · Cornell design system</title>
+  <link rel="stylesheet" href="https://use.typekit.net/nwp2wku.css">
+  <link rel="stylesheet" href="../index.css">
+  <link rel="stylesheet" href="showcase.css">
+  <script src="showcase.js"></script>
+</head>
+<body>
+<a class="cu-skip" href="#main">Skip to main content</a>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><symbol id="cu-i-chevron_left" viewBox="0 -960 960 960"><path d="M560.62-253.85 333.85-480.62l226.77-227.15 32.61 32.62-194.15 194.53 194.15 194.16-32.61 32.61Z"/></symbol><symbol id="cu-i-chevron_right" viewBox="0 -960 960 960"><path d="M536.92-480.62 342.77-675.15l32.61-32.62 226.77 227.15-226.77 226.77-32.61-32.61 194.15-194.16Z"/></symbol><symbol id="cu-i-pause" viewBox="0 -960 960 960"><path d="M533.85-220v-520H740v520H533.85ZM220-220v-520h206.54v520H220Zm359.23-45.39h115.38v-429.22H579.23v429.22Zm-313.84 0h115.76v-429.22H265.39v429.22Zm0-429.22v429.22-429.22Zm313.84 0v429.22-429.22Z"/></symbol><symbol id="cu-i-play_arrow" viewBox="0 -960 960 960"><path d="M340-238.39v-487.68l383.07 243.84L340-238.39Zm45.39-243.84Zm0 161 253.99-161-253.99-161v322Z"/></symbol></svg>
+<main id="main" tabindex="-1">
+<section class="sc-section"><div class="cu-container" style="max-width:52rem">
+<h1>Motion</h1>
+<p class="cu-intro">Reveals as an element scrolls into view, and parallax (CDS Motion Design). An element reveals once, when its top reaches 85% of the viewport height.</p>
+<p class="sc-note">Kept from CDS: the reveal point, timings and distances, and that nothing is hidden until the script has run (<code>.is-scripted</code>). Added for accessibility: with reduced motion everything shows at once and nothing moves, keyboard focus inside a hidden element reveals it, and printing shows everything. <button class="cu-button cu-button--sm" type="button" id="motion-reset">Reset reveals</button></p>
+<div class="cu-motion-fadein cu-motion-onload" id="m-onload"><h2 class="cu-h4">Fade-in on load <small><code>cu-motion-fadein cu-motion-onload</code></small></h2><p>Revealed as soon as any of it is on screen, for elements near the top of the page.</p><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23b8c7cc'/%3E%3Cpath d='M0 225l112-90 88 45 80-66 120 111v75H0z' fill='%2378939b'/%3E%3Ccircle cx='312' cy='75' r='27' fill='%2378939b' opacity='.6'/%3E%3C/svg%3E" alt="" style="width:100%;max-width:45rem;display:block"></div>
+<div style="block-size:70vh" aria-hidden="true"></div>
+<div class="cu-motion-fadein" id="m-fade"><h2 class="cu-h4">Fade-in <small><code>cu-motion-fadein</code></small></h2><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23c9bfa8'/%3E%3Cpath d='M0 225l112-90 88 45 80-66 120 111v75H0z' fill='%238c7f5e'/%3E%3Ccircle cx='312' cy='75' r='27' fill='%238c7f5e' opacity='.6'/%3E%3C/svg%3E" alt="" style="width:100%;max-width:45rem;display:block"></div>
+<div style="block-size:50vh" aria-hidden="true"></div>
+<div class="cu-motion-slidein" id="m-slide"><h2 class="cu-h4">Slide-in <small><code>cu-motion-slidein</code></small></h2><p>Fades in and rises 60px. <a href="#m-slide">A link inside</a>: tabbing to it reveals the block at once.</p><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23b5c4a8'/%3E%3Cpath d='M0 225l112-90 88 45 80-66 120 111v75H0z' fill='%236f8a5c'/%3E%3Ccircle cx='312' cy='75' r='27' fill='%236f8a5c' opacity='.6'/%3E%3C/svg%3E" alt="" style="width:100%;max-width:45rem;display:block"></div>
+<div style="block-size:50vh" aria-hidden="true"></div>
+<div class="sc-demo"><div class="cu-motion-parallax" id="m-para"><h2 class="cu-h4">Parallax <small><code>cu-motion-parallax</code></small></h2><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23b8c7cc'/%3E%3Cpath d='M0 225l112-90 88 45 80-66 120 111v75H0z' fill='%2378939b'/%3E%3Ccircle cx='312' cy='75' r='27' fill='%2378939b' opacity='.6'/%3E%3C/svg%3E" alt="" style="width:100%;max-width:45rem;display:block"></div></div>
+<div style="block-size:50vh" aria-hidden="true"></div>
+<div class="cu-motion-custom" id="m-custom"><h2 class="cu-h4">Custom <small><code>cu-motion-custom</code></small></h2><p>No motion of its own: it only gets <code>.is-revealed</code>, and the animation is yours. This one uses the CDS sample (rotate and scale in).</p><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23c9bfa8'/%3E%3Cpath d='M0 225l112-90 88 45 80-66 120 111v75H0z' fill='%238c7f5e'/%3E%3Ccircle cx='312' cy='75' r='27' fill='%238c7f5e' opacity='.6'/%3E%3C/svg%3E" alt="" style="width:100%;max-width:45rem;display:block"></div>
+<style>
+@keyframes sc-sample-animation { 0% { opacity: 0; transform: rotate(40deg) scale(0.5); } 100% { opacity: 1; transform: none; } }
+#m-custom.is-scripted { opacity: 0; }
+#m-custom.is-revealed { opacity: 1; animation: sc-sample-animation 0.5s ease-out; }
+@media (prefers-reduced-motion: reduce) { #m-custom.is-revealed { animation: none; } }
+</style>
+<div style="block-size:40vh" aria-hidden="true"></div>
+</div></section>
+<script>document.getElementById('motion-reset').addEventListener('click', function () { document.querySelectorAll('.is-revealed').forEach(function (e) { e.classList.remove('is-revealed'); }); setTimeout(function () { window.scrollTo(0, 0); location.reload(); }, 50); });</script>
+</main>
+</body>
+</html>

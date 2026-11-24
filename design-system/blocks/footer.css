@@ -1,0 +1,103 @@
+/* Block — footer. Matches the Cornell footer: a content band, then a darker sub-footer
+   that carries the required links (Cornell University ©year, University Privacy, Web Accessibility Assistance).
+   <footer class="cu-footer" aria-label="Site footer">
+     <div class="cu-footer__main"> <div class="cu-container"> <h2 class="cu-footer__heading">…</h2> <p>…</p> </div> </div>
+     <div class="cu-footer__sub"> <div class="cu-container"> <div class="cu-footer__links">
+       <ul role="list"> <li><a href="https://www.cornell.edu">Cornell University</a> ©<span data-current-year>2026</span></li> <li><a href="https://privacy.cornell.edu/">University Privacy</a></li> </ul>
+       <ul role="list"> <li><a href="https://tdx.cornell.edu/TDClient/39/Portal/Requests/ServiceDet?ID=373">Web Accessibility Assistance</a></li> </ul>
+     </div> </div> </div>
+   </footer>
+   Two columns: <div class="cu-container cu-footer__cols"> <div class="cu-footer__primary">content</div> <div class="cu-footer__secondary"><div class="cu-footer__prefs">Appearance</div></div> </div>.
+   The primary column comes first in the markup, so it is first on a phone; from 768px they sit side by side.
+   The year is never hard-coded: wrap it in <span data-current-year> (showcase.js fills it with the current
+   year; in Angular bind new Date().getFullYear()). The static text is only the no-JS fallback. */
+@layer blocks {
+  .cu-footer {
+    --color-focus: var(--footer-link);
+    --color-focus-halo: var(--footer-bg);
+    --color-link: var(--footer-link);
+    --color-link-hover: var(--footer-link);
+
+    background-color: var(--footer-bg);
+    color: var(--footer-ink);
+  }
+  .cu-footer a {
+    color: var(--footer-link);
+    text-decoration-line: underline;
+    text-decoration-color: color-mix(in srgb, var(--footer-link) 70%, transparent);
+  }
+  .cu-footer__main {
+    padding-block: 1.875rem;
+  }
+  .cu-footer__heading {
+    margin: 0 0 0.7em;
+    color: var(--footer-heading);
+    font-family: var(--font-serif);
+    font-weight: var(--weight-regular);
+    font-size: var(--text-h2);
+    line-height: 1.3;
+  }
+  .cu-footer__main p {
+    max-width: none;
+    margin: 0;
+  }
+  /* Visitor preferences (Appearance, and Density in the app shell) sit in the content band, above the sub-footer,
+     not in the legal line. A band that holds only these (the app shell has no other content) uses --prefs. */
+  .cu-footer__prefs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3) var(--space-5);
+    margin-block-start: 1.25rem;
+  }
+  .cu-footer__main--prefs { padding-block: 0.9375rem; }
+  /* Two columns in the content band, the CDS way (its sidebar-priority / sidebar-secondary layout): the markup
+     order is the small-screen order (primary first, then secondary), and grid areas place them side by side from
+     768px. The primary column holds the content, the secondary one the visitor preferences. */
+  .cu-footer__cols { display: grid; gap: var(--space-5); }
+  /* a fieldset will not shrink below its content by default; let the choices wrap instead (reflow at 200% text) */
+  .cu-footer__prefs .cu-mode-switch { min-inline-size: 0; max-inline-size: 100%; }
+  .cu-footer__prefs .cu-mode-switch__options { flex-wrap: wrap; }
+  .cu-footer__secondary .cu-footer__prefs { margin-block-start: 0; flex-direction: column; align-items: flex-start; }
+  @media (min-width: 768px) {
+    .cu-footer__cols {
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+      grid-template-areas: 'primary secondary';
+      column-gap: 1.625rem;
+    }
+    .cu-footer__primary { grid-area: primary; }
+    .cu-footer__secondary { grid-area: secondary; }
+    .cu-footer__secondary .cu-footer__prefs { align-items: flex-end; } /* flush with the right edge, like the links below */
+  }
+  .cu-footer__main--prefs .cu-footer__prefs { margin-block-start: 0; }
+  .cu-footer .cu-footer__prefs .cu-mode-switch { --_on-fill: var(--footer-bg); } /* the band is --footer-bg, not the sub-footer's */
+  .cu-footer__sub {
+    padding-block: 0.9375rem;
+    background-color: var(--footer-sub-bg);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+  }
+  .cu-footer__links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  .cu-footer__links ul {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 0.9375rem 0 -0.9375rem;
+    padding: 0;
+    list-style: none;
+  }
+  .cu-footer__links ul + ul {
+    margin-inline: 0 -0.9375rem;
+  }
+  .cu-footer__links li {
+    margin: 0;
+    padding-inline: 0.9375rem;
+  }
+  @media (min-width: 1024px) {
+    .cu-footer__main { padding-block: 3.125rem; }
+    .cu-footer__sub { padding-block: 1.25rem; }
+  }
+}

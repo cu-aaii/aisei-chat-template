@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="../assets/favicon.ico" sizes="16x16">
+  <title>Tokens · Cornell design system</title>
+  <!-- Cornell typography (Typekit kit used by CDS): freight-sans-pro, freight-text-pro -->
+  <link rel="stylesheet" href="https://use.typekit.net/nwp2wku.css">
+  <link rel="stylesheet" href="../index.css">
+  <link rel="stylesheet" href="showcase.css">
+  <script src="manifest.js"></script>
+  <script src="showcase.js"></script>
+</head>
+<body>
+<a class="cu-skip" href="#main">Skip to main content</a>
+<main id="main" tabindex="-1" class="cu-container sc-page">
+  <h1>Tokens</h1>
+  <p class="cu-intro">Every colour, size and space the blocks use. Values below are resolved for the theme and mode selected above. Generated from <code>tokens/</code> and <code>themes/</code> by <code>tools/check.mjs --manifest</code>.</p>
+
+  <section class="sc-section" id="summary">
+    <h2>Contrast by theme</h2>
+    <p class="sc-note">Each pair is a text/background (or UI-component/background) combination the blocks actually use, checked against WCAG 2.2 AA: 4.5:1 for text, 3:1 for large text and UI.</p>
+    <div class="cu-table-wrap"><table class="cu-table" id="sum"><thead><tr><th scope="col">Theme / mode</th><th scope="col" class="cu-table__num">Pairs</th><th scope="col" class="cu-table__num">Passing</th><th scope="col">Lowest ratio</th></tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section class="sc-section" id="colours">
+    <h2>Colours <span class="cu-text-muted" id="cur-theme"></span></h2>
+    <div id="swatches" class="sc-swatches"></div>
+  </section>
+
+  <section class="sc-section" id="pairs">
+    <h2>Every contrast pair</h2>
+    <div class="cu-table-wrap" role="region" aria-label="Contrast pairs" tabindex="0"><table class="cu-table" id="pairs-table"><thead><tr><th scope="col">Foreground</th><th scope="col">Background</th><th scope="col">Sample</th><th scope="col">Kind</th><th scope="col" class="cu-table__num">Ratio</th><th scope="col">Result</th></tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section class="sc-section" id="type">
+    <h2>Type and space</h2>
+    <p class="sc-note">Text sizes are in rem and multiply from <code>--text-base</code> (16px, 18px from 960px).</p>
+    <div id="scale" class="cu-stack" style="--stack-gap:var(--space-2)"></div>
+  </section>
+</main>
+<script>
+(function () {
+  var M = window.CU_MANIFEST;
+  var q = new URLSearchParams(location.search);
+  var theme = q.get('theme') || 'cornell';
+  if (!M.colours[theme]) theme = 'cornell';
+  var mode = q.get('mode') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  if (M.modes.indexOf(mode) < 0) mode = 'light';
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+
+  document.getElementById('cur-theme').textContent = '· ' + theme + ' / ' + mode;
+
+  // Summary
+  var sb = document.querySelector('#sum tbody');
+  M.themes.forEach(function (t) { M.modes.forEach(function (md) {
+    var rows = M.pairs.filter(function (p) { return p.theme === t && p.mode === md; });
+    var ok = rows.filter(function (p) { return p.pass; }).length;
+    var low = rows.reduce(function (a, b) { return a.ratio < b.ratio ? a : b; });
+    var tr = el('tr');
+    tr.appendChild(el('th', '', t + ' / ' + md)).setAttribute('scope', 'row');
+    tr.appendChild(el('td', 'cu-table__num', String(rows.length)));
+    tr.appendChild(el('td', 'cu-table__num ' + (ok === rows.length ? 'sc-pass' : 'sc-fail'), ok + ' / ' + rows.length));
+    tr.appendChild(el('td', '', low.ratio.toFixed(2) + ':1  (' + low.fg.replace('--', '') + ' on ' + low.bg.replace('--', '') + ')'));
+    sb.appendChild(tr);
+  }); });
+
+  // Swatches
+  var groups = [['Surfaces and text', /^--color-(canvas|surface|ink|muted|line|row-line|field-line|table-head|scrim)/],
+    ['Action, link, accent, focus', /^--color-(primary|link|accent|on-primary|on-accent|focus)/],
+    ['Status', /^--color-(ok|err|warn|info|idle|on-warn)/],
+    ['Frame: masthead, nav, footer', /^--(masthead|nav|sidenav|footer)/]];
+  var host = document.getElementById('swatches');
+  host.style.display = 'block';
+  var colours = M.colours[theme][mode];
+  groups.forEach(function (g) {
+    host.appendChild(el('h3', '', g[0]));
+    var grid = el('div', 'sc-swatches');
+    Object.keys(colours).filter(function (k) { return g[1].test(k); }).forEach(function (k) {
+      var s = el('div', 'sc-swatch'), chip = el('div', 'sc-swatch__chip'), meta = el('div', 'sc-swatch__meta');
+      chip.style.background = colours[k];
+      meta.appendChild(el('b', '', k));
+      meta.appendChild(el('span', '', colours[k]));
+      s.appendChild(chip); s.appendChild(meta); grid.appendChild(s);
+    });
+    host.appendChild(grid);
+  });
+
+  // Pairs for the current theme, with a live sample
+  var pb = document.querySelector('#pairs-table tbody');
+  M.pairs.filter(function (p) { return p.theme === theme && p.mode === mode; }).forEach(function (p) {
+    var tr = el('tr');
+    tr.appendChild(el('td', '', p.fg.replace('--', '')));
+    tr.appendChild(el('td', '', p.bg.replace('--', '')));
+    var sample = el('td'); var chip = el('span', 'sc-sample', p.kind === 'ui' ? '' : 'Aa'); chip.style.color = p.fgHex; chip.style.background = p.bgHex; if (p.kind === 'ui') { var bar = el('span', 'sc-bar'); bar.style.background = p.fgHex; chip.appendChild(bar); } sample.appendChild(chip); tr.appendChild(sample);
+    tr.appendChild(el('td', '', p.kind + ' ' + p.min + ':1'));
+    tr.appendChild(el('td', 'cu-table__num', p.ratio.toFixed(2)));
+    tr.appendChild(el('td', p.pass ? 'sc-pass' : 'sc-fail', p.pass ? 'Pass' : 'FAIL'));
+    pb.appendChild(tr);
+  });
+
+  // Type and space
+  var sc = document.getElementById('scale');
+  [['--text-h1', 'Heading 1'], ['--text-h2', 'Heading 2'], ['--text-h3', 'Heading 3'], ['--text-h4', 'Heading 4'], ['--text-lg', 'Large text'], ['--text-base', 'Body text'], ['--text-sm', 'Small text'], ['--text-xs', 'Extra-small text']].forEach(function (r) {
+    var row = el('div', 'cu-cluster'); var s = el('span', '', r[1]); s.style.fontSize = 'var(' + r[0] + ')'; s.style.lineHeight = '1.25';
+    row.appendChild(s); row.appendChild(el('code', '', r[0])); sc.appendChild(row);
+  });
+  sc.appendChild(el('h3', '', 'Space'));
+  [1, 2, 3, 4, 5, 6, 8, 10, 12, 16].forEach(function (n) {
+    var row = el('div', 'cu-cluster'); var bar = el('span', 'sc-space'); bar.style.inlineSize = 'var(--space-' + n + ')';
+    row.appendChild(bar); row.appendChild(el('code', '', '--space-' + n)); sc.appendChild(row);
+  });
+})();
+</script>
+</body>
+</html>

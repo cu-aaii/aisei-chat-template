@@ -1,0 +1,252 @@
+/* Block — cards (CDS .layout-cards): listings of linked items with an image, a title, a summary and metadata.
+   .cu-cards                      container (listing: small image left from 768px, hairline between cards)
+   .cu-cards--tiles               image tiles with a scrim and centred title overlaid; --no-overlay puts the title below
+   .cu-cards--max-1 / --max-2 / --max-4 / --max-4-2 / --max-3-1     column counts at wide sizes
+   .cu-cards--one-plus-max-3 / --one-plus-max-4                     a wide lead card, then smaller ones
+   .cu-cards--animate (zoom on hover)   .cu-cards--collapse (no gutters)
+   Parts: __list > __card > __image > a > img + __badge + __overlay > h3, then __body > __summary + __meta.
+   (The scrolling card slider is blocks/cardslider.css.)
+   Breakpoints 1080 and 1400 in CDS map to 1024 and 1440 here, so the system keeps one breakpoint scale. */
+@layer blocks {
+  .cu-cards {
+    max-width: 30rem;
+    margin-inline: auto;
+  }
+  .cu-cards__list {
+    display: flex;
+    flex-wrap: wrap;
+    margin-inline: -0.625rem;
+    padding: 0;
+    list-style: none;
+  }
+  .cu-cards__card {
+    position: relative;
+    width: 100%;
+    max-width: 31.25rem;
+    margin-inline: auto;
+    padding: 1.875rem 0.625rem 0;
+  }
+  .cu-cards__card:first-of-type { padding-block-start: 0.625rem; }
+  .cu-cards__card::after {
+    content: '';
+    display: block;
+    padding-block-start: 1.25rem;
+    clear: both;
+  }
+  .cu-cards__card img {
+    width: 100%;
+    margin-block-end: 0.9375rem;
+    vertical-align: middle;
+  }
+  .cu-cards__card h3,
+  .cu-cards__card .cu-h3 { margin-block-end: 0.5em; }
+  .cu-cards__card h4,
+  .cu-cards__card .cu-h4 {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-soft);
+    margin-block: 0 0.5em;
+  }
+  .cu-cards__card h3 + h4 { margin-block-start: -0.35em; }
+  .cu-cards__summary {
+    font-size: var(--text-sm);
+    margin-block: 0 0.6em;
+  }
+  .cu-cards__image { position: relative; }
+  .cu-cards__image a,
+  .cu-cards__card h3 a { text-decoration: none; }
+  .cu-cards__image a { display: block; }
+  .cu-cards__card .cu-cards__deco {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.05em;
+  }
+  .cu-cards__image .cu-cards__deco { text-decoration: none; }
+  .cu-cards__image a:hover .cu-cards__deco,
+  .cu-cards__image a:focus-visible .cu-cards__deco { text-decoration: underline; }
+  .cu-cards__badge {
+    position: absolute;
+    inset: 0 auto auto 0;
+    max-width: 100%;
+    padding: 0.2em 0.7em;
+    overflow: hidden;
+    background: var(--overlay-badge-bg);
+    color: var(--color-on-scrim);
+    font-size: 0.6875rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    pointer-events: none;
+  }
+  /* Metadata: a row of small items (date, author, category), separated by hairlines. */
+  .cu-cards__meta {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -0.5rem;
+    padding: 0;
+    list-style: none;
+    font-size: var(--text-xs);
+    color: var(--color-soft);
+  }
+  .cu-cards__meta > * { padding: 1px 0.5rem; }
+  .cu-cards__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-block-end: 1.875rem;
+  }
+  .cu-cards__header > :where(h2, h3) { margin-block: 0; }
+
+  @media (min-width: 768px) {
+    .cu-cards { max-width: none; margin-inline: 0; }
+    .cu-cards__card { max-width: none; margin-inline: 0; }
+    .cu-cards__card::after {
+      padding-block-start: 1.5625rem;
+      border-block-end: var(--border-thin) solid var(--card-rule);
+    }
+    .cu-cards__card:last-of-type::after { border: 0; }
+    .cu-cards__card img { margin-block-end: 0.3125rem; }
+    .cu-cards__image + .cu-cards__body { width: 77%; float: right; }
+    .cu-cards__image a img { width: 20%; float: left; margin-inline-end: 3%; }
+  }
+  @media (min-width: 960px) {
+    .cu-cards__list { margin-inline: -0.9375rem; }
+    .cu-cards__card { padding-inline: 0.9375rem; }
+  }
+  @media (min-width: 1200px) {
+    .cu-cards__list { margin-inline: -1.25rem; }
+    .cu-cards__card { padding-inline: 1.25rem; }
+    .cu-cards__badge { font-size: 0.875rem; padding: 0.3em 0.9em; }
+  }
+  @media (min-width: 768px) {
+    .cu-cards__badge { font-size: 0.75rem; max-width: 20%; }
+  }
+
+  /* ---- Tiles ---- */
+  .cu-cards--tiles .cu-cards__image { display: block; }
+  .cu-cards--tiles .cu-cards__image::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--overlay-card-scrim);
+    pointer-events: none;
+  }
+  .cu-cards--tiles .cu-cards__image a {
+    transition: background var(--duration-fast), box-shadow var(--duration-fast);
+  }
+  .cu-cards--tiles .cu-cards__image a:hover {
+    background: var(--overlay-card-hover);
+    box-shadow: 0 0 0 0.75rem var(--overlay-card-hover);
+  }
+  .cu-cards--tiles .cu-cards__image a:active {
+    background: var(--overlay-card-press);
+    box-shadow: 0 0 0 0.75rem var(--overlay-card-press);
+  }
+  .cu-cards--tiles .cu-cards__overlay {
+    position: absolute;
+    inset: auto 0 0;
+    padding: 0 0.9375rem 1.25rem;
+    overflow: hidden;
+    text-align: center;
+    color: var(--color-on-scrim);
+  }
+  .cu-cards--tiles .cu-cards__overlay > :last-child { margin-block-end: 0; }
+  .cu-cards--tiles .cu-cards__overlay :is(h3, h4, .cu-h3, .cu-h4) { color: var(--color-on-scrim); }
+  .cu-cards--tiles .cu-cards__image img { position: static; width: 100%; float: none; margin: 0; }
+  .cu-cards--tiles .cu-cards__image + .cu-cards__body { width: 100%; float: none; margin-block-start: 0.9375rem; }
+  .cu-cards--tiles .cu-cards__badge { max-width: 100%; }
+  @media (min-width: 768px) {
+    .cu-cards--tiles .cu-cards__card {
+      width: 50%;
+      margin: 0 0 1.25rem;
+      padding-block: 0;
+    }
+    .cu-cards--tiles .cu-cards__card::after { content: none; }
+  }
+  @media (min-width: 960px) { .cu-cards--tiles .cu-cards__card { margin-block-end: 1.875rem; } }
+  @media (min-width: 1200px) {
+    .cu-cards--tiles .cu-cards__card { width: 33.3333%; margin-block-end: 2.5rem; }
+  }
+  .cu-cards--tiles.cu-cards--no-overlay .cu-cards__image::before { content: none; }
+  .cu-cards--tiles.cu-cards--no-overlay .cu-cards__overlay {
+    position: static;
+    margin-block-start: 0.75rem;
+    padding: 0;
+    text-align: start;
+    color: inherit;
+  }
+  .cu-cards--tiles.cu-cards--no-overlay .cu-cards__overlay :is(h3, h4, .cu-h3, .cu-h4) { color: inherit; }
+  .cu-cards--tiles.cu-cards--no-overlay .cu-cards__overlay h4 { color: var(--color-soft); }
+  .cu-cards--tiles:not(.cu-cards--no-overlay) .cu-cards__overlay h4 { color: var(--color-on-scrim); }
+
+  /* Column-count variants (tiles) */
+  @media (min-width: 768px) {
+    .cu-cards--max-1 .cu-cards__card { width: 100%; }
+    .cu-cards--max-3-1 .cu-cards__card { width: 33.3333%; }
+    .cu-cards--max-4 .cu-cards__list { margin-inline: -0.8125rem; }
+    .cu-cards--max-4 .cu-cards__card { padding-inline: 0.8125rem; }
+  }
+  @media (min-width: 1024px) { .cu-cards--max-4 .cu-cards__card { width: 33.3333%; } }
+  @media (min-width: 1200px) {
+    .cu-cards--max-2 .cu-cards__card { width: 50%; }
+    .cu-cards--max-4-2 .cu-cards__list { margin-inline: -0.9375rem; }
+    .cu-cards--max-4-2 .cu-cards__card { width: 25%; padding-inline: 0.9375rem; }
+  }
+  @media (min-width: 1440px) {
+    .cu-cards--max-4 .cu-cards__list { margin-inline: -0.9375rem; }
+    .cu-cards--max-4 .cu-cards__card { width: 25%; padding-inline: 0.9375rem; }
+  }
+
+  /* One lead card, then a row of smaller ones */
+  @media (min-width: 768px) {
+    .cu-cards--one-plus-max-3 .cu-cards__card { width: 33.3333%; }
+    .cu-cards--one-plus-max-4 .cu-cards__card { width: 50%; }
+    .cu-cards--one-plus-max-3 .cu-cards__card h3,
+    .cu-cards--one-plus-max-4 .cu-cards__card h3 { font-size: 1rem; }
+    .cu-cards--one-plus-max-3 .cu-cards__card:first-of-type,
+    .cu-cards--one-plus-max-4 .cu-cards__card:first-of-type { width: 100%; }
+    .cu-cards--one-plus-max-3 .cu-cards__card:first-of-type h3,
+    .cu-cards--one-plus-max-4 .cu-cards__card:first-of-type h3 { font-size: 1.375rem; }
+  }
+  @media (min-width: 960px) {
+    .cu-cards--one-plus-max-4 .cu-cards__card { width: 25%; }
+    .cu-cards--one-plus-max-4 .cu-cards__card:first-of-type { width: 100%; }
+    :is(.cu-cards--one-plus-max-3, .cu-cards--one-plus-max-4) .cu-cards__card:first-of-type .cu-cards__image {
+      display: block;
+      position: static;
+    }
+    :is(.cu-cards--one-plus-max-3, .cu-cards--one-plus-max-4) .cu-cards__card:first-of-type .cu-cards__image a {
+      position: relative;
+      background: none;
+      box-shadow: none;
+    }
+    :is(.cu-cards--one-plus-max-3, .cu-cards--one-plus-max-4) .cu-cards__card:first-of-type .cu-cards__image::before { content: none; }
+    :is(.cu-cards--one-plus-max-3, .cu-cards--one-plus-max-4) .cu-cards__card:first-of-type .cu-cards__image a > img {
+      width: 50%;
+      float: left;
+      margin-inline-end: 3%;
+    }
+    :is(.cu-cards--one-plus-max-3, .cu-cards--one-plus-max-4) .cu-cards__card:first-of-type .cu-cards__body {
+      width: 47%;
+      float: left;
+      margin-block-start: 0;
+    }
+  }
+  @media (min-width: 1200px) {
+    :is(.cu-cards--one-plus-max-3, .cu-cards--one-plus-max-4) .cu-cards__card:first-of-type .cu-cards__summary {
+      margin-block-start: 1em;
+      font-size: 1.125rem;
+    }
+  }
+
+  /* Finishes */
+  .cu-cards--animate.cu-cards--tiles .cu-cards__image { overflow: hidden; }
+  .cu-cards--animate.cu-cards--tiles a img { transition: transform 0.3s ease-out; }
+  .cu-cards--animate.cu-cards--tiles a:hover img { transform: scale(1.05); }
+  .cu-cards--collapse.cu-cards--tiles .cu-cards__list { margin-inline: 0; }
+  .cu-cards--collapse.cu-cards--tiles .cu-cards__card { padding: 0; margin-block-end: 0; }
+  @media (prefers-reduced-motion: reduce) {
+    .cu-cards--animate.cu-cards--tiles a:hover img { transform: none; }
+  }
+}

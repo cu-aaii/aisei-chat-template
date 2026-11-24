@@ -1,0 +1,41 @@
+/* Block — 12-column flex grid (CDS .flex-grid).
+   <div class="cu-grid"><div class="cu-col-4">…</div><div class="cu-col-8">…</div></div>
+   Columns: cu-col-1 … cu-col-11, plus -1-5 (a fifth) and -1-8 (an eighth); no class = full width.
+   Columns stack below 768px. The layout also waits until its own container is 600px wide (container query), so a grid in
+   a narrow sidebar stays stacked even on a wide screen.
+   Modifiers: --collapse-cols (no gutters), --collapse-rows (no row gap), --compact-rows, --padded (vertical padding). */
+@layer blocks {
+  .cu-grid {
+    display: flex;
+    flex-wrap: wrap;
+    margin-inline: -15px;
+    container-type: inline-size;
+  }
+  .cu-grid > * { inline-size: 100%; padding-inline: 15px; margin-block-end: 1.5em; }
+  .cu-grid > hr { margin: 0 15px 1.5em; inline-size: calc(100% - 30px); padding-inline: 0; }
+  .cu-grid--collapse-cols { margin-inline: 0; }
+  .cu-grid--collapse-cols > * { padding-inline: 0; }
+  .cu-grid--collapse-rows > * { margin-block-end: 0; }
+  .cu-grid--compact-rows > * { margin-block-end: 0.35em; }
+  .cu-grid--padded > * { padding-block: 15px; }
+  /* Columns apply from 768px, and only once the grid's own container is 600px wide */
+  @media (min-width: 768px) {
+    @container (min-width: 600px) {
+      .cu-grid > .cu-col-1 { inline-size: 8.333333%; }
+      .cu-grid > .cu-col-2 { inline-size: 16.666667%; }
+      .cu-grid > .cu-col-3 { inline-size: 25%; }
+      .cu-grid > .cu-col-4 { inline-size: 33.333333%; }
+      .cu-grid > .cu-col-5 { inline-size: 41.666667%; }
+      .cu-grid > .cu-col-6 { inline-size: 50%; }
+      .cu-grid > .cu-col-7 { inline-size: 58.333333%; }
+      .cu-grid > .cu-col-8 { inline-size: 66.666667%; }
+      .cu-grid > .cu-col-9 { inline-size: 75%; }
+      .cu-grid > .cu-col-10 { inline-size: 83.333333%; }
+      .cu-grid > .cu-col-11 { inline-size: 91.666667%; }
+      .cu-grid > .cu-col-1-5 { inline-size: 20%; }
+      .cu-grid > .cu-col-1-8 { inline-size: 12.5%; }
+      .cu-grid > .cu-form-item, .cu-grid > .cu-form-actions { align-self: flex-end; margin-block-end: 1em; }
+    }
+  }
+  .cu-grid--compact-rows > .cu-form-item { margin-block-end: 0.35em; }
+}

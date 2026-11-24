@@ -1,0 +1,57 @@
+/* Block — motion (CDS "Motion Design": _motion.scss + cds_motion.js). Reveals as an element scrolls into view, and parallax.
+   <div class="cu-motion-fadein">…</div>      fades in once, when its top reaches 85% of the viewport height
+   <div class="cu-motion-slidein">…</div>     fades in and rises 60px
+   <div class="cu-motion-custom">…</div>      no motion of its own: gets .is-revealed, style the animation yourself
+   <div class="cu-motion-parallax">…</div>    drifts against the scroll, by a quarter of its height at most
+   + cu-motion-onload                          reveal as soon as the page loads (for elements near the top)
+   Behaviour: initMotion() in showcase/showcase.js. Kept from CDS: the reveal point, timings and distances, and that
+   an element is hidden only once the script has marked it (.is-scripted), so without script nothing is ever hidden.
+   Added: with prefers-reduced-motion everything is shown at once and nothing moves (no slide, no parallax); content
+   that receives keyboard focus is revealed immediately; printing shows everything. */
+@layer blocks {
+  .cu-motion-fadein.is-scripted {
+    opacity: 0;
+  }
+  .cu-motion-fadein.is-revealed {
+    opacity: 1;
+    transition: opacity 0.5s linear 0.1s;
+  }
+
+  .cu-motion-slidein.is-scripted {
+    opacity: 0;
+    transform: translateY(60px);
+  }
+  .cu-motion-slidein.is-revealed {
+    opacity: 1;
+    transform: none;
+    transition: transform 0.5s ease-out 0.1s, opacity 0.5s linear 0.1s;
+  }
+
+  .cu-motion-parallax {
+    will-change: transform;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cu-motion-fadein.is-scripted,
+    .cu-motion-slidein.is-scripted,
+    .cu-motion-custom.is-scripted {
+      opacity: 1;
+      transform: none;
+      transition: none;
+      animation: none;
+    }
+    .cu-motion-parallax {
+      transform: none;
+      will-change: auto;
+    }
+  }
+  @media print {
+    .cu-motion-fadein.is-scripted,
+    .cu-motion-slidein.is-scripted,
+    .cu-motion-custom.is-scripted,
+    .cu-motion-parallax {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}

@@ -8,6 +8,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { HeroSegment } from '../content.models';
+import { CssColorProbe } from '../../services/theme/css-colors';
 
 const DRAW_IN_MS = 30000;
 const DRAW_IN_EASE_POWER = 6; // ease-out: draws fast at first, eases into the last stretch
@@ -96,32 +97,37 @@ function strokeRevealed(
   ctx.stroke();
 }
 
+/** `#rrggbb` (what `CssColorProbe` answers) as an RGB triple; an unparsable value gives black. */
 function hexToRgb(hex: string): [number, number, number] {
-  const clean = hex.trim().replace('#', '');
-  const n = parseInt(clean, 16);
+  const n = /^#[0-9a-f]{6}$/i.test(hex.trim()) ? parseInt(hex.trim().slice(1), 16) : 0;
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
+/** The canvas's two strand colours, as design-system tokens: resolved at draw time, in the band's (dark) scheme. */
+const STRAND_COLOURS = ['var(--color-red-text)', 'var(--band-dark-ink)'] as const;
+
 /**
- * Dark hero band with a gradient background, an italic-accent-word headline,
- * and a decorative animated canvas — a simplified Canvas 2D approximation of
- * the live site's WebGL flowing-curve hero graphic, confined to the
- * bottom-right corner. The graphic is generated once, draws in on load, then pulses
- * color/alpha in place — it never repositions or redraws its shape.
+ * The home page's hero: a dark design-system band (`cu-band cu-band--near-black`, which sets `color-scheme: dark`,
+ * so every token inside takes its dark value in either page mode), an italic-accent-word headline, and a
+ * decorative canvas: a simplified Canvas 2D approximation of the live site's WebGL flowing-curve graphic, confined
+ * to the bottom-right corner. The graphic is generated once, draws in on load, then pulses alpha in place.
+ *
+ * Colours are tokens only. The accent words use `--color-red-text`, the design system's contrast-checked red for
+ * text (carnelian in light, a light red on a dark surface). The canvas cannot read `var()`, so it resolves its
+ * colours with `CssColorProbe` at an invisible element inside the band (design-system-port, Step 3).
  */
 @Component({
   selector: 'app-hero',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'hero' },
+  host: { class: 'hero cu-band cu-band--near-black' },
   template: `
-    <canvas class="hero-canvas" #canvasRef></canvas>
-    <div class="inner container-fluid">
+    <canvas class="hero-canvas" #canvasRef aria-hidden="true"></canvas>
+    <span class="probe" #probeRef aria-hidden="true"></span>
+    <div class="inner cu-container">
       <h1>
         @for (seg of title(); track $index) {
-          @if (seg.accent === 1) {
-            <em class="accent-1">{{ seg.text }}</em>
-          } @else if (seg.accent === 2) {
-            <em class="accent-2">{{ seg.text }}</em>
+          @if (seg.accent) {
+            <em class="accent">{{ seg.text }}</em>
           } @else {
             <span>{{ seg.text }}</span>
           }
@@ -138,11 +144,9 @@ function hexToRgb(hex: string): [number, number, number] {
       display: block;
       position: relative;
       overflow: hidden;
-      background: linear-gradient(135deg, var(--color-hero-bg) 0%, #2a2a2a 100%);
-      color: #fff;
     }
     @media (min-width: 768px) {
-      :host { min-height: 630px; display: flex; align-items: center; }
+      :host { min-height: 36rem; display: flex; align-items: center; }
     }
     .hero-canvas {
       position: absolute;
@@ -151,33 +155,23 @@ function hexToRgb(hex: string): [number, number, number] {
       pointer-events: none;
       display: block;
     }
-    /* No padding-top: at >=768px :host is a flex container that vertically centres
-       .inner, and the <p> below carries its own 60px padding-bottom. A symmetric
-       top pad pushed the whole block visually low. The mobile override below still
-       needs one — there :host is a plain block, so it's real spacing under the
-       masthead, not a centring artifact. */
+    .probe { position: absolute; inline-size: 0; block-size: 0; overflow: hidden; }
     .inner {
       position: relative;
       z-index: 1;
       width: 100%;
-      padding-bottom: 64px;
+      padding-block: var(--space-8);
     }
     h1 {
-      font-family: var(--heading-font);
-      font-size: 97px;
+      font-family: var(--font-sans);
+      font-size: clamp(3rem, 8vw, 6rem);
       line-height: 1.15;
-      margin: 0 0 18px;
-      font-weight: 400;
+      margin: 0 0 var(--space-4);
+      font-weight: var(--weight-regular);
+      color: inherit;
     }
-    h1 .accent-1 { color: var(--color-hero-accent-1); font-style: italic; font-weight: 900; }
-    h1 .accent-2 { color: var(--color-hero-accent-2); font-style: italic; font-weight: 900; }
-    p { max-width: 960px; opacity: .85; font-size: 26px; line-height: 1.2; margin: 0; padding-bottom: 60px; }
-
-    @media (max-width: 767px) {
-      .inner { padding-top: 44px; padding-bottom: 44px; }
-      h1 { font-size: 54px; }
-      p { font-size: 18px; }
-    }
+    h1 .accent { color: var(--color-red-text); font-style: italic; font-weight: var(--weight-bold); }
+    p { max-width: 60rem; font-size: clamp(1.125rem, 2.2vw, 1.625rem); line-height: 1.3; margin: 0; }
   `,
 })
 export class HeroComponent {
@@ -185,6 +179,7 @@ export class HeroComponent {
   readonly subtitle = input('');
 
   private readonly canvasRef = viewChild<ElementRef<HTMLCanvasElement>>('canvasRef');
+  private readonly probeRef = viewChild<ElementRef<HTMLElement>>('probeRef');
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -200,9 +195,11 @@ export class HeroComponent {
     if (!canvas || !ctx) return;
 
     const hostEl = this.host.nativeElement;
-    const computed = getComputedStyle(hostEl);
-    const [rA, gA, bA] = hexToRgb(computed.getPropertyValue('--color-hero-accent-1') || '#769cb6');
-    const [rB, gB, bB] = hexToRgb(computed.getPropertyValue('--color-hero-accent-2') || '#c6b20f');
+    const probeEl = this.probeRef()?.nativeElement;
+    if (!probeEl) return;
+    const probe = new CssColorProbe(probeEl);
+    const [rA, gA, bA] = hexToRgb(probe.resolve(STRAND_COLOURS[0]));
+    const [rB, gB, bB] = hexToRgb(probe.resolve(STRAND_COLOURS[1]));
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isMobile = () => window.innerWidth < MOBILE_WIDTH;
@@ -276,7 +273,8 @@ export class HeroComponent {
         const pulse =
           animate && revealProgress >= 1 ? PULSE_AMPLITUDE * Math.sin(elapsed * PULSE_SPEED + s) : 0;
         const alpha = Math.max(0.05, HOLD_ALPHA + pulse);
-        ctx.strokeStyle = `rgba(${strand.color[0]},${strand.color[1]},${strand.color[2]},${alpha})`;
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = '#' + strand.color.map((c) => c.toString(16).padStart(2, '0')).join('');
         ctx.lineWidth = lineWidth;
         strokeRevealed(ctx, strand.points, strand.cum, strand.total * revealProgress);
       }

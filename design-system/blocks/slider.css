@@ -1,0 +1,236 @@
+/* Block — image slider (CDS "Image Slider", also the banner slider): full-bleed photographs that cross-fade, each with an
+   optional caption box, and a control row with previous, next, pause and one pip per slide. Reference behaviour:
+   initSlider() in showcase/showcase.js. What the behaviour must keep:
+     - controls are built by script, so without it you get the first slide and its caption and no dead buttons
+     - autoplay (data-autoplay, data-interval="8" seconds) never starts for people who ask for reduced motion, stops for good after
+       any use of a control or when focus enters the slider, and always has a pause/play button (WCAG 2.2.2)
+     - every caption stays in the page, reachable and read out (CDS): the slides that are not showing are only transparent, and focusing a
+       caption (Tab, or a screen reader moving through the headings) shows its slide. Previous / Next / a dot say "Slide n of N: title" in a status line
+     - Left/Right, Home and End on a control move between slides
+   <section class="cu-slider [cu-slider--banner] [cu-slider--reduced-overlay|--no-overlay] [cu-slider--nav-end]" aria-roledescription="carousel"
+            aria-label="Featured stories" data-autoplay data-interval="8">
+     <div class="cu-slider__slides">
+       <div class="cu-slider__slide" role="group" aria-roledescription="slide" aria-label="1 of 3">
+         <img class="cu-slider__image" src="…" alt="">
+         <div class="cu-slider__caption"><h2>Headline</h2><p>Text <a href="#">link</a></p></div></div> … </div></section>
+   The slider is dark in both modes (it sits on photographs). Variants: --banner (the tall page-header size), --nav-end (controls at the
+   right), --captions-end / --captions-center, --caption-bottom. */
+@layer blocks {
+  .cu-slider {
+    --_fade: 1000ms;
+    --_shade-a: 10%;
+    --_shade-b: 60%;
+    color-scheme: dark;
+    position: relative;
+    isolation: isolate;
+    box-sizing: border-box;
+    inline-size: 100%;
+    min-block-size: 25rem;
+    aspect-ratio: 846 / 580;
+    margin-block-end: 2em;
+    overflow: hidden;
+    background-color: var(--slider-bg);
+    color: var(--slider-ink);
+  }
+  .cu-slider--banner {
+    aspect-ratio: auto;
+    block-size: 40vw;
+    margin-block-end: 0;
+  }
+  .cu-slider::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: var(--z-slide-shade);
+    background-image: linear-gradient(to bottom, color-mix(in srgb, var(--slider-shade) var(--_shade-a), transparent) 50%, color-mix(in srgb, var(--slider-shade) var(--_shade-b), transparent) 100%);
+    pointer-events: none;
+  }
+  .cu-slider--reduced-overlay { --_shade-a: 0%; --_shade-b: 20%; }
+  .cu-slider--no-overlay::after { content: none; }
+
+  .cu-slider__slides { position: absolute; inset: 0; }
+  .cu-slider__slide { position: absolute; inset: 0; }
+  /* A slide may hold a <video> in place of the <img> (see backdrop.css): its Pause / Play button sits top right, since the slider's own
+     controls are at the bottom */
+  .cu-slider__slide > .cu-backdrop__pause-wrap { inset: 0.9375rem 0 auto; z-index: var(--z-slide-controls); }
+  .cu-slider__image {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    object-position: 50% 15%;
+  }
+
+  /* Before the script runs: just the first slide, nothing to press */
+  .cu-slider:not([data-ready]) .cu-slider__slide:not(:first-child) { display: none; }
+  .cu-slider[data-ready] .cu-slider__slide {
+    z-index: var(--z-raised);
+    opacity: 0;
+    pointer-events: none; /* transparent, not hidden: its caption must stay reachable for the keyboard and screen readers */
+    transition: opacity var(--_fade) linear;
+  }
+  .cu-slider[data-ready] .cu-slider__slide.is-current {
+    z-index: var(--z-slide-current);
+    opacity: 1;
+    pointer-events: auto;
+    transition: opacity var(--_fade) linear;
+  }
+
+  .cu-slider__caption {
+    position: absolute;
+    z-index: var(--z-slide-caption);
+    inset-block-start: 0.9375rem;
+    inset-inline-start: var(--space-4);
+    box-sizing: border-box;
+    min-inline-size: 16.25rem;
+    max-inline-size: calc(100% - 2rem);
+    padding: 0.9375rem;
+    background-color: color-mix(in srgb, var(--slider-caption-bg) 65%, transparent);
+    color: var(--slider-caption-ink);
+    -webkit-font-smoothing: subpixel-antialiased;
+  }
+  .cu-slider[data-ready] .cu-slider__caption { opacity: 0; transition: opacity 0.2s var(--ease); }
+  .cu-slider[data-ready] .is-current .cu-slider__caption { opacity: 1; transition: opacity 0.2s linear 0.6s; }
+  /* the headline has the CDS slider's h2 look whatever its level (an h3 under a section h2 is often the honest one) */
+  .cu-slider__caption :is(h2, h3) { margin-block: 0 0.4em; color: inherit; font-family: var(--font-serif); font-size: var(--text-h2); line-height: 1.3; }
+  .cu-slider__caption > :last-child { margin-block-end: 0; }
+  .cu-slider__caption a:not(.cu-button) {
+    color: var(--slider-ink);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.125em;
+  }
+  .cu-slider--caption-bottom .cu-slider__caption { inset-block: auto 4.5rem; }
+  .cu-slider--captions-end .cu-slider__caption { inset-inline: auto var(--space-4); }
+  .cu-slider--captions-center .cu-slider__caption { inset-inline: 50% auto; transform: translateX(-50%); text-align: center; }
+
+  .cu-slider__controls {
+    position: absolute;
+    z-index: var(--z-slide-controls);
+    inset-inline: 0;
+    inset-block-end: 0;
+    display: flex;
+    align-items: center;
+    padding: 0.9375rem var(--space-4);
+  }
+  .cu-slider--nav-end .cu-slider__controls { flex-direction: row-reverse; }
+  .cu-slider__buttons { display: flex; gap: 2px; white-space: nowrap; }
+  .cu-slider__btn {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 2.25rem;
+    block-size: 2.25rem;
+    padding: 0;
+    background-color: var(--btn-red);
+    color: var(--btn-red-ink);
+    border: 0;
+    font: inherit;
+    cursor: pointer;
+    transition: background-color var(--duration-fast) var(--ease);
+  }
+  .cu-slider__btn:hover { background-color: var(--btn-red-hover); }
+  .cu-slider__btn:active { background-color: var(--btn-red-active); }
+  .cu-slider__btn .cu-icon { font-size: 1.5rem; }
+  /* The video's own control when a slide holds a <video>: a text button ("Pause video" / "Play video"), so it reads as a control for the
+     video and not for the slideshow. Inside the slide it sits top right; in the banner it follows the dots. */
+  .cu-slider__video {
+    pointer-events: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    block-size: 2.25rem;
+    padding-inline: 0.75rem;
+    background-color: var(--btn-red);
+    color: var(--btn-red-ink);
+    border: 0;
+    font: inherit;
+    font-size: var(--text-sm);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color var(--duration-fast) var(--ease);
+  }
+  .cu-slider__video:hover { background-color: var(--btn-red-hover); }
+  .cu-slider__video:active { background-color: var(--btn-red-active); }
+  .cu-slider__video .cu-icon { inline-size: 1.25rem; block-size: 1.25rem; font-size: 1.25rem; }
+  .cu-slider__video .cu-backdrop__play { display: none; }
+  .cu-slider__video.is-paused .cu-backdrop__play { display: block; }
+  .cu-slider__video.is-paused .cu-backdrop__stop { display: none; }
+  .cu-header__controls .cu-slider__video { margin-inline-start: 0.9375rem; }
+  @media (pointer: coarse) { .cu-slider__video { min-block-size: var(--target-min); } }
+  .cu-slider__pips {
+    display: none;
+    margin: 0 0 0 0.9375rem;
+    padding: 0;
+    list-style: none;
+  }
+  .cu-slider--nav-end .cu-slider__pips { margin: 0 0.9375rem 0 0; }
+  .cu-slider__pips li { display: flex; align-items: center; block-size: 2.25rem; margin: 0; }
+  .cu-slider__pip {
+    display: grid;
+    place-items: center;
+    padding: 0.3125rem;
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+  .cu-slider__pip::before {
+    content: '';
+    display: block;
+    inline-size: 0.875rem;
+    block-size: 0.875rem;
+    border-radius: 100em;
+    background-color: color-mix(in srgb, var(--slider-shade) 50%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--slider-ink) 50%, transparent);
+  }
+  .cu-slider__pip:hover::before,
+  .cu-slider__pip:focus-visible::before { background-color: color-mix(in srgb, var(--slider-shade) 80%, transparent); }
+  .cu-slider__pip[aria-current='true']::before {
+    background-color: var(--slider-ink);
+    box-shadow: 0 0 0 1px var(--slider-ink), 0 0 0 2px color-mix(in srgb, var(--slider-shade) 50%, transparent);
+  }
+
+  @media (pointer: coarse) {
+    .cu-slider__btn { inline-size: var(--target-min); block-size: var(--target-min); }
+  }
+  @media (min-width: 768px) {
+    .cu-slider__pips { display: flex; }
+    .cu-slider--banner { block-size: 50vw; min-block-size: 32.5rem; max-block-size: 80vh; }
+  }
+  @media (min-width: 1024px) {
+    .cu-slider__caption { inset-block-start: 1.875rem; inset-inline-start: 1.875rem; min-inline-size: 18.75rem; max-inline-size: 30rem; }
+    .cu-slider--captions-end .cu-slider__caption { inset-inline: auto 1.875rem; }
+    .cu-slider__controls { padding: 1.875rem 1.875rem; }
+    .cu-slider--banner { min-block-size: 38.75rem; }
+    .cu-slider--banner .cu-slider__caption { inset-block: auto calc(0.9375rem + 3.6em + 3%); }
+  }
+  @media (min-width: 1200px) {
+    .cu-slider__caption { inset-inline-start: 3.75rem; }
+    .cu-slider--captions-end .cu-slider__caption { inset-inline: auto 3.75rem; }
+    .cu-slider__controls { padding: 3.75rem; padding-block-start: 0; }
+    .cu-slider--banner .cu-slider__caption { inset-block: auto calc(2.8125rem + 3.6em + 3%); }
+    .cu-slider--banner .cu-slider__caption :is(h2, h3) { font-size: 1.8em; }
+  }
+  /* Phones, banner: the caption loses its box and is centred, as CDS does over the photograph */
+  @media (max-width: 767px) {
+    .cu-slider--banner .cu-slider__caption {
+      inset-block: 1.875rem auto;
+      inset-inline: 0;
+      min-inline-size: 0;
+      max-inline-size: none;
+      padding: 0 var(--space-4);
+      background: none;
+      font-size: var(--text-xs);
+      text-align: center;
+    }
+    .cu-slider--banner .cu-slider__caption :is(h2, h3) { font-size: 1.3em; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cu-slider { --_fade: 0ms; }
+    .cu-slider[data-ready] .cu-slider__caption,
+    .cu-slider[data-ready] .is-current .cu-slider__caption { transition: none; }
+  }
+  @media (forced-colors: active) {
+    .cu-slider__btn, .cu-slider__pip, .cu-slider__video { border: var(--border-thin) solid CanvasText; }
+    .cu-slider__caption { border: var(--border-thin) solid CanvasText; background: Canvas; color: CanvasText; }
+  }
+}

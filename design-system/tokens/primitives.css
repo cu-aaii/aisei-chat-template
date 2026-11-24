@@ -1,0 +1,57 @@
+/* Tier 1 — primitives: raw palette values, named for what they ARE.
+   Nothing outside tokens/ and themes/ may use a raw colour; blocks use the semantic tokens.
+   Source: the Cornell brand book, https://brand.cornell.edu/design-center/colors/
+
+   Share of a design (brand book): primary about 90% (white 55%, carnelian 20%, dark gray 15%),
+   secondary about 7%, accents about 3%. Accents are never the primary colour of a unit, never a full-colour
+   bleed. Logos: carnelian, black or white only.
+
+   Some accents have two values because the brand book limits where each may be used:
+     -graphic   graphic elements only: never as the colour of text
+     -large     large text only (18pt, or 14pt bold)
+     (plain)    any text size
+   The checker (tools/check.mjs) fails a text pair that uses a graphic-only or large-only value. */
+@layer tokens {
+  :root {
+    /* Primary */
+    --cu-carnelian: #b31b1b;
+    --cu-dark-gray: #222222;
+    --cu-white: #ffffff;
+    --cu-black: #000000; /* logo and body text */
+
+    /* Secondary */
+    --cu-light-gray: #f7f7f7;
+    --cu-warm-gray: #a2998b; /* dark warm gray: neutral background areas, black text */
+    --cu-sea-gray: #9fad9f; /* neutral background areas, black text */
+
+    /* Accents */
+    --cu-link-blue: #006699; /* links and buttons; white or light gray text on it */
+    --cu-green-graphic: #6eb43f;
+    --cu-green: #4b7b2b;
+    --cu-green-large: #578e32;
+    --cu-orange-graphic: #f8981d;
+    --cu-orange-large: #d47500;
+    --cu-red-graphic: #ef4035; /* secondary red */
+    --cu-red: #df1e12;
+    --cu-navy: #073949; /* neutral background areas */
+
+    /* Values CDS uses that the brand book does not name (hover and neutral steps) */
+    --cu-carnelian-dark: #a01114;
+    --cu-link-blue-hover: #005580;
+    --cu-link-blue-active: #004466;
+    --cu-link-blue-tint: #e5f0f5; /* a light tint of the brand blue, for selected and informational surfaces */
+
+    /* Neutral steps CDS repeats by hand, named once */
+    --gray-50: #f7f7f7;
+    --gray-100: #eeeeee;
+    --gray-200: #dddddd;
+    --gray-300: #cccccc;
+    --gray-400: #808080; /* form-control border: 3:1 on white; CDS and the app template used lighter values that fail WCAG 1.4.11 */
+    --gray-500: #707070;
+    --gray-600: #555555;
+    --gray-700: #444444;
+    --gray-800: #333333;
+    --gray-900: #222222;
+    --gray-950: #121212;
+  }
+}

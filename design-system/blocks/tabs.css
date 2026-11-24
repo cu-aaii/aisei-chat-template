@@ -1,0 +1,133 @@
+/* Block — tablist (CDS "Tablists": default, navbar, lined-bottom), on the WAI-ARIA tabs pattern.
+   The keyboard model is behaviour, not look: arrows move focus and wrap, Home/End jump, Enter or Space
+   selects, and only the selected tab is a tab stop (reference: initTabs() in showcase/showcase.js).
+   This file is only the look, keyed to the ARIA attributes, so any implementation that sets
+   role="tab" / aria-selected is styled.
+   <div class="cu-tabs [cu-tabs--navbar] [cu-tabs--lined]">
+     <div role="tablist" aria-label="…"> <button role="tab" aria-selected="true" aria-controls="p1" id="t1">One</button> … </div>
+     <div role="tabpanel" id="p1" aria-labelledby="t1" tabindex="0">…</div> … </div>
+   Variants: (none) filled tabs, the selected one in link blue · --navbar underlined labels, the selected one carnelian ·
+   --navbar --lined the same on a hairline rail, tabs touching · --dark a charcoal bar (any variant). */
+@layer blocks {
+  .cu-tabs {
+    margin-block: var(--space-8);
+  }
+  .cu-tabs [role='tablist'] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1px calc(0.28em + 1px); /* CDS: 1px margin plus the space between inline buttons */
+    padding-block: 0.625rem;
+  }
+  .cu-tabs [role='tab'] {
+    --_wash: var(--overlay-tint-b);
+    padding: 0.4em 1.25em 0.45em; /* 41px tall at 16px, 46px at 18px: well over the 24px AA target (2.5.8) */
+    border: 1px solid transparent;
+    background-color: color-mix(in srgb, var(--_wash) 20%, transparent);
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    transition: background-color var(--duration-fast) var(--ease);
+  }
+  .cu-tabs [role='tab']:hover,
+  .cu-tabs [role='tab']:focus-visible {
+    background-color: color-mix(in srgb, var(--_wash) 30%, transparent);
+  }
+  .cu-tabs [role='tab']:active {
+    --_wash: var(--overlay-tint-c);
+    background-color: color-mix(in srgb, var(--_wash) 30%, transparent);
+    transition: none;
+  }
+  .cu-tabs [role='tab'][aria-selected='true'] {
+    background-color: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+  .cu-tabs [role='tabpanel'] {
+    display: flow-root;
+    padding-block: 1.5em;
+  }
+  .cu-tabs [role='tabpanel'] > :last-child {
+    margin-block-end: 0;
+  }
+  .cu-tabs [role='tabpanel'][hidden] {
+    display: none;
+  }
+  .cu-tabs [role='tabpanel']:focus-visible {
+    outline-offset: -3px;
+  }
+
+  /* Navbar: text with an underline that is clear, a faint grey on hover, carnelian when selected. */
+  .cu-tabs--navbar [role='tablist'] {
+    align-items: center;
+    padding-block: 0.9375rem;
+    column-gap: var(--space-5);
+  }
+  /* --large: CDS .large on the tablist, 18px, 20px from 1024px, 24px from 1200px */
+  .cu-tabs--large [role='tablist'] { font-size: 1.125rem; }
+  .cu-tabs--navbar [role='tab'] {
+    --_edge: transparent;
+    min-height: 0;
+    padding: 0;
+    background: none;
+    color: var(--color-ink);
+    border: 0;
+    border-block-end: 3px solid var(--_edge);
+    transition: border-color var(--duration-base) var(--ease);
+  }
+  .cu-tabs--navbar [role='tab']:hover,
+  .cu-tabs--navbar [role='tab']:focus-visible {
+    --_edge: color-mix(in srgb, var(--color-ink) 12%, transparent);
+    background: none;
+    transition-duration: var(--duration-fast);
+  }
+  .cu-tabs--navbar [role='tab']:active {
+    --_edge: color-mix(in srgb, var(--color-ink) 50%, transparent);
+    background: none;
+  }
+  .cu-tabs--navbar [role='tab'][aria-selected='true'] {
+    --_edge: var(--color-accent);
+    background: none;
+    color: var(--color-ink);
+  }
+
+  /* Lined bottom: a faint rail under the whole bar, tabs touching, padded sideways. */
+  .cu-tabs--lined [role='tablist'] {
+    column-gap: 0;
+    padding-block-end: 0;
+    margin-block-end: 0.9375rem; /* CDS: the rail hugs the tabs, the bar's 15px bottom padding falls below it */
+    background-image: linear-gradient(color-mix(in srgb, var(--overlay-tint-d) 18%, transparent), color-mix(in srgb, var(--overlay-tint-d) 18%, transparent));
+    background-repeat: repeat-x;
+    background-size: 100% 3px;
+    background-position: 0 100%;
+  }
+  .cu-tabs--lined [role='tab'] {
+    padding: 0 1.25rem;
+    margin: 0;
+  }
+
+  /* Dark bar (CDS [role=tablist].dark): #222 bar, white labels, a 20% white edge on hover, 50% pressed, carnelian selected. */
+  .cu-tabs--dark [role='tablist'] {
+    color-scheme: dark;
+    padding-inline: var(--space-4);
+    background-color: var(--tabbar-dark);
+    color: var(--color-ink);
+  }
+  .cu-tabs--dark.cu-tabs--navbar [role='tab']:hover,
+  .cu-tabs--dark.cu-tabs--navbar [role='tab']:focus-visible { --_edge: color-mix(in srgb, var(--color-ink) 20%, transparent); }
+
+  @media (min-width: 768px) {
+    .cu-tabs--navbar [role='tablist'] { column-gap: var(--space-10); }
+    .cu-tabs--lined [role='tablist'] { column-gap: 0; }
+  }
+  @media (min-width: 1024px) {
+    .cu-tabs--large [role='tablist'] { font-size: 1.25rem; }
+    .cu-tabs--navbar [role='tablist'] { column-gap: calc(var(--space-8) * 1.875); }
+    .cu-tabs--lined [role='tablist'] { column-gap: 0; }
+  }
+  @media (min-width: 1200px) {
+    .cu-tabs--large [role='tablist'] { font-size: 1.5rem; }
+  }
+  @media (prefers-contrast: more) {
+    .cu-tabs [role='tab'] { outline: var(--border-thin) solid currentcolor; outline-offset: -1px; }
+    .cu-tabs--navbar [role='tab'] { outline: 0; }
+  }
+}

@@ -13,7 +13,11 @@
     "build": "ng build --configuration production --output-path=dist/client && tsc -p server/tsconfig.json && tsx scripts/export-chat-content.mjs && tsx scripts/generate-sitemap.mjs",
     "start": "node --env-file=.env dist/server/index.js",
     "run:local": "npm run build && node --env-file=.env dist/server/index.js",
-    "check": "tsc -p server/tsconfig.json --noEmit && tsc -p evals/tsconfig.json && vitest run --config evals/vitest.config.ts evals/chat-cases.test.ts evals/transcript-log.test.ts evals/prompt-cache.test.ts && ng build --configuration production",
+    "check": "npm run check:design-system && npm run check:colours && tsc -p server/tsconfig.json --noEmit && tsc -p evals/tsconfig.json && tsc -p scripts/tsconfig.json && vitest run --config evals/vitest.config.ts evals/chat-cases.test.ts evals/transcript-log.test.ts evals/prompt-cache.test.ts && vitest run && ng build --configuration production",
+    "check:design-system": "node scripts/check-design-system.mjs && node design-system/tools/check.mjs",
+    "check:colours": "node scripts/check-raw-colours.mjs",
+    "sync:design-system": "node scripts/sync-design-system.mjs",
+    "test": "vitest run",
     "lint": "ng lint",
     "test:chat": "vitest run --config evals/vitest.config.ts",
     "test:chat:draft": "tsx --env-file=.env evals/draft-chat-cases.ts"

@@ -1,0 +1,152 @@
+/* Block — card slider (CDS "Card Slider"): a row of cards that scrolls a screenful at a time, with previous/next and one pip per
+   screen. It is plain horizontal scrolling with snap points, so touch, trackpad, keyboard and find-in-page work without script, and
+   tabbing to a card that is off screen scrolls it into view by itself. Script (initCardSlider() in showcase/showcase.js) only adds the
+   buttons and pips and keeps them in step. There is no autoplay, so there is nothing to pause. Buttons use aria-disabled rather than
+   disabled, so focus is never lost when the end is reached.
+   <div class="cu-card-slider [--max-2…--max-6] [--side-padding] [--pips-bottom] [--pips-large] [--no-background]" role="region"
+        aria-roledescription="carousel" aria-label="Latest stories">
+     <div class="cu-card-slider__viewport"> <div class="cu-cards cu-cards--tiles"><ul class="cu-cards__list" role="list"> <li class="cu-cards__card">…</li> … </ul></div> </div></div>
+   Cards per screen (as CDS, with its 1080 and 624 widths on this system's 1024 and 600): default 1 → 2 (768) → 3 (1024);
+   --max-1 and --max-2 one (two from 960); --max-4 two (600), three (960), four (1200); --max-5 two (480), three (768), four (960), five (1200);
+   --max-6 two (480), three (600), four (768), five (960), six (1200). Unlike CDS, phones scroll too (CDS stacks the cards there). */
+@layer blocks {
+  .cu-card-slider {
+    --_per: 1;
+    --_gutter: 0.625rem;
+    position: relative;
+    margin-block-end: 1.5em;
+  }
+  .cu-card-slider__viewport {
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    margin-inline: calc(var(--_gutter) * -1);
+    padding-block-end: 1.875rem;
+    touch-action: pan-x pan-y;
+  }
+  .cu-card-slider__viewport > .cu-cards { max-inline-size: none; margin: 0; }
+  .cu-card-slider .cu-cards__list {
+    flex-wrap: nowrap;
+    margin-inline: 0;
+  }
+  .cu-card-slider .cu-cards__card {
+    flex: 0 0 calc(100% / var(--_per));
+    inline-size: calc(100% / var(--_per));
+    max-inline-size: none;
+    margin-inline: 0;
+    padding-inline: var(--_gutter);
+    scroll-snap-align: start;
+  }
+  .cu-card-slider .cu-cards__card::after { border: 0; }
+  /* the script hides the scrollbar once it has added the buttons and pips that replace it */
+  .cu-card-slider[data-ready] .cu-card-slider__viewport { scrollbar-width: none; }
+  .cu-card-slider[data-ready] .cu-card-slider__viewport::-webkit-scrollbar { display: none; }
+
+  .cu-card-slider__nav { display: none; }
+  .cu-card-slider[data-ready] .cu-card-slider__nav { display: block; }
+  .cu-card-slider__nav[hidden], .cu-card-slider__pips[hidden] { display: none; }
+  .cu-card-slider__btn {
+    position: absolute;
+    inset-block-start: calc(50% - 1.875rem);
+    inline-size: 1.9375rem;
+    block-size: 3.75rem;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    background-color: var(--cardslider-nav);
+    color: var(--cardslider-nav-ink);
+    border: 0;
+    font: inherit;
+    cursor: pointer;
+    transition: background-color var(--duration-fast) var(--ease);
+  }
+  .cu-card-slider--pips-bottom .cu-card-slider__btn { inset-block-start: calc(50% - 3.625rem); }
+  .cu-card-slider__btn:hover { background-color: var(--cardslider-nav-hover); }
+  .cu-card-slider__btn:active { background-color: var(--cardslider-nav-active); }
+  .cu-card-slider__btn[aria-disabled='true'] { opacity: 0.3; cursor: default; background-color: var(--cardslider-nav); }
+  .cu-card-slider__btn .cu-icon { font-size: 2rem; }
+  .cu-card-slider__prev { inset-inline-start: -1.25rem; }
+  .cu-card-slider__next { inset-inline-end: -1.25rem; }
+  @media (pointer: coarse) {
+    .cu-card-slider__btn { inline-size: var(--target-min); }
+  }
+
+  .cu-card-slider__pips {
+    display: flex;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .cu-card-slider__pips li { margin: 0; }
+  .cu-card-slider__pip {
+    display: grid;
+    place-items: center;
+    padding: 0.5625rem; /* 7px dot + 2 x 9px = 25px, over the 24px minimum target */
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+  .cu-card-slider__pip::before {
+    content: '';
+    display: block;
+    inline-size: 0.4375rem;
+    block-size: 0.4375rem;
+    border-radius: 100em;
+    background-color: var(--color-ink);
+    opacity: 0.25;
+  }
+  .cu-card-slider--pips-large .cu-card-slider__pip::before { inline-size: 0.875rem; block-size: 0.875rem; }
+  .cu-card-slider__pip:hover::before,
+  .cu-card-slider__pip:focus-visible::before { opacity: 0.55; }
+  .cu-card-slider__pip[aria-current='true']::before { opacity: 1; }
+
+  /* with side padding the buttons sit in the padding, beside the cards; without it they overlap the cards' outer edges */
+  .cu-card-slider--side-padding { padding-inline: 2.625rem; }
+  .cu-card-slider--side-padding .cu-card-slider__prev { inset-inline-start: 0; }
+  .cu-card-slider--side-padding .cu-card-slider__next { inset-inline-end: 0; }
+
+  /* Cards per screen */
+  @media (min-width: 480px) {
+    .cu-card-slider--max-5, .cu-card-slider--max-6 { --_per: 2; }
+  }
+  @media (min-width: 600px) {
+    .cu-card-slider--max-4 { --_per: 2; }
+    .cu-card-slider--max-6 { --_per: 3; }
+  }
+  @media (min-width: 768px) {
+    .cu-card-slider { padding-block: 1.875rem; background-image: radial-gradient(ellipse at center top, color-mix(in srgb, var(--color-ink) 10%, transparent) 0%, transparent 60%), radial-gradient(ellipse at center bottom, color-mix(in srgb, var(--color-ink) 4%, transparent) 0%, transparent 40%); }
+    .cu-card-slider--no-background { background-image: none; }
+    .cu-card-slider:is(:not([class*='--max-']), .cu-card-slider--max-3) { --_per: 2; }
+    .cu-card-slider--max-1, .cu-card-slider--max-2 { --_per: 1; }
+    .cu-card-slider--max-5 { --_per: 3; }
+    .cu-card-slider--max-6 { --_per: 4; }
+    .cu-card-slider--side-padding { padding-inline: 3.75rem; }
+    .cu-card-slider--side-padding .cu-card-slider__prev { inset-inline-start: 0; }
+    .cu-card-slider--side-padding .cu-card-slider__next { inset-inline-end: 0; }
+  }
+  @media (min-width: 960px) {
+    .cu-card-slider { --_gutter: 0.9375rem; }
+    .cu-card-slider--max-2 { --_per: 2; }
+    .cu-card-slider--max-4 { --_per: 3; }
+    .cu-card-slider--max-5 { --_per: 4; }
+    .cu-card-slider--max-6 { --_per: 5; }
+  }
+  @media (min-width: 1024px) {
+    .cu-card-slider:is(:not([class*='--max-']), .cu-card-slider--max-3) { --_per: 3; }
+  }
+  @media (min-width: 1200px) {
+    .cu-card-slider { --_gutter: 1.25rem; }
+    .cu-card-slider--max-4 { --_per: 4; }
+    .cu-card-slider--max-5 { --_per: 5; }
+    .cu-card-slider--max-6 { --_per: 6; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cu-card-slider__viewport { scroll-behavior: auto; }
+  }
+  @media (forced-colors: active) {
+    .cu-card-slider__btn { border: var(--border-thin) solid CanvasText; }
+    .cu-card-slider__pip::before { background-color: CanvasText; }
+  }
+}

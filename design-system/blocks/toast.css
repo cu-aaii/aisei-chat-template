@@ -1,0 +1,94 @@
+/* Block — update message and toast (CDS .form-updates and .ui-toast). A quiet message that confirms what just happened,
+   in a polite live region so a screen reader announces it without moving focus.
+   Inline:  <div class="cu-update" role="status"><button class="cu-update__close" type="button" aria-label="Dismiss"></button>
+              <div class="cu-update__content">Saved.</div></div>
+   Toast:   add --toast; it slides in at the bottom right. Behaviour (showUpdate() in showcase/showcase.js):
+     - the region is in the page from the start, empty and clipped; data-open shows it and the content is filled after,
+       so the announcement is reliable (a region that is hidden and then shown often is not announced)
+     - the toast closes itself after 4s, as in CDS, but the timer stops while the pointer or focus is on it (WCAG 2.2.1),
+       and data-timeout="0" keeps it until dismissed; Escape inside it dismisses it
+     - the close button is the only control, and the box never takes focus by itself */
+@layer blocks {
+  @keyframes cu-toast-in {
+    from { opacity: 0; transform: translateX(400px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes cu-update-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .cu-update {
+    display: flow-root;
+    margin-block-end: 1.5em;
+    padding: 0.75rem 0.9375rem;
+    background-color: var(--update-bg);
+    color: var(--color-ink);
+    border: var(--border-thin) solid var(--update-line);
+    animation: cu-update-in 0.4s linear;
+  }
+  /* closed: empty and clipped out of sight, but still in the accessibility tree, so filling it is announced */
+  .cu-update:not([data-open]) {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    border: 0;
+    white-space: nowrap;
+    animation: none;
+  }
+  .cu-update:not([data-open]) .cu-update__close { visibility: hidden; }
+  .cu-update__content > :last-child { margin-block-end: 0; }
+  .cu-update__close {
+    --_glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Crect x='4' y='-1' width='2' height='12' transform='rotate(45 5 5)'/%3E%3Crect x='4' y='-1' width='2' height='12' transform='rotate(-45 5 5)'/%3E%3C/svg%3E");
+    position: relative;
+    float: right;
+    inset-inline-end: -0.25em;
+    inline-size: 1.5rem;
+    block-size: 1.5rem;
+    margin: 0 0 0 0.25rem;
+    padding: 0;
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+  .cu-update__close::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: var(--color-ink);
+    -webkit-mask-image: var(--_glyph);
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: 0.625rem 0.625rem;
+    mask: var(--_glyph) center / 0.625rem 0.625rem no-repeat;
+  }
+  .cu-update__close:hover, .cu-update__close:focus-visible { background-color: color-mix(in srgb, var(--color-ink) 6%, transparent); }
+  .cu-update__close:active { background-color: color-mix(in srgb, var(--color-ink) 13%, transparent); opacity: 0.72; }
+
+  .cu-update--toast {
+    position: fixed;
+    inset: auto 0.9375rem 0.9375rem auto;
+    z-index: var(--z-toast);
+    box-sizing: border-box;
+    inline-size: 22.5rem;
+    max-inline-size: calc(100% - 1.875rem);
+    margin: 0;
+    padding: 0.625rem 0.8125rem;
+    border-color: var(--update-toast-line);
+    box-shadow: var(--shadow-toast);
+    animation: cu-toast-in 0.3s ease-out;
+  }
+  @media (min-width: 768px) {
+    .cu-update--toast { inset: auto 1.875rem 1.875rem auto; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cu-update, .cu-update--toast { animation: none; }
+  }
+  @media (forced-colors: active) {
+    .cu-update { border-color: CanvasText; }
+    .cu-update__close::before { background-color: CanvasText; }
+  }
+}

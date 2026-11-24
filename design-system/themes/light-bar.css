@@ -1,0 +1,17 @@
+/* Light bar — the CDS .navbar.fill (light grey #ededed) as the header's top bar: dark text, the carnelian wordmark,
+   the 4px carnelian line above it. Put it on the header: data-theme="light-bar". Only the bar changes; the brand
+   zone keeps the page's header colours. Everything not listed here inherits the default (cornell) theme. */
+@layer tokens {
+  [data-theme='light-bar'] {
+    --utility-bg: #ededed;
+    --utility-ink: #333333;
+    --utility-hover-bg: #dcdcdc; /* CDS: black at 7% over #ededed, as a solid */
+    --utility-focus: var(--cu-link-blue);
+    --utility-halo: var(--cu-white);
+    --utility-submit-bg: #dcdcdc;
+    --wordmark-color: var(--cu-carnelian);
+    --header-topline: var(--cu-carnelian);
+    --utility-overlap: 0;
+    --header-topline-wide: 0.25rem;
+  }
+}

@@ -1,5 +1,6 @@
 import {
   afterEveryRender,
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   ElementRef,
@@ -25,233 +26,147 @@ interface MessagePart {
 }
 
 /**
- * Shared chat surface — the message list + composer used by both the floating
- * `<app-chat-dialog>` (mounted once, every page) and the inline AI panel on
- * `/search`. Both read the same `ChatEngineService` singleton, so a
- * conversation started in one continues seamlessly in the other.
+ * The chat's message log and composer, inside the floating `<app-chat-dialog>`; it reads the
+ * `ChatEngineService` singleton, so the conversation outlives the panel.
+ *
+ * Markup is the design system's agent-chat block (design-system/blocks/chat.css): `cu-chat__log`
+ * (`role="log"`, so new messages are announced), `cu-chat__msg--user` / `--agent`, a `cu-chat__composer`
+ * form with a `cu-input` textarea and a `cu-button`, and the `cu-chat__hint` line. A failed request is a
+ * `cu-notice cu-notice--warn` (status is never colour alone). The assistant's answers are Markdown: the
+ * design system's base styles draw their paragraphs, lists, links and code.
  */
 @Component({
   selector: 'app-chat-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [IconComponent, MarkdownPipe, ThinkingIndicatorComponent, TranscriptNoticeComponent],
-  host: { class: 'chat-panel', '(click)': 'onContentClick($event)' },
+  host: { class: 'app-chat-panel', '(click)': 'onContentClick($event)' },
   template: `
-    <div #scroller class="scroll" role="log" aria-live="polite" aria-label="Chat messages">
+    <div #scroller class="cu-chat__log" role="log" aria-label="Conversation">
       @if (chatEngine.chat.messages.length > 0) {
         @for (message of chatEngine.chat.messages; track message.id) {
-          <div class="row" [class.user]="message.role === 'user'" [class.assistant]="message.role !== 'user'">
-            <div class="bubble">
-              @for (part of asParts(message.parts); track $index) {
-                @switch (kind(part)) {
-                  @case ('text') {
-                    @if (message.role === 'user') {
-                      <div class="text user-text">{{ part.text }}</div>
-                    } @else {
-                      <div class="text" [innerHTML]="part.text | chatMarkdown"></div>
-                    }
+          <div
+            class="cu-chat__msg"
+            [class.cu-chat__msg--user]="message.role === 'user'"
+            [class.cu-chat__msg--agent]="message.role !== 'user'"
+          >
+            @for (part of asParts(message.parts); track $index) {
+              @switch (kind(part)) {
+                @case ('text') {
+                  @if (message.role === 'user') {
+                    <div class="user-text">{{ part.text }}</div>
+                  } @else {
+                    <div class="text" [innerHTML]="part.text | chatMarkdown"></div>
                   }
-                  @case ('tool') {
-                    @if (debugTools) {
-                      <details class="tool-call">
-                        <summary>{{ toolLabel(part) }}</summary>
-                        @if (part.input) {
-                          <pre class="tool-io">{{ stringify(part.input) }}</pre>
-                        }
-                        @if (part.output) {
-                          <pre class="tool-io">{{ stringify(part.output) }}</pre>
-                        }
-                        @if (part.errorText) {
-                          <p class="tool-error">{{ part.errorText }}</p>
-                        }
-                      </details>
-                    }
+                }
+                @case ('tool') {
+                  @if (debugTools) {
+                    <details class="tool-call">
+                      <summary>{{ toolLabel(part) }}</summary>
+                      @if (part.input) {
+                        <pre class="tool-io"><code>{{ stringify(part.input) }}</code></pre>
+                      }
+                      @if (part.output) {
+                        <pre class="tool-io"><code>{{ stringify(part.output) }}</code></pre>
+                      }
+                      @if (part.errorText) {
+                        <p class="tool-error">{{ part.errorText }}</p>
+                      }
+                    </details>
                   }
                 }
               }
-              @if (!debugTools && showThinking(message)) {
-                <app-thinking-indicator [label]="activeToolLabel(message)" />
-              }
-              @if (isStreamingLast(message.id)) {
-                <span class="cursor" aria-hidden="true">▋</span>
-              }
-            </div>
+            }
+            @if (!debugTools && showThinking(message)) {
+              <app-thinking-indicator [label]="activeToolLabel(message)" />
+            }
+            @if (isStreamingLast(message.id)) {
+              <span class="cursor" aria-hidden="true">▋</span>
+            }
           </div>
         }
         @if (awaitingReply()) {
-          <div class="row assistant">
-            <div class="bubble">
-              <app-thinking-indicator />
-            </div>
+          <div class="cu-chat__msg cu-chat__msg--agent">
+            <app-thinking-indicator />
           </div>
         }
       } @else {
-        <div class="empty">
-          <app-icon name="chat" />
-          <h2>Ask about the Hub</h2>
-          <p>Ask me about anything on this site.</p>
-        </div>
+        <p class="cu-chat__msg cu-chat__msg--agent">
+          Hi, I can answer questions about anything on this site. Ask me what a page says.
+        </p>
       }
     </div>
 
-    <form class="composer" (submit)="onSubmit($event)">
-      @if (errorText()) {
-        <div class="error-banner">{{ errorText() }}</div>
-      }
-      <app-transcript-notice />
-      <div class="input-row">
-        <textarea
-          #box
-          name="message"
-          class="field"
-          rows="1"
-          aria-label="Message"
-          placeholder="Ask a question…"
-          (input)="autoGrow(box)"
-          (keydown)="onKeydown($event, box)"
-        ></textarea>
-        @if (busy()) {
-          <button type="button" class="action stop" aria-label="Stop" (click)="onStop()">
-            <app-icon name="close" />
-          </button>
-        } @else {
-          <button type="submit" class="action send" aria-label="Send message">
-            <app-icon name="send" />
-          </button>
-        }
+    @if (errorText()) {
+      <div class="cu-notice cu-notice--warn app-chat__error" role="alert">
+        <p class="cu-notice__title">The assistant could not answer</p>
+        <p>{{ errorText() }}</p>
       </div>
+    }
+    <app-transcript-notice />
+    <form class="cu-chat__composer" (submit)="onSubmit($event)">
+      <label class="cu-sr-only" for="site-chat-message">Message</label>
+      <textarea
+        #box
+        id="site-chat-message"
+        name="message"
+        class="cu-input"
+        rows="1"
+        placeholder="Ask a question…"
+        aria-describedby="site-chat-hint"
+        (input)="autoGrow(box)"
+        (keydown)="onKeydown($event, box)"
+      ></textarea>
+      @if (busy()) {
+        <button type="button" class="cu-button cu-button--secondary cu-button--icon-only" aria-label="Stop" (click)="onStop()">
+          <svg appIcon="close"></svg>
+        </button>
+      } @else {
+        <button type="submit" class="cu-button cu-button--icon-only" aria-label="Send message">
+          <svg appIcon="send"></svg>
+        </button>
+      }
     </form>
+    <p class="cu-chat__hint" id="site-chat-hint">Enter to send · Shift+Enter for a new line · Esc to minimize</p>
   `,
   styles: `
+    /* The host sits between the panel (a flex column) and the block's parts: it passes the column on. */
     :host {
       display: flex;
-      flex-direction: column;
-      min-height: 0;
-      height: 100%;
-      font-family: var(--body-font);
-    }
-
-    .scroll {
       flex: 1;
-      min-height: 0;
-      overflow-y: auto;
-      padding: 14px 16px;
-    }
-
-    .empty {
-      height: 100%;
-      display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      color: #666;
-      gap: 4px;
-      padding: 24px;
+      min-height: 0;
     }
-    .empty app-icon { font-size: 34px; color: var(--color-accent); margin-bottom: 6px; }
-    .empty h2 { font-family: var(--heading-font); font-size: 20px; margin: 0; color: #222; }
-    .empty p { font-size: 16px; margin: 0; max-width: 280px; }
 
-    .row { display: flex; margin: 10px 0; }
-    .row.user { justify-content: flex-end; }
-    .row.assistant { justify-content: flex-start; }
-    .bubble {
-      max-width: 88%;
-      padding: 10px 14px;
-      border-radius: 10px;
-      font-size: 16px;
-      line-height: 1.55;
-    }
-    .row.user .bubble { background: var(--color-accent); color: #fff; }
-    .row.assistant .bubble { background: #f2f2f2; color: #222; border: 1px solid var(--color-border); }
-    .user-text { white-space: pre-wrap; word-break: break-word; }
+    .user-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+    .text { overflow-wrap: anywhere; }
+    /* The answer's own elements (p, ul, pre) come from [innerHTML], which emulated encapsulation never reaches:
+       their spacing is in theme/app.css (.app-chat-panel .text). */
 
-    .text :first-child { margin-top: 0; }
-    .text :last-child { margin-bottom: 0; }
-    .text p { margin: 0 0 8px; }
-    .text pre { background: rgba(0, 0, 0, 0.06); padding: 8px 10px; border-radius: 6px; overflow-x: auto; margin: 6px 0; }
-    .text code { font-family: monospace; font-size: 14px; background: rgba(0, 0, 0, 0.07); padding: 1px 5px; border-radius: 3px; }
-    .text pre code { background: none; padding: 0; }
-    .text ul, .text ol { margin: 4px 0 8px; padding-left: 20px; }
-    .text a { color: var(--color-accent); }
-
-    .cursor { display: inline-block; margin-left: 1px; animation: chat-blink 1s step-end infinite; }
+    .cursor { display: inline-block; margin-inline-start: 1px; animation: chat-blink 1s step-end infinite; }
     @keyframes chat-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
 
+    /* Raw tool input/output: development builds only (see debugTools). */
     .tool-call {
-      margin: 6px 0;
-      font-size: 12.5px;
-      border: 1px solid var(--color-border);
-      border-radius: 6px;
-      background: #fff;
+      margin-block: var(--space-2);
+      font-size: var(--text-xs);
+      border: var(--border-thin) solid var(--color-line);
+      background: var(--color-surface);
     }
-    .tool-call summary {
-      cursor: pointer;
-      padding: 6px 10px;
-      color: #555;
-      font-weight: 700;
-    }
+    .tool-call summary { cursor: pointer; padding: var(--space-1) var(--space-2); color: var(--color-muted); font-weight: var(--weight-bold); }
     .tool-io {
       margin: 0;
-      padding: 8px 10px;
-      border-top: 1px solid var(--color-border);
-      font-family: monospace;
-      font-size: 11.5px;
+      padding: var(--space-2);
+      border-block-start: var(--border-thin) solid var(--color-line);
       white-space: pre-wrap;
-      word-break: break-word;
+      overflow-wrap: anywhere;
       max-height: 200px;
       overflow-y: auto;
     }
-    .tool-error { margin: 0; padding: 8px 10px; color: #8a1113; font-size: 12px; }
+    .tool-error { margin: 0; padding: var(--space-2); color: var(--color-error-text); }
 
-    .composer { flex: 0 0 auto; padding: 10px 12px 12px; border-top: 1px solid var(--color-border); }
-    .error-banner {
-      margin-bottom: 8px;
-      padding: 8px 10px;
-      border-radius: 6px;
-      background: #fdf1e0;
-      color: #8a5a00;
-      font-size: 14px;
-    }
-    .input-row {
-      display: flex;
-      align-items: flex-end;
-      gap: 6px;
-      border: 1px solid var(--color-border);
-      border-radius: 18px;
-      padding: 4px 4px 4px 12px;
-      background: #fff;
-    }
-    .field {
-      flex: 1;
-      align-self: stretch;
-      border: none;
-      outline: none;
-      resize: none;
-      background: transparent;
-      font: inherit;
-      font-size: 16px;
-      line-height: 1.5;
-      max-height: 160px;
-      overflow-y: auto;
-      padding: 8px 0;
-    }
-    .action {
-      flex: 0 0 auto;
-      width: 38px;
-      height: 38px;
-      border: none;
-      border-radius: 50%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      background: var(--color-accent);
-      color: #fff;
-    }
-    .action app-icon { font-size: 20px; }
-    .action:disabled { opacity: 0.4; cursor: default; }
-    .action.stop { background: #666; }
+    .app-chat__error { margin: 0 var(--space-4) var(--space-2); font-size: var(--text-sm); }
+    .app-chat__error p { margin: 0; }
   `,
 })
 export class ChatPanelComponent {
@@ -268,7 +183,11 @@ export class ChatPanelComponent {
 
   private readonly scroller = viewChild<ElementRef<HTMLElement>>('scroller');
 
+  private readonly box = viewChild<ElementRef<HTMLTextAreaElement>>('box');
+
   constructor() {
+    // The first open happens before this @defer chunk has loaded: take focus once, when the panel first shows.
+    afterNextRender(() => this.box()?.nativeElement.focus());
     afterEveryRender(() => {
       const el = this.scroller()?.nativeElement;
       if (!el) return;

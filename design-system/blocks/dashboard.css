@@ -1,0 +1,275 @@
+/* Block — dashboard parts for apps (not in CDS). Built from CDS's flat, square, bordered surfaces, Freight type and
+   badge/pill vocabulary; meant for the compact scale (data-density="compact"), and fine at the website scale too.
+
+   PAGE HEADER   title, tags and a meta line; page actions on the right (they wrap under on narrow screens)
+   <div class="cu-page-header">
+     <div class="cu-page-header__main">
+       <div class="cu-page-header__heading"><h1>My work</h1><ul class="cu-tags" role="list"><li><span class="cu-pill">admin</span></li></ul></div>
+       <p class="cu-page-header__meta">8 projects · 11 initiatives · as of 11-18-26</p>
+     </div>
+     <div class="cu-page-header__actions"><button class="cu-button cu-button--secondary">Refresh</button></div>
+   </div>
+
+   STATS         a row of figures. A <dl>: the label is the <dt>, the figure the first <dd>; the figure is shown on top.
+                 A state is a word (a .cu-badge), never only a colour.
+   <dl class="cu-stats">
+     <div class="cu-stat"><dt class="cu-stat__label">Projects</dt><dd class="cu-stat__value">8</dd>
+       <dd class="cu-stat__note">tech lead · lead</dd></div>
+     <div class="cu-stat"><dt class="cu-stat__label">Oldest</dt><dd class="cu-stat__value">36<span class="cu-stat__unit"> days</span></dd>
+       <dd class="cu-stat__note"><span class="cu-badge cu-badge--err">Stale</span> Unidentified Payments</dd></div>
+   </dl>
+   A whole tile can be a link: put <a class="cu-stat__link" href> around the label text; the tile becomes the target.
+
+   PANE          a working section: header (title, count, meta), optional filter bar, body (a table, a chart, an empty state)
+   <section class="cu-pane" aria-labelledby="p1">
+     <div class="cu-pane__header"><h2 class="cu-pane__title" id="p1">Projects</h2><span class="cu-pane__count">8 of 8</span>
+       <p class="cu-pane__meta">sorted by urgency</p></div>
+     <div class="cu-filters"> fields … <div class="cu-filters__end"> buttons </div></div>
+     <div class="cu-pane__body"> … </div>
+   </section>
+
+   FILTERS       a wrapping row of compact fields (label above, as CDS) and buttons aligned to the fields' bottom edge
+   EMPTY         <div class="cu-empty"><svg class="cu-icon"…/><p class="cu-empty__title">Nothing here</p><p>Why, and what to do.</p></div>
+   TAGS          a list of .cu-pill (roles, metadata) or .cu-badge (states); .cu-badge--plain is the dot and word only
+                 (priority, urgency). .cu-kind--project / --initiative mark the two kinds of work the same way everywhere.
+   TABLE extras  .cu-table--app: compact rows, a header that stays in view, .cu-num (right-aligned figures),
+                 .cu-cell-sub (a second line under a link), .cu-clamp (cut to two lines, full text in the title). */
+@layer blocks {
+  /* ---- Page header ---- */
+  .cu-page-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3) var(--space-6);
+    margin-block-end: var(--space-5);
+  }
+  .cu-page-header__main { min-inline-size: 0; flex: 1 1 24rem; }
+  .cu-page-header__heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+  }
+  .cu-page-header__heading > :is(h1, h2),
+  .cu-page-header__main > :is(h1, h2) { margin: 0; }
+  .cu-page-header__meta {
+    margin: var(--space-1) 0 0;
+    color: var(--color-muted);
+    font-size: var(--text-sm);
+  }
+  .cu-page-header__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .cu-page-header + .cu-lead { margin-block-start: calc(var(--space-2) * -1); }
+  .cu-lead {
+    max-inline-size: 75ch;
+    margin-block: 0 var(--space-5);
+    color: var(--color-ink);
+    font-size: var(--text-base);
+  }
+
+  /* ---- Tags ---- */
+  .cu-tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .cu-tags > li { margin: 0; max-inline-size: none; }
+  .cu-badge--plain {
+    padding: 0;
+    background-color: transparent;
+    border-color: transparent;
+    font-weight: var(--weight-regular);
+    color: var(--color-ink);
+  }
+  .cu-badge--plain.cu-badge--err::before { background-color: var(--color-err); }
+  .cu-badge--plain.cu-badge--warn::before { background-color: var(--color-warn); }
+  .cu-badge--plain.cu-badge--ok::before { background-color: var(--color-ok); }
+  .cu-badge--plain:not(.cu-badge--err, .cu-badge--warn, .cu-badge--ok)::before { background-color: var(--color-idle); }
+  .cu-kind {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+  }
+  .cu-kind--project { --_accent: var(--accent-blue); --_k: var(--panel-strength); }
+  .cu-kind--initiative { --_accent: var(--accent-purple); --_k: var(--panel-strength); }
+
+  /* ---- Stats ---- */
+  .cu-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+    gap: var(--space-3);
+    margin: 0 0 var(--space-5);
+    padding: 0;
+  }
+  .cu-stat {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-inline-size: 0;
+    padding: var(--space-4) var(--space-4) var(--space-3);
+    background-color: var(--color-surface);
+    border: var(--border-thin) solid var(--color-line);
+  }
+  .cu-stat > dd { margin: 0; }
+  .cu-stat__value {
+    order: -1;
+    font-family: var(--font-sans);
+    font-size: calc(var(--text-h1) * 1.15);
+    font-weight: var(--weight-semibold);
+    line-height: 1;
+    font-variant-numeric: lining-nums tabular-nums;
+    color: var(--color-heading);
+  }
+  .cu-stat__unit {
+    margin-inline-start: 0.15em;
+    font-size: var(--text-base);
+    font-weight: var(--weight-regular);
+    color: var(--color-muted);
+  }
+  .cu-stat__label {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--color-ink);
+  }
+  .cu-stat__note {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-2);
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+  }
+  .cu-stat__link { color: var(--color-link); text-decoration: none; }
+  .cu-stat__link::after { content: ''; position: absolute; inset: 0; } /* the whole tile is the target */
+  .cu-stat:has(.cu-stat__link):hover { border-color: var(--color-link); }
+  .cu-stat:has(.cu-stat__link):hover .cu-stat__link { text-decoration: underline; }
+  .cu-stat:has(.cu-stat__link:focus-visible) {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+  .cu-stat__link:focus-visible { outline: none; }
+
+  /* ---- Pane ---- */
+  .cu-pane {
+    margin-block-end: var(--space-6);
+    background-color: var(--color-surface);
+    border: var(--border-thin) solid var(--color-line);
+  }
+  .cu-pane__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-1) var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-block-end: var(--border-thin) solid var(--color-line);
+  }
+  .cu-pane__title {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: var(--text-lg);
+    font-weight: var(--weight-semibold);
+    line-height: var(--leading-snug);
+  }
+  .cu-pane__count {
+    color: var(--color-muted);
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+  }
+  .cu-pane__meta {
+    margin: 0 0 0 auto;
+    max-inline-size: none;
+    color: var(--color-muted);
+    font-size: var(--text-xs);
+  }
+  .cu-pane__body { padding: var(--space-4); }
+  .cu-pane__body:has(> .cu-table-wrap:only-child) { padding: 0; }
+  .cu-pane__body > .cu-table-wrap:only-child { margin: 0; border: 0; }
+  .cu-pane > .cu-filters { padding: var(--space-3) var(--space-4) 0; }
+  .cu-pane > .cu-filters + .cu-pane__body { padding-block-start: var(--space-3); }
+
+  /* ---- Filters ---- */
+  .cu-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--space-3);
+    margin-block-end: var(--space-3);
+  }
+  .cu-filters .cu-form-item { flex: 0 1 12rem; margin: 0; min-inline-size: min(100%, 10rem); }
+  .cu-filters .cu-form-item--grow { flex: 1 1 16rem; }
+  .cu-filters .cu-form-item :is(.cu-input, .cu-select, .cu-input-wrap, .cu-select-look) { inline-size: 100%; max-inline-size: none; margin-block: 0; }
+  .cu-filters .cu-label { display: block; margin-block-end: var(--space-1); }
+  .cu-filters :is(.cu-input, .cu-select:not([multiple]), .cu-select-look) { block-size: var(--control-h); }
+  .cu-filters .cu-option-label { padding-block: var(--space-1); } /* label + box make a target over 24px */
+  .cu-filters .cu-option { flex: none; margin: 0; min-block-size: var(--control-h); display: inline-flex; align-items: center; }
+  .cu-filters__end {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-inline-start: auto;
+  }
+
+  /* ---- Empty state ---- */
+  .cu-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    max-inline-size: 42ch;
+    margin: var(--space-6) auto;
+    text-align: center;
+    color: var(--color-muted);
+    font-size: var(--text-sm);
+  }
+  .cu-empty > .cu-icon { font-size: 2.5rem; color: var(--color-idle); }
+  .cu-empty > p { margin: 0; }
+  .cu-empty__title {
+    color: var(--color-ink);
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+  }
+
+  /* ---- Table extras for apps ---- */
+  .cu-table--app th,
+  .cu-table--app td {
+    padding: var(--space-2) var(--space-3);
+    vertical-align: middle;
+  }
+  .cu-table--app thead th {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: var(--z-raised);
+    font-size: var(--text-xs);
+    border-block-end-width: var(--border-thin);
+  }
+  .cu-table--app tbody th { font-weight: var(--weight-regular); }
+  /* the header stays in view while the rows scroll: give the wrap a height (sticky needs its own scroller) */
+  .cu-table-wrap--scroll { max-block-size: var(--table-max-h, 70vh); overflow: auto; }
+  .cu-table .cu-num { text-align: end; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .cu-table .cu-nowrap { white-space: nowrap; }
+  .cu-cell-aside { margin-inline-start: 0.35em; color: var(--color-muted); }
+  .cu-cell-sub {
+    display: block;
+    color: var(--color-muted);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-regular);
+  }
+  .cu-clamp {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    max-inline-size: 32ch;
+  }
+}
