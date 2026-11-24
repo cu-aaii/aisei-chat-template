@@ -1,0 +1,694 @@
+/* Blocks — navigation. One bar block (.cu-nav) with modifiers, a vertical form of it, section navigation,
+   the app-shell side navigation, and the breadcrumb. Every current page is marked with aria-current and
+   signalled by more than colour (a fill, a bar), so it survives forced-colours and colour-blindness.
+
+   Variants (combine freely — each modifier changes one thing):
+     tone       cu-nav--light | (default dark) | cu-nav--red | cu-nav--blue | cu-nav--gradient (over a photo)
+     alignment  cu-nav--start | --center | --end        spread  cu-nav--even | --around | --between
+     active     (default tint) | cu-nav--active-red     hover   cu-nav--accent-red
+     shape      cu-nav--tall | cu-nav--underlines | cu-nav--vertical
+     menus      cu-nav--menu (dropdowns, 3 levels) | cu-nav--mega (3-column panel; + --mega-headings, --mega-merge)
+   Inside .cu-header the bar collapses behind the Menu button below 960px (see blocks/header.css); on its
+   own, below 960px it stacks, submenus become accordions, and a .cu-nav-toggle can fold the whole bar.
+   Behaviour (open/close, arrow keys, Escape) is the app's job; the showcase has a ~100-line reference.
+
+   <nav class="cu-nav cu-nav--menu" aria-label="Main">
+     <div class="cu-container">
+       <ul class="cu-nav__list" role="list">
+         <li><a class="cu-nav__link" href="/" aria-current="page">Home</a></li>
+         <li class="cu-nav__parent">
+           <a class="cu-nav__link" href="/about">About</a>
+           <button class="cu-nav__toggle" type="button" aria-expanded="false"><span class="cu-sr-only">About submenu</span></button>
+           <ul class="cu-nav__sub" role="list"> <li><a class="cu-nav__link" href="…">Item</a></li> … </ul>
+         </li> … */
+@layer blocks {
+  .cu-nav {
+    --_bg: var(--nav-bg);
+    --_ink: var(--nav-ink);
+    --_panel-bg: var(--navbar-dark-panel-bg);
+    --_panel-line: var(--navbar-dark-panel-line);
+    --_focus: var(--nav-focus);
+    --_halo: var(--nav-halo);
+    --_hover: color-mix(in srgb, var(--_ink) 8%, transparent);
+    --_press: color-mix(in srgb, var(--_ink) 12%, transparent);
+    --_trail: color-mix(in srgb, var(--_ink) 7%, transparent);
+    --_rule: color-mix(in srgb, var(--_ink) 18%, transparent);
+    --_quiet: color-mix(in srgb, var(--_ink) 72%, transparent);
+    --color-focus: var(--_focus);
+    --color-focus-halo: var(--_halo);
+
+    background-color: var(--_bg);
+    color: var(--_ink);
+  }
+
+  /* ---- Tones ---- */
+  .cu-nav--light {
+    --_bg: var(--navbar-light-bg);
+    --_ink: var(--navbar-light-ink);
+    --_panel-bg: var(--navbar-light-panel-bg);
+    --_panel-line: var(--navbar-light-panel-line);
+    --_focus: var(--navbar-light-focus);
+    --_halo: var(--navbar-light-halo);
+  }
+  .cu-nav--red {
+    --_bg: var(--navbar-red-bg);
+    --_ink: var(--navbar-red-ink);
+    --_panel-bg: var(--navbar-red-panel-bg);
+    --_panel-line: var(--navbar-red-panel-line);
+    --_hover: var(--overlay-red-hover);
+    --_press: var(--overlay-red-press);
+    --_trail: var(--overlay-red-trail);
+    --_halo: var(--navbar-red-bg);
+  }
+  .cu-nav--blue {
+    --_bg: var(--navbar-blue-bg);
+    --_ink: var(--navbar-blue-ink);
+    --_panel-bg: var(--navbar-blue-panel-bg);
+    --_panel-line: var(--navbar-blue-panel-line);
+    --_halo: var(--navbar-blue-bg);
+  }
+  .cu-nav--gradient {
+    --_bg: transparent;
+    background-image: var(--overlay-navbar-gradient);
+  }
+
+  /* ---- List and links ---- */
+  .cu-nav__list {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .cu-nav__list li,
+  .cu-nav__sub li {
+    margin: 0;
+    max-width: none;
+    position: relative;
+  }
+  .cu-nav__link {
+    display: flex;
+    align-items: center;
+    min-height: 2.9375rem;
+    padding: 0.5625rem var(--space-4);
+    color: var(--_ink);
+    font-weight: var(--weight-regular);
+    text-decoration: none;
+    transition: background-color var(--duration-base);
+  }
+  .cu-nav__link:hover,
+  .cu-nav__link:focus-visible,
+  .cu-nav__toggle:hover,
+  .cu-nav__parent:is(:hover, :focus-within, .is-open) > :is(.cu-nav__link, .cu-nav__toggle) {
+    background-color: var(--_hover);
+    color: var(--_ink);
+    text-decoration: none;
+    transition-duration: var(--duration-fast);
+  }
+  .cu-nav__link:active,
+  .cu-nav__toggle:active {
+    background-color: var(--_press);
+    transition: none;
+  }
+  /* The current page, and the sections that lead to it (aria-current="true") */
+  .cu-nav__link[aria-current] {
+    background-color: var(--_trail);
+    color: var(--_ink);
+  }
+
+  .cu-nav__parent:has(> .cu-nav__link[aria-current]) > .cu-nav__toggle {
+    background-color: var(--_trail);
+  }
+
+  /* ---- Parents: link + disclosure button, chevron drawn in CSS ---- */
+  .cu-nav__parent {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+  .cu-nav__parent > .cu-nav__link {
+    flex: 1 1 auto;
+    padding-inline-end: 0.3em;
+  }
+  .cu-nav__toggle {
+    display: none;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    min-inline-size: 2.5rem;
+    padding: 0 1.2em 0 0.25em;
+    border: 0;
+    background: transparent;
+    color: var(--_ink);
+    cursor: pointer;
+  }
+  .cu-nav[data-ready] .cu-nav__toggle {
+    display: inline-flex;
+  }
+  .cu-nav__toggle::after {
+    content: '';
+    inline-size: 0.5em;
+    block-size: 0.5em;
+    margin-block-start: -0.25em;
+    border: solid currentcolor;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    transition: transform var(--duration-fast);
+  }
+  .is-open > .cu-nav__toggle::after {
+    margin-block: 0.25em 0;
+    transform: rotate(-135deg);
+  }
+  /* Without script, hover and focus still reveal the menus (and the button stays hidden) */
+  .cu-nav:not([data-ready]) .cu-nav__parent > .cu-nav__link::after {
+    content: '+';
+    margin-inline-start: 0.3em;
+  }
+
+  /* ---- Dropdown panels (levels 2 and 3) ---- */
+  .cu-nav__sub {
+    display: none;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    background-color: var(--_panel-bg);
+  }
+  .cu-nav__parent.is-open > .cu-nav__sub {
+    display: block;
+  }
+  .cu-nav__sub .cu-nav__link {
+    padding: 0.5rem var(--space-4);
+  }
+
+  /* ---- Below 960px: stacked, submenus are accordions ---- */
+  @media (max-width: 959px) {
+    .cu-nav:not(.cu-header > .cu-nav) > .cu-container {
+      padding-inline: 0;
+    }
+    .cu-nav:not(.cu-header > .cu-nav) .cu-nav__list > li > .cu-nav__link {
+      padding-inline: var(--container-pad);
+    }
+    .cu-nav__list > li {
+      border-block-end: 1px solid var(--_rule);
+    }
+    .cu-nav__list > li:first-child {
+      border-block-start: 1px solid var(--_rule);
+    }
+    .cu-nav__link[aria-current] {
+      box-shadow: inset 0.1875rem 0 0 0 var(--nav-active-bg);
+    }
+    .cu-nav__toggle {
+      min-inline-size: 3rem;
+      padding: 0;
+    }
+    .cu-nav__toggle::after {
+      inline-size: 0.625em;
+      block-size: 0.625em;
+    }
+    .cu-nav__sub {
+      flex: 0 0 100%;
+      background: none;
+      padding-inline-start: 1.2em;
+    }
+    .cu-nav__sub > li {
+      border-block-start: 1px solid var(--_rule);
+    }
+  }
+
+  /* ---- Tablet and up ---- */
+  @media (min-width: 768px) {
+    .cu-nav__list {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+    .cu-nav__link {
+      padding-inline: 1.2em;
+    }
+  }
+  @media (min-width: 960px) {
+    .cu-nav__link {
+      transition-duration: var(--duration-base);
+    }
+    .cu-nav__list > li {
+      border: 0;
+    }
+    .cu-nav__sub {
+      position: absolute;
+      inset-block-start: calc(100% - 1px);
+      inset-inline-start: 0;
+      z-index: var(--z-dropdown);
+      inline-size: max-content;
+      min-inline-size: 12em;
+      max-inline-size: 24em;
+      padding: 1px 0;
+      font-size: 0.8889em;
+      line-height: 1.5;
+      box-shadow: inset 0 0 0 1px var(--_panel-line), 0 1px 1px var(--overlay-panel-shadow);
+    }
+    .cu-nav__sub.is-flipped {
+      inset-inline: auto 0;
+    }
+    .cu-nav:not([data-ready]) .cu-nav__parent:is(:hover, :focus-within) > .cu-nav__sub {
+      display: block;
+    }
+    .cu-nav__sub > li {
+      inline-size: 100%;
+    }
+    .cu-nav__sub .cu-nav__link {
+      padding: 0.5625em 1.35em;
+    }
+    /* flyouts */
+    .cu-nav__sub .cu-nav__parent {
+      flex-wrap: nowrap;
+    }
+    .cu-nav__sub .cu-nav__parent > .cu-nav__link {
+      padding-inline-end: 0.3em;
+    }
+    .cu-nav__sub .cu-nav__toggle {
+      min-inline-size: 2.25rem;
+      padding: 0;
+    }
+    .cu-nav__sub .cu-nav__toggle::after {
+      margin: 0;
+      transform: rotate(-45deg);
+    }
+    .cu-nav__sub .is-open > .cu-nav__toggle::after {
+      transform: rotate(-45deg);
+    }
+    .cu-nav__sub .cu-nav__sub {
+      font-size: 1em;
+      inset-block-start: 0;
+      inset-inline-start: calc(100% - 3px);
+      box-shadow: inset 0 0 0 1px var(--_panel-line), 0 1px 2px var(--overlay-panel-shadow);
+    }
+    .cu-nav__sub .cu-nav__sub.is-flipped {
+      inset-inline: auto calc(100% - 3px);
+    }
+
+    /* alignment and spread (apply to the top-level list) */
+    .cu-nav--start > .cu-container > .cu-nav__list { justify-content: flex-start; }
+    .cu-nav--center > .cu-container > .cu-nav__list { justify-content: center; }
+    .cu-nav--end > .cu-container > .cu-nav__list { justify-content: flex-end; }
+    .cu-nav--even > .cu-container > .cu-nav__list { justify-content: space-evenly; }
+    .cu-nav--around > .cu-container > .cu-nav__list { justify-content: space-around; }
+    .cu-nav--between > .cu-container > .cu-nav__list { justify-content: space-between; }
+
+    /* current page as a red pill */
+    .cu-nav--active-red .cu-nav__list > li > .cu-nav__link[aria-current] {
+      background-color: var(--color-accent-fill);
+      color: var(--color-on-accent-fill);
+    }
+    /* hover as a red pill */
+    .cu-nav--accent-red .cu-nav__list > li > :is(.cu-nav__link, .cu-nav__toggle):is(:hover, :focus-visible),
+    .cu-nav--accent-red .cu-nav__list > .cu-nav__parent:is(:hover, :focus-within, .is-open) > :is(.cu-nav__link, .cu-nav__toggle) {
+      background-color: var(--color-accent-fill);
+      color: var(--color-on-accent-fill);
+      transition-duration: 0s;
+    }
+    .cu-nav--accent-red .cu-nav__list > li > .cu-nav__link:active {
+      background-color: var(--color-accent-fill-hover);
+    }
+    .cu-nav--accent-red .cu-nav__list > .cu-nav__parent > .cu-nav__toggle::after {
+      color: var(--color-on-accent-fill);
+    }
+
+    /* Tall: the bar is taller than its items, so each one reads as a button with a gap above and below.
+       Without it the bar is flat and the items fill it edge to edge. */
+    .cu-nav--tall {
+      padding-block: 0.4375rem;
+    }
+    .cu-nav--tall:is(.cu-nav--active-red, .cu-nav--accent-red) .cu-nav__list > li > :is(.cu-nav__link, .cu-nav__toggle) {
+      border-radius: 3px;
+    }
+    .cu-nav--tall:is(.cu-nav--active-red, .cu-nav--accent-red) .cu-nav__list > .cu-nav__parent > .cu-nav__link {
+      border-end-end-radius: 0;
+      border-start-end-radius: 0;
+    }
+    .cu-nav--tall:is(.cu-nav--active-red, .cu-nav--accent-red) .cu-nav__list > .cu-nav__parent > .cu-nav__toggle {
+      border-end-start-radius: 0;
+      border-start-start-radius: 0;
+    }
+
+    /* underline on hover instead of a fill */
+    .cu-nav--underlines .cu-nav__list > li > .cu-nav__link,
+    .cu-nav--underlines .cu-nav__list > li > .cu-nav__toggle {
+      background: none;
+    }
+    .cu-nav--underlines .cu-nav__list > li > .cu-nav__link:hover {
+      text-decoration: underline;
+      text-decoration-color: var(--_quiet);
+    }
+  }
+
+  /* ---- Fold the whole bar on phones (progressive enhancement: the button only appears with script) ---- */
+  .cu-nav-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    inline-size: 100%;
+    min-block-size: var(--target-min);
+    padding: var(--space-2) var(--space-4);
+    border: 0;
+    border-block-end: 1px solid var(--color-line);
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    font: inherit;
+    font-weight: var(--weight-semibold);
+    text-align: start;
+    cursor: pointer;
+  }
+  .cu-nav-toggle[hidden] {
+    display: none;
+  }
+  .cu-nav-toggle::before {
+    content: '';
+    flex: none;
+    inline-size: 0.5em;
+    block-size: 0.5em;
+    border: solid currentcolor;
+    border-width: 0 0.125em 0.125em 0;
+    transform: rotate(45deg);
+  }
+  .cu-nav-toggle[aria-expanded='true']::before {
+    transform: rotate(-135deg);
+  }
+  @media (min-width: 768px) {
+    .cu-nav-toggle {
+      display: none;
+    }
+  }
+  @media (max-width: 767px) {
+    .cu-nav-toggle[aria-expanded='false']:not([hidden]) + .cu-nav {
+      display: none;
+    }
+  }
+
+  /* ---- Mega menu: a three-column panel under the bar ---- */
+  @media (min-width: 960px) {
+    .cu-nav--mega {
+      position: relative;
+    }
+    .cu-nav--mega .cu-nav__list > .cu-nav__parent {
+      position: static;
+    }
+    .cu-nav--mega .cu-nav__list > .cu-nav__parent > .cu-nav__sub {
+      --_edge: max(var(--container-pad), calc((100% - var(--container-max)) / 2 + var(--container-pad)));
+      inset-inline: var(--_edge);
+      inline-size: auto;
+      max-inline-size: none;
+      padding: 2em 1.5em 0;
+      font-size: 1em;
+      line-height: 1.4;
+      box-shadow: 0 10px 20px var(--overlay-panel-shadow), 0 1px 0 var(--_panel-line);
+    }
+    .cu-nav--mega .cu-nav__list > .cu-nav__parent.is-open > .cu-nav__sub,
+    .cu-nav--mega:not([data-ready]) .cu-nav__list > .cu-nav__parent:is(:hover, :focus-within) > .cu-nav__sub {
+      display: grid;
+      grid-auto-flow: column;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-rows: repeat(var(--_rows, 2), auto);
+      gap: 0 1.25rem;
+    }
+    .cu-nav--mega .cu-nav__list > .cu-nav__parent > .cu-nav__sub > li {
+      margin: 0 0 2em;
+    }
+    /* group link: underlined, no fill */
+    .cu-nav--mega .cu-nav__sub .cu-nav__link {
+      display: inline;
+      min-block-size: 0;
+      padding: 0;
+      background: none;
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 0.125em;
+      text-decoration-color: color-mix(in srgb, var(--_ink) 30%, transparent);
+    }
+    .cu-nav--mega .cu-nav__sub .cu-nav__link:is(:hover, :focus-visible) {
+      text-decoration-color: color-mix(in srgb, var(--_ink) 85%, transparent);
+    }
+    .cu-nav--mega .cu-nav__sub .cu-nav__parent {
+      display: block;
+    }
+    .cu-nav--mega .cu-nav__sub .cu-nav__toggle {
+      display: none;
+    }
+    /* group children are always visible, indented under a quiet rule */
+    .cu-nav--mega .cu-nav__sub .cu-nav__sub {
+      display: block;
+      position: static;
+      inline-size: 100%;
+      margin: 1em 0 0;
+      padding: 0 0 0 1em;
+      border-inline-start: 2px solid var(--_rule);
+      background: none;
+      box-shadow: none;
+      font-size: 1em;
+    }
+    .cu-nav--mega .cu-nav__sub .cu-nav__sub > li {
+      margin: 0 0 0.4em;
+    }
+    .cu-nav--mega .cu-nav__desc {
+      margin: 0.5em 0 1.5em;
+      color: var(--_quiet);
+    }
+    .cu-nav--mega .cu-nav__feature {
+      grid-column: 3;
+      grid-row: 1 / -1;
+      margin: 0;
+      padding: 0 0 0 1.25em;
+      background-color: var(--overlay-feature-bg);
+      box-shadow: 1.5em 0 0 2em var(--overlay-feature-bg);
+    }
+    .cu-nav--mega .cu-nav__feature > :first-child {
+      margin-block-start: 0;
+    }
+    .cu-nav__feature h2 {
+      margin: -0.1em 0 0.5em;
+      color: var(--_ink);
+      font-size: var(--text-h3);
+    }
+    .cu-nav__feature img {
+      max-inline-size: 100%;
+      block-size: auto;
+    }
+    .cu-nav__feature .cu-button {
+      display: inline-flex;
+    }
+    /* headings: second-level links read as serif headings */
+    .cu-nav--mega-headings .cu-nav__list > .cu-nav__parent > .cu-nav__sub > li > .cu-nav__link {
+      font-family: var(--font-serif);
+      font-size: 1.3em;
+    }
+    /* merge: the top-level bar and the open panel share one surface */
+    .cu-nav--mega-merge .cu-nav__list.is-open {
+      background-color: var(--_panel-bg);
+    }
+    .cu-nav--mega-merge .cu-nav__list > .cu-nav__parent > .cu-nav__sub {
+      box-shadow: 0 10px 20px var(--overlay-panel-shadow);
+    }
+    .cu-nav--mega-merge .cu-nav__list > li > :is(.cu-nav__link, .cu-nav__toggle) {
+      border-radius: 3px;
+    }
+    .cu-nav--mega-merge .cu-nav__list > .cu-nav__parent > .cu-nav__link {
+      border-end-end-radius: 0;
+      border-start-end-radius: 0;
+    }
+    .cu-nav--mega-merge .cu-nav__list > .cu-nav__parent > .cu-nav__toggle {
+      border-end-start-radius: 0;
+      border-start-start-radius: 0;
+    }
+  }
+  @media (max-width: 959px) {
+    .cu-nav__feature {
+      padding: 1.2em 1.2em 3em 1em;
+    }
+    .cu-nav__feature h2 {
+      font-size: var(--text-h3);
+      color: var(--_ink);
+    }
+    .cu-nav__desc {
+      margin: 0.5em 0 1em;
+      padding-inline: 1em 3.75em;
+      color: var(--_quiet);
+    }
+  }
+
+  /* ---- Vertical navbar ---- */
+  .cu-nav--vertical {
+    --_bg: transparent;
+    --_ink: var(--color-ink);
+    --_focus: var(--navbar-plain-focus);
+    --_halo: var(--navbar-plain-halo);
+    padding-block: 0;
+    background: none;
+  }
+  .cu-nav--vertical .cu-nav__list {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    margin-block-end: 1.5em;
+  }
+  .cu-nav--vertical .cu-nav__list > li {
+    inline-size: 100%;
+    margin-block-end: 2px;
+    border: 0;
+    background-color: color-mix(in srgb, var(--_ink) 6%, transparent);
+  }
+  .cu-nav--vertical .cu-nav__link {
+    padding-inline: 1.2em;
+  }
+
+  /* ---- Section (secondary) navigation: a titled list with the current branch opened ---- */
+  .cu-section-nav {
+    margin: 0 0 2em;
+    line-height: 1.4;
+  }
+  .cu-section-nav__title {
+    font-family: var(--font-sans); /* CDS .menu-block-title stays sans */
+    margin: 0 0 0.7em;
+    font-size: 1.3333em;
+    font-weight: var(--weight-regular);
+  }
+  .cu-section-nav a {
+    display: block;
+    padding-block: 0.75rem;
+    color: var(--color-muted);
+    text-decoration: none;
+    transition: color var(--duration-fast);
+  }
+  .cu-section-nav a:is(:hover, :focus-visible) {
+    color: var(--color-ink);
+  }
+  .cu-section-nav a:active {
+    color: var(--color-muted);
+    transition-duration: 0s;
+  }
+  .cu-section-nav a[aria-current] {
+    color: var(--color-accent);
+    font-weight: var(--weight-medium);
+  }
+  .cu-section-nav__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .cu-section-nav__list li {
+    margin: 0;
+    max-width: none;
+    border-block-end: 1px solid var(--color-line);
+  }
+  .cu-section-nav__list li:last-child {
+    border-block-end: 0;
+  }
+  .cu-section-nav__list ul {
+    margin: 0.625rem 0 0.625rem 1px;
+    padding: 0 0 0 1.125rem;
+    border-inline-start: 2px solid var(--color-accent);
+    list-style: none;
+  }
+  .cu-section-nav__list ul li {
+    border: 0;
+    font-size: var(--text-sm);
+  }
+  .cu-section-nav__list ul a {
+    padding-block: 0.25rem;
+  }
+
+  /* Side navigation (app shell) */
+  .cu-sidenav {
+    padding: var(--space-4) var(--space-2);
+    color: var(--sidenav-ink);
+  }
+  .cu-sidenav__title {
+    font-family: var(--font-sans); /* a label, not a heading look: stays sans when h1-h3 are serif */
+    margin: var(--space-2) var(--space-3) var(--space-2);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+  .cu-sidenav__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .cu-sidenav__list > li {
+    margin: 0;
+    max-width: none;
+  }
+  .cu-sidenav__link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: var(--target-min);
+    padding: var(--space-2) var(--space-3);
+    border-inline-start: 0.25rem solid transparent;
+    border-radius: var(--radius-control);
+    color: var(--sidenav-ink);
+    font-weight: var(--weight-medium);
+    text-decoration: none;
+  }
+  .cu-sidenav__link:hover {
+    background-color: var(--sidenav-hover-bg);
+    color: var(--sidenav-ink);
+    text-decoration: none;
+  }
+  .cu-sidenav__link[aria-current='page'] {
+    background-color: var(--sidenav-active-bg);
+    color: var(--sidenav-active-ink);
+    border-inline-start-color: currentcolor;
+  }
+  .cu-sidenav__icon {
+    flex: none;
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  @media (max-width: 959px) {
+    .cu-sidenav__list {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+    .cu-sidenav__title {
+      display: none;
+    }
+  }
+
+  /* Breadcrumb: a trail of links with a chevron after each; the last item is the current page (plain text) */
+  .cu-breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    margin: -0.1em 0 calc(var(--text-base) * 1.5);
+    padding: 0;
+    list-style: none;
+    font-size: var(--text-sm);
+  }
+  .cu-breadcrumb > li {
+    display: flex;
+    align-items: center;
+    margin: 0 0.75em 0 0;
+    padding: 0;
+    max-width: none;
+  }
+  .cu-breadcrumb > li:not(:last-child)::after {
+    content: '';
+    inline-size: 0.4em;
+    block-size: 0.4em;
+    margin-inline-start: 0.9em;
+    border: solid var(--color-ink);
+    border-width: 2px 2px 0 0;
+    opacity: 0.45;
+    transform: rotate(45deg);
+  }
+  .cu-breadcrumb [aria-current='page'] {
+    color: var(--color-ink);
+  }
+}

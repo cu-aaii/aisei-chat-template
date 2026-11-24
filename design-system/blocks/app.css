@@ -1,0 +1,266 @@
+/* Block — app shell: the frame for an application or dashboard (not in CDS; CDS frames websites).
+   Built from CDS parts so it carries the same brand: the INNER header's carnelian bar with the Cornell wordmark
+   and utility links, a slim title bar under it, then the side navigation (.cu-sidenav) beside a full-width
+   content area. Use it with data-density="compact" (tokens/scale.css) for the app scale.
+
+   <html data-density="compact">
+   <a class="cu-skip" href="#main">Skip to main content</a>
+   <div class="cu-app" data-app>
+     <header class="cu-header cu-header--inner cu-header--app" aria-label="Site banner">
+       <div class="cu-utility"><div class="cu-container cu-container--full cu-utility__inner">
+         <a class="cu-utility__wordmark" href="https://www.cornell.edu"><svg role="img" aria-label="Cornell University"><use href="#cu-wordmark"/></svg></a>
+         <nav aria-label="Utility"><ul class="cu-utility__list" role="list"> … </ul></nav>
+       </div></div>
+       <div class="cu-app__bar">
+         <button class="cu-app__toggle" type="button" aria-expanded="true" aria-controls="app-nav">
+           <svg class="cu-icon cu-app__toggle-shown" aria-hidden="true"><use href="#cu-i-menu_open"/></svg>
+           <svg class="cu-icon cu-app__toggle-hidden" aria-hidden="true"><use href="#cu-i-menu"/></svg>
+           <span class="cu-app__toggle-label">Menu</span></button>
+         <p class="cu-app__title"><a href="/">App name</a></p>
+         <p class="cu-app__subtitle">Unit</p>
+         <div class="cu-app__bar-end"> global actions (optional) </div>
+       </div>
+     </header>
+     <div class="cu-app__body">
+       <nav class="cu-app__nav" id="app-nav" aria-label="Main">
+         <div class="cu-app__nav-head"><button class="cu-app__close" type="button" data-app-close>Close menu</button></div>
+         <div class="cu-sidenav"> <h2 class="cu-sidenav__title">Group</h2><ul class="cu-sidenav__list" role="list"> … </ul> … </div>
+         <ul class="cu-app__nav-utility" role="list"> the utility links again, shown below 960px </ul>
+       </nav>
+       <div class="cu-app__scrim" data-app-close hidden></div>
+       <main class="cu-app__main" id="main" tabindex="-1"> … </main>
+     </div>
+   </div>
+
+   Behaviour (showcase/showcase.js initApp(); the Angular AppShellComponent does the same):
+     960px and up   the menu sits beside the content; the toggle hides and shows it (remembered).
+     below 960px    the menu opens over the content as a modal panel: focus moves into it, Tab stays inside,
+                    Escape or Close or the scrim closes it and returns focus to the toggle, the page behind is inert.
+   Without script nothing is hidden: the menu shows above the content on small screens.
+   Hiding and showing slide (250ms, the design system's easing) once the script has added .is-ready after the first
+   paint; with reduced motion they switch at once. */
+@layer blocks {
+  .cu-app {
+    --_nav-w: 16rem;
+    --_dur: calc(var(--duration-base) * 1.25); /* 250ms: long enough to follow, short enough not to wait for */
+    display: flex;
+    flex-direction: column;
+    min-block-size: 100vh;
+    background-color: var(--color-page);
+  }
+
+  /* ---- Header: CDS inner header, no search tab, no brand zone or main navigation ---- */
+  .cu-header--app .cu-utility__inner {
+    padding-inline-end: var(--container-pad);
+  }
+  @media (min-width: 768px) {
+    .cu-header--app .cu-utility__inner { min-block-size: 3rem; }
+  }
+  @media (max-width: 959px) {
+    .cu-app.is-scripted .cu-header--app .cu-utility__inner > nav { display: none; } /* those links move into the menu */
+  }
+
+  .cu-app__bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+    min-block-size: 3.25rem;
+    padding: var(--space-1) var(--container-pad);
+    background-color: var(--header-bg);
+    color: var(--header-ink);
+    border-block-end: var(--border-thin) solid var(--color-line);
+  }
+  .cu-app__toggle,
+  .cu-app__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    flex: none;
+    min-inline-size: 2.5rem;
+    min-block-size: 2.5rem;
+    margin: 0;
+    margin-inline-start: calc(var(--space-2) * -1);
+    padding: 0 var(--space-2);
+    background: none;
+    border: 0;
+    border-radius: var(--radius-control);
+    color: inherit;
+    font: inherit;
+    font-size: var(--text-sm);
+    cursor: pointer;
+  }
+  .cu-app__toggle .cu-icon,
+  .cu-app__close .cu-icon { font-size: 1.5rem; }
+  .cu-app__toggle:hover,
+  .cu-app__close:hover { background-color: var(--sidenav-hover-bg); }
+  /* On the app bar the text takes the bar's ink, which is light on a dark bar, so the grey sidenav hover would
+     put light words on a light box. Tint with the bar's own ink instead: it follows the bar in every theme. */
+  .cu-app__bar .cu-app__toggle:hover { background-color: color-mix(in srgb, currentColor 16%, transparent); }
+  /* The toggle always says "Menu" in words (a label beats a bare icon for people new to the pattern) and its icon
+     shows the state: the open-menu icon (lines with an arrow pointing in) while the menu is shown, the plain
+     menu icon while it is hidden. The accessible name stays "Menu"; aria-expanded carries the state. */
+  .cu-app__toggle-label { font-weight: var(--weight-semibold); }
+  .cu-app__toggle[aria-expanded='true'] .cu-app__toggle-hidden,
+  .cu-app__toggle[aria-expanded='false'] .cu-app__toggle-shown { display: none; }
+  .cu-app:not(.is-scripted) .cu-app__toggle { display: none; } /* nothing to toggle without script */
+
+  .cu-app__title {
+    margin: 0;
+    max-inline-size: none;
+    font-family: var(--font-serif);
+    font-size: var(--text-h3);
+    line-height: var(--leading-heading);
+  }
+  :where([data-headings='sans']) .cu-app__title { font-family: var(--font-sans); }
+  .cu-app__title a {
+    color: var(--header-title);
+    text-decoration: none;
+  }
+  .cu-app__title a:hover { text-decoration: underline; }
+  .cu-app__subtitle {
+    display: none;
+    margin: 0;
+    padding-inline-start: var(--space-3);
+    border-inline-start: var(--border-thin) solid var(--color-line);
+    color: var(--color-muted);
+    font-size: var(--text-sm);
+  }
+  .cu-app__bar-end {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin-inline-start: auto;
+  }
+  @media (min-width: 768px) {
+    .cu-app__subtitle { display: block; }
+  }
+
+  /* ---- Body: menu beside the content ---- */
+  .cu-app__body {
+    position: relative;
+    display: grid;
+    flex: 1;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cu-app__nav {
+    background-color: var(--sidenav-bg);
+    color: var(--sidenav-ink);
+    border-block-end: var(--border-thin) solid var(--color-line);
+  }
+  .cu-app__nav .cu-sidenav { padding-block: var(--space-3) var(--space-6); }
+  .cu-app__nav .cu-sidenav__title {
+    display: block;
+    margin-block-start: var(--space-5);
+  }
+  .cu-app__nav .cu-sidenav__title:first-child { margin-block-start: var(--space-1); }
+  .cu-app__nav .cu-sidenav__list { flex-direction: column; flex-wrap: nowrap; gap: 0; }
+  .cu-app__nav .cu-sidenav__link { min-block-size: var(--target-min); padding-block: var(--space-1); }
+  .cu-app__nav .cu-sidenav__icon { font-size: 1.25rem; fill: currentcolor; stroke: none; } /* Material Symbols are filled shapes */
+  .cu-app__nav-head,
+  .cu-app__nav-utility { display: none; }
+  .cu-app__main {
+    min-inline-size: 0;
+    padding: var(--layout-pad) var(--container-pad) var(--space-16);
+  }
+  .cu-app__main:focus { outline: none; }
+  .cu-app__scrim { display: none; }
+
+  @media (min-width: 960px) {
+    .cu-app__body { grid-template-columns: var(--_nav-w) minmax(0, 1fr); }
+    .cu-app__nav {
+      min-inline-size: 0;
+      overflow: clip; /* clip, not hidden: hidden would make it a scroller and stop the menu below being sticky */
+      border-block-end: 0;
+      border-inline-end: var(--border-thin) solid var(--color-line);
+    }
+    .cu-app__nav > .cu-sidenav { /* the column runs the full height; the menu itself stays in view */
+      position: sticky;
+      inset-block-start: 0;
+      inline-size: var(--_nav-w); /* a fixed width, so the column slides over the menu instead of re-wrapping it */
+      max-block-size: 100vh;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+    .cu-app[data-nav='closed'] .cu-app__body { grid-template-columns: 0 minmax(0, 1fr); }
+    .cu-app[data-nav='closed'] .cu-app__nav { visibility: hidden; border-inline-end-color: transparent; }
+    /* Hide and show slide the column (once the page has drawn, so nothing moves at load). Closing keeps the
+       menu visible until the slide ends, then hides it from keyboard and screen readers. Reduced motion: the
+       duration token is ~0 (base/a11y.css), so it simply switches. */
+    .cu-app.is-ready .cu-app__body { transition: grid-template-columns var(--_dur) var(--ease); }
+    .cu-app.is-ready .cu-app__nav { transition: visibility 0s linear var(--_dur), border-color var(--_dur) var(--ease); }
+    .cu-app.is-ready[data-nav='open'] .cu-app__nav { transition-delay: 0s; }
+  }
+
+  /* Below 960px with script: the menu is a modal panel over the content */
+  @media (max-width: 959px) {
+    .cu-app.is-scripted .cu-app__nav {
+      position: fixed;
+      inset-block: 0;
+      inset-inline-start: 0;
+      z-index: var(--z-dialog);
+      display: block;
+      visibility: hidden;
+      transform: translateX(-100%);
+      inline-size: min(20rem, 88vw);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      border-block-end: 0;
+      border-inline-end: var(--border-thin) solid var(--color-line);
+      box-shadow: var(--shadow-dialog);
+    }
+    .cu-app.is-scripted[data-nav='open'] .cu-app__nav { visibility: visible; transform: none; }
+    .cu-app.is-scripted .cu-app__scrim {
+      position: fixed;
+      inset: 0;
+      z-index: var(--z-nav);
+      display: block;
+      visibility: hidden;
+      background-color: var(--color-scrim);
+      opacity: 0;
+    }
+    .cu-app.is-scripted[data-nav='open'] .cu-app__scrim { visibility: visible; opacity: 0.6; }
+    /* The panel slides in from the edge and the scrim fades; on closing both stay visible until they finish. */
+    .cu-app.is-ready .cu-app__nav { transition: transform var(--_dur) var(--ease), visibility 0s linear var(--_dur); }
+    .cu-app.is-ready .cu-app__scrim { transition: opacity var(--_dur) var(--ease), visibility 0s linear var(--_dur); }
+    .cu-app.is-ready[data-nav='open'] :is(.cu-app__nav, .cu-app__scrim) { transition-delay: 0s; }
+    .cu-app.is-scripted .cu-app__nav-head {
+      display: flex;
+      justify-content: flex-end;
+      padding: var(--space-2) var(--space-3) 0;
+    }
+    .cu-app__close { margin: 0; }
+    .cu-app.is-scripted .cu-app__nav-utility {
+      display: block;
+      margin: 0;
+      padding: var(--space-3) var(--space-2) var(--space-6);
+      list-style: none;
+      border-block-start: var(--border-thin) solid var(--color-line);
+    }
+    .cu-app__nav-utility > li { margin: 0; max-inline-size: none; }
+    .cu-app__nav-utility :is(a, button) {
+      display: flex;
+      align-items: center;
+      inline-size: 100%;
+      min-block-size: var(--target-min);
+      padding: var(--space-1) var(--space-3);
+      background: none;
+      border: 0;
+      color: var(--sidenav-ink);
+      font: inherit;
+      text-align: start;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .cu-app__nav-utility :is(a, button):hover { background-color: var(--sidenav-hover-bg); }
+  }
+
+  @media (forced-colors: active) {
+    .cu-app__nav { border-inline-end: 1px solid CanvasText; }
+  }
+  @media print {
+    .cu-app__nav, .cu-app__toggle, .cu-app__scrim { display: none; }
+    .cu-app__body { display: block; }
+  }
+}

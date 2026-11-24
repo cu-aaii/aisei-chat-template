@@ -1,0 +1,177 @@
+/* Tier 2 — scale tokens: type, space, radius, elevation, layering, motion, layout, targets.
+   Theme-independent. Lengths are rem so they follow the user's browser font size.
+
+   BREAKPOINTS. A media query cannot read a custom property, so the five values below are the
+   system's only breakpoints, written out and enforced by tools/check.mjs:
+     480px  small phones and up      768px  tablet, multi-column layouts begin
+     960px  desktop navigation + larger type begin
+     1200px full desktop             1440px maximum content width begins
+   Mobile first: base rules are the phone layout; each @media (min-width: …) adds to it. */
+@layer tokens {
+  :root {
+    /* Type families. Freight is served by the Typekit kit the app already loads; the stack falls
+       back to system fonts so the system also renders with no network (and in the showcase). */
+    --font-sans: 'freight-sans-pro', sans-serif; /* same stacks as CDS; the fonts come from Cornell's Typekit kit, see README */
+    --font-serif: 'freight-text-pro', serif;
+    --font-mono: ui-monospace, 'SF Mono', Courier, monospace;
+
+    /* Type scale. Cornell sets body at 16px on phones and 18px on desktop; everything scales from
+       --text-base, so a single custom property change rescales the whole system. */
+    --text-base: 1rem;
+    --text-sm: 0.9375rem;
+    --text-xs: 0.875rem;
+    --text-lg: 1.125rem;
+    --text-intro: calc(var(--text-base) * 1.3333);
+    --text-h1: calc(var(--text-base) * 1.9);
+    --text-h2: calc(var(--text-base) * 1.6);
+    --text-h3: calc(var(--text-base) * 1.3);
+    --text-h4: calc(var(--text-base) * 1.1);
+    --leading-body: 1.6;
+    --leading-snug: 1.4;
+    --leading-heading: 1.25;
+    --weight-light: 300;
+    --weight-regular: 400;
+    --weight-medium: 500;
+    --weight-semibold: 600;
+    --weight-bold: 700;
+
+    /* Space: 4px steps */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-10: 2.5rem;
+    --space-12: 3rem;
+    --space-16: 4rem;
+
+    /* Shape. Cornell controls are square; themes may round them by overriding --radius-control. */
+    --radius-none: 0;
+    --radius-sm: 0.25rem;
+    --radius-md: 0.5rem;
+    --radius-pill: 999px;
+    --radius-control: var(--radius-none);
+    --radius-card: var(--radius-none);
+    --border-thin: 1px;
+    --border-thick: 2px;
+    --panel-strength: 22%; /* how much of a panel accent mixes into the surface */
+    --panel-line-strength: 50%;
+    --band-strength-1: 11%; /* CDS accent1 / accent2 / accent3 band tints over the page surface */
+    --band-strength-2: 9%;
+    --band-strength-3: 18%;
+    --band-hairline-strength: 4%;
+
+    /* Elevation */
+    --shadow-1: 0 0 0.2rem light-dark(rgb(0 0 0 / 0.15), rgb(0 0 0 / 0.6));
+    --shadow-tooltip: 0 1px 6px rgb(0 0 0 / 0.12), 0 2px 0 rgb(0 0 0 / 0.1); /* CDS tooltip, light and dark */
+    --shadow-float: 0 0 6px rgb(0 0 0 / 0.4); /* CDS floating back-to-top */
+    --shadow-toast: 0 0 10px light-dark(rgb(0 0 0 / 0.3), rgb(0 0 0 / 0.5)); /* CDS .ui-toast */
+    --shadow-dialog: 0 0 0.9375rem light-dark(rgb(0 0 0 / 0.15), rgb(0 0 0 / 0.25)); /* CDS modal */
+    --shadow-2: 0 0.25rem 1rem light-dark(rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.6));
+    --shadow-3: 0 0.5rem 2rem light-dark(rgb(0 0 0 / 0.28), rgb(0 0 0 / 0.8));
+
+    /* Layering */
+    --header-topline-wide: 0; /* desktop red top line: 0 over the default red bar */
+    --utility-overlap: -0.25rem; /* light-bar and dark-bar set 0 so the red top line shows above them */
+    --z-behind: -1; /* behind a block's own content (the slideshow banner pictures; the block makes its own stacking context) */
+    --z-base: 0;
+    --z-raised: 1;
+    --z-slide-current: 2; /* inside a slider only: the slides, shade, caption and controls stack in this order */
+    --z-slide-shade: 3;
+    --z-slide-caption: 4;
+    --z-slide-controls: 5;
+    --z-nav: 100;
+    --z-dropdown: 200;
+    --z-toast: 900;
+    --z-dialog: 1000;
+    --z-skip: 2000;
+
+    /* Motion. The reduced-motion query in base/a11y.css shrinks these to ~0. */
+    --duration-fast: 120ms;
+    --duration-base: 200ms;
+    --ease: cubic-bezier(0.2, 0, 0, 1);
+
+    /* Layout */
+    --container-max: 90rem; /* 1440px, as CDS */
+    --layout-pad: 1.25rem; /* space under the header before the page body starts; 45px from 1024px */
+    --container-pad: 0.9375rem; /* 15px; 30px from 1024, 60px from 1200 (CDS) */
+    --field-max: 37.5rem; /* 600px: widest a form control gets */
+
+    /* Touch targets: 40px by default, 44px on coarse pointers (WCAG 2.5.8 asks 24px; we exceed it) */
+    --control-h: 2.5rem;
+    --target-min: 2.75rem;
+  }
+
+  @media (min-width: 1024px) {
+    :root {
+      --layout-pad: 2.8125rem;
+      --text-base: 1.125rem;
+      --text-sm: 1rem;
+      --text-lg: 1.25rem;
+      --container-pad: 1.875rem;
+    }
+  }
+
+  @media (min-width: 1200px) {
+    :root {
+      --container-pad: 3.75rem;
+    }
+  }
+
+  /* A header with data-theme="cornell" inside a page themed otherwise (an app bar theme on <html>) takes the default
+     bar back: the two header scale values a bar theme changes. */
+  [data-theme='cornell'] {
+    --header-topline-wide: 0;
+    --utility-overlap: -0.25rem;
+  }
+
+  @media (pointer: coarse) {
+    :root {
+      --control-h: var(--target-min);
+    }
+  }
+
+  /* DENSITY. CDS is sized for reading websites; an app is for scanning and working, so it can switch the
+     whole scale to a compact one: data-density="compact" on <html> (or on any container, e.g. .cu-app).
+     Only scale tokens change, never colours or shapes, so every block tightens without being rewritten:
+       body 15px, tables and secondary text 14px, nothing under 13px; headings on a shorter scale;
+       spacing about 3/4; controls 32px (still over the 24px WCAG 2.5.8 target); focus rings unchanged.
+     Phones keep the website scale (touch needs the room), and a coarse pointer keeps 44px targets. */
+  @media (min-width: 768px) {
+    [data-density='compact'] {
+      --text-base: 0.9375rem;
+      --text-sm: 0.875rem;
+      --text-xs: 0.8125rem;
+      --text-lg: 1.0625rem;
+      --text-intro: 1.0625rem;
+      --text-h1: 1.75rem;
+      --text-h2: 1.375rem;
+      --text-h3: 1.125rem;
+      --text-h4: 1rem;
+      --leading-body: 1.5;
+      --leading-heading: 1.2;
+
+      --space-3: 0.625rem;
+      --space-4: 0.75rem;
+      --space-5: 1rem;
+      --space-6: 1.125rem;
+      --space-8: 1.5rem;
+      --space-10: 1.875rem;
+      --space-12: 2.25rem;
+      --space-16: 3rem;
+
+      --layout-pad: 1.25rem;
+      --container-pad: 1.5rem;
+      --control-h: 2rem;
+      --target-min: 2rem;
+    }
+  }
+  @media (min-width: 768px) and (pointer: coarse) {
+    [data-density='compact'] {
+      --control-h: 2.75rem;
+      --target-min: 2.75rem;
+    }
+  }
+}

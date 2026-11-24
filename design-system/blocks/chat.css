@@ -1,0 +1,233 @@
+/* Block — agent chat (not in CDS): a launcher fixed in the bottom corner, and the chat panel it opens. Built from CDS
+   parts: the primary button (link blue, square), the modal's shadow and hairline, a light title bar, CDS fields.
+   The factory console's chat dock (app/client/app/shared/components/chat-dock/) is drawn this way.
+
+   <div class="cu-chat">
+     <button class="cu-chat__launcher" type="button" aria-expanded="false" aria-controls="chat">
+       <svg class="cu-icon" aria-hidden="true"><use href="#cu-i-forum"/></svg>Ask an agent<span class="cu-chat__who">PM agent</span>
+     </button>
+     <dialog class="cu-chat__panel" id="chat" aria-labelledby="chat-title" tabindex="-1">
+       <div class="cu-chat__bar">
+         <h2 class="cu-chat__title" id="chat-title">PM agent</h2>
+         <button class="cu-chat__icon" type="button" data-chat-close aria-label="Minimize chat">…</button>
+       </div>
+       <div class="cu-chat__log" role="log" aria-label="Conversation"> .cu-chat__msg (--agent | --user) … </div>
+       <form class="cu-chat__composer"> <label class="cu-sr-only" for="m">Message</label> <textarea class="cu-input" id="m"></textarea> <button class="cu-button">Send</button> </form>
+       <p class="cu-chat__hint">Enter to send · Shift+Enter for a new line · Esc to minimize</p>
+     </dialog>
+   </div>
+
+   Behaviour (showcase.js initChat; the console's ChatDockComponent): the launcher opens the panel (a non-modal
+   dialog, so the page stays usable) and hides; focus goes to the message field; Escape or Minimize closes it and
+   returns focus to the launcher. New messages are announced (role="log"). Focus stays in the panel: Tab and Shift+Tab wrap
+   inside it (Escape is the way out), and tabindex="-1" on the dialog keeps a click on blank space inside it from dropping
+   focus to the page (which would stop Escape and the wrap). The pointer can still use the page. Phones: the panel fills the
+   screen, so it is modal there (aria-modal, the page behind inert, anything outside pulled back).
+
+   Moving it (the console's dock grip): a real button, .cu-chat__grip, sits beside the launcher and at the start of the panel's
+   bar (showcase.js adds both, so the markup above stays as it is; the dots icon is decoration, aria-hidden, and the button
+   is named "Move the chat. Drag, or use the arrow keys; End returns it to the corner"). Drag it with a pointer, or focus it
+   and press the arrow keys (20px, 80px with Shift); End returns the chat to its corner. The offset is clamped so the chat can
+   never leave the screen, it moves as one piece (--chat-x / --chat-y on .cu-chat), and focus never leaves the grip or the
+   panel while it moves. The reach is the same by keyboard as by mouse: nothing here is drag only. A polite status line
+   speaks only when the chat reaches an edge or returns to the corner, never on every step. Phones: the panel fills the
+   screen, so there is nothing to move and the grips are not shown. */
+@layer blocks {
+  .cu-chat {
+    position: fixed;
+    inset-inline-end: var(--space-5);
+    inset-block-end: var(--space-5);
+    z-index: var(--z-nav);
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-1);
+    translate: var(--chat-x, 0px) var(--chat-y, 0px);
+  }
+  /* the launcher floats over the corner: keep room under the page's last row so nothing is ever covered by it */
+  :where(body:has(> .cu-chat)) :is(.cu-app__main, .cu-footer__sub) { padding-block-end: calc(2.75rem + 2 * var(--space-5) + var(--space-4)); }
+  /* and keyboard focus is never scrolled under it (WCAG 2.4.11): the page scrolls a focused control above the corner */
+  :where(html:has(body > .cu-chat)) { scroll-padding-block-end: calc(2.75rem + 2 * var(--space-5)); }
+  .cu-chat__launcher {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    max-inline-size: calc(100vw - 2 * var(--space-5));
+    min-block-size: max(2.75rem, var(--control-h));
+    padding: 0 var(--space-4);
+    background-color: var(--color-primary);
+    color: var(--color-on-primary);
+    border: 0;
+    border-radius: var(--radius-control);
+    box-shadow: var(--shadow-float);
+    font: inherit;
+    font-weight: var(--weight-semibold);
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .cu-chat__launcher:hover { background-color: var(--color-primary-hover); }
+  .cu-chat__launcher:active { background-color: var(--color-primary-active); }
+  .cu-chat__launcher > .cu-icon { font-size: 1.25rem; fill: currentcolor; }
+  .cu-chat__launcher[aria-expanded='true'] { display: none; }
+  .cu-chat__who {
+    overflow: hidden;
+    padding-inline-start: var(--space-2);
+    border-inline-start: var(--border-thin) solid color-mix(in srgb, var(--color-on-primary) 50%, transparent);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-regular);
+    text-overflow: ellipsis;
+  }
+
+  .cu-chat__panel {
+    position: static;
+    display: none;
+    flex-direction: column;
+    inline-size: min(26rem, calc(100vw - 2 * var(--space-5)));
+    block-size: min(40rem, calc(100vh - 8rem));
+    margin: 0;
+    padding: 0;
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    border: var(--border-thin) solid var(--color-line);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-dialog);
+  }
+  .cu-chat__panel[open] { display: flex; }
+  .cu-chat__bar {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+    background-color: var(--color-canvas);
+    border-block-end: var(--border-thin) solid var(--color-line);
+  }
+  .cu-chat__title {
+    flex: 1;
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+    line-height: var(--leading-snug);
+  }
+  .cu-chat__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 2.25rem;
+    block-size: 2.25rem;
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: var(--radius-control);
+    color: var(--color-ink);
+    cursor: pointer;
+  }
+  .cu-chat__icon:hover { background-color: var(--sidenav-hover-bg); }
+  .cu-chat__icon > .cu-icon { font-size: 1.25rem; fill: currentcolor; }
+  /* The grip: a 2.25rem button (24px minimum) with a decorative dots icon. Beside the launcher it is part of the pill (same
+     colours); in the panel's bar it reads as one of the bar's icon buttons. touch-action: none lets a finger drag it. */
+  .cu-chat__grip {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    inline-size: 2.25rem;
+    block-size: 2.25rem;
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: var(--radius-control);
+    color: inherit;
+    cursor: grab;
+    touch-action: none;
+  }
+  .cu-chat__grip:active { cursor: grabbing; }
+  .cu-chat__grip > .cu-icon { font-size: 1.25rem; fill: currentcolor; }
+  .cu-chat__grip:hover { background-color: var(--sidenav-hover-bg); }
+  .cu-chat__grip--pill {
+    min-block-size: max(2.75rem, var(--control-h));
+    background-color: var(--color-primary);
+    color: var(--color-on-primary);
+    box-shadow: var(--shadow-float);
+  }
+  .cu-chat__grip--pill:hover { background-color: var(--color-primary-hover); }
+  .cu-chat:has(.cu-chat__launcher[aria-expanded='true']) > .cu-chat__grip--pill { display: none; }
+  .cu-chat :is(.cu-chat__launcher, .cu-chat__icon, .cu-chat__grip):focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  .cu-chat__log {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-block-size: 0;
+    overflow-y: auto;
+    padding: var(--space-4);
+  }
+  .cu-chat__msg {
+    max-inline-size: 85%;
+    margin: 0;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-sm);
+    line-height: var(--leading-body);
+  }
+  .cu-chat__msg--agent {
+    align-self: flex-start;
+    background-color: var(--color-canvas);
+    border: var(--border-thin) solid var(--color-line);
+  }
+  .cu-chat__msg--user {
+    align-self: flex-end;
+    background-color: var(--color-primary-tint);
+    border: var(--border-thin) solid var(--color-primary-tint);
+  }
+  .cu-chat__prompts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .cu-chat__prompts > li { margin: 0; max-inline-size: none; }
+
+  .cu-chat__composer {
+    display: flex;
+    flex: none;
+    align-items: flex-end;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4) 0;
+    border-block-start: var(--border-thin) solid var(--color-line);
+  }
+  .cu-chat__composer .cu-input {
+    flex: 1;
+    min-block-size: 2.75rem;
+    max-block-size: 8rem;
+    margin: 0;
+    resize: vertical;
+  }
+  .cu-chat__hint {
+    flex: none;
+    margin: 0;
+    padding: var(--space-1) var(--space-4) var(--space-3);
+    color: var(--color-muted);
+    font-size: var(--text-xs);
+    text-align: center;
+    max-inline-size: none;
+  }
+
+  @media (max-width: 767px) {
+    .cu-chat:has(.cu-chat__panel[open]) { inset: 0; }
+    .cu-chat { translate: none; }
+    .cu-chat__grip { display: none; }
+    .cu-chat__panel { inline-size: 100%; block-size: 100%; border: 0; }
+  }
+  @media (forced-colors: active) {
+    .cu-chat__launcher, .cu-chat__panel, .cu-chat__grip { border: 1px solid CanvasText; }
+  }
+  @media print {
+    .cu-chat { display: none; }
+  }
+}

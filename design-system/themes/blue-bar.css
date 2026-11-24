@@ -1,0 +1,17 @@
+/* Blue bar — the navy of CDS's blue navbar (cu-nav--blue) as the header's top bar: light text, the white
+   wordmark, the 4px carnelian line above it. Put it on the header: data-theme="blue-bar". Only the bar changes.
+   Everything not listed here inherits the default (cornell) theme. */
+@layer tokens {
+  [data-theme='blue-bar'] {
+    --utility-bg: var(--navbar-blue-bg);
+    --utility-ink: var(--navbar-blue-ink);
+    --utility-hover-bg: var(--navbar-blue-panel-bg);
+    --utility-focus: var(--cu-white);
+    --utility-halo: var(--navbar-blue-bg);
+    --utility-submit-bg: var(--navbar-blue-panel-bg);
+    --wordmark-color: var(--cu-white);
+    --header-topline: var(--cu-carnelian);
+    --utility-overlap: 0;
+    --header-topline-wide: 0.25rem;
+  }
+}

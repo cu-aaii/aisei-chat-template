@@ -1,0 +1,12 @@
+/* Dark header — the CDS dark banner: a near-black brand zone with the white seal and a white title, in either
+   colour mode. Everything not listed here inherits the default (cornell) theme. A theme is a short list of
+   overrides; a value that differs by mode is written once as light-dark(<light>, <dark>). */
+@layer tokens {
+  [data-theme='dark-header'] {
+    --header-bg: var(--cu-dark-gray);
+    --header-title: var(--cu-white);
+    --header-ink: #dedede;
+    --header-focus: #5cb3e0;
+    --seal-color: var(--cu-white);
+  }
+}

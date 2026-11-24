@@ -1,0 +1,48 @@
+{{> top}}
+<main id="main" tabindex="-1">
+  <section class="cu-band">
+    <div class="cu-container">
+      <div class="cu-stack" style="--stack-gap:var(--space-4)">
+        <p class="cu-eyebrow">Cornell CIT</p>
+        <h1>Build with AI, the Cornell way</h1>
+        <p class="cu-intro">Shared tools, patterns and support for teams across campus. Everything here is built from one set of design tokens.</p>
+        <div class="cu-cluster">
+          <a class="cu-button cu-button--lg" href="#tools">Explore tools</a>
+          <a class="cu-button cu-button--secondary cu-button--lg" href="#">Request access</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cu-band cu-band--canvas" id="tools">
+    <div class="cu-container">
+      {{> tools}}
+    </div>
+  </section>
+
+  <section class="cu-band">
+    <div class="cu-container">
+      {{> callout}}
+    </div>
+  </section>
+
+  <section class="cu-band cu-band--canvas">
+    <div class="cu-container cu-with-sidebar">
+      <div>
+        {{> tones}}
+        {{> start}}
+        {{> tabs}}
+        {{> quote}}
+        {{> limits}}
+      </div>
+      {{> help}}
+    </div>
+  </section>
+
+  <section class="cu-band">
+    <div class="cu-container">
+      {{> faq}}
+      {{> ask}}
+    </div>
+  </section>
+{{> bottom}}

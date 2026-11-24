@@ -1,0 +1,9 @@
+{
+  "extends": "../server/tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "..",
+    "allowJs": false
+  },
+  "include": ["./*.test.ts", "./*.d.mts"]
+}

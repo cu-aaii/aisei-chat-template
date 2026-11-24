@@ -1,0 +1,111 @@
+/* Block — media backdrops and banners.
+   .cu-backdrop            an <img> or <video> fills the region behind its content (the region needs content of its own)
+     --overlay             wash that keeps text readable (light by default)    --dark  dark wash + light text
+     --gradient            fades from the top (--to-top: from the bottom)
+   .cu-backdrop__pause     round pause/play button for a video backdrop; the page script adds it and toggles .is-paused
+   .cu-banner              wide, responsive image constrained by viewport height; --short, --tall, --tall-16x9
+   .cu-banner__caption     small caption bar (--top, --right)
+
+   Video backdrop (CDS): the <video> is the first child, as an <img> is:
+     <div class="cu-backdrop cu-backdrop--overlay cu-backdrop--dark">
+       <video muted loop playsinline preload="metadata" poster="picture.jpg" aria-hidden="true"><source src="clip.webm" type="video/webm"><source src="clip.mp4" type="video/mp4"></video>
+       <div class="cu-container">…</div></div>
+   Without script it is a still picture (the poster). The script starts it (muted, looping) unless the person asks for reduced
+   motion, adds the Pause / Play button (WCAG 2.2.2) and keeps it in step with the video. A video that says something (not
+   decoration) gets aria-label with a description instead of aria-hidden. Keep the clip small: 1280px wide, no sound track, a
+   a few hundred KB (WebM first, MP4 for older Safari), and a calm picture, since text sits on it. Use --overlay (light or --dark) so text stays readable. */
+@layer blocks {
+  .cu-backdrop { position: relative; }
+  .cu-backdrop > img,
+  .cu-backdrop > video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .cu-backdrop > :not(img, video, .cu-backdrop__pause-wrap) { position: relative; z-index: var(--z-raised); }
+  .cu-backdrop--dark { color-scheme: dark; color: var(--band-dark-ink); }
+  .cu-backdrop--overlay::after,
+  .cu-backdrop--gradient::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: var(--z-base);
+    pointer-events: none;
+  }
+  .cu-backdrop--overlay::after { background: var(--overlay-backdrop-light); }
+  .cu-backdrop--overlay.cu-backdrop--dark::after { background: var(--overlay-backdrop-dark); }
+  .cu-backdrop--gradient::after { background: var(--overlay-backdrop-grad-light); }
+  .cu-backdrop--gradient.cu-backdrop--to-top::after { background: var(--overlay-backdrop-grad-light-up); }
+  .cu-backdrop--gradient.cu-backdrop--dark::after { background: var(--overlay-backdrop-grad-dark); }
+  .cu-backdrop--gradient.cu-backdrop--dark.cu-backdrop--to-top::after { background: var(--overlay-backdrop-grad-dark-up); }
+
+  .cu-backdrop__pause-wrap {
+    position: absolute;
+    inset: auto 0 0.9375rem;
+    z-index: var(--z-raised);
+    display: flex;
+    justify-content: flex-end;
+    padding-inline: 0.9375rem;
+    pointer-events: none;
+  }
+  .cu-backdrop__pause {
+    pointer-events: auto;
+    appearance: none;
+    inline-size: 2.5rem; /* 40px: above the 24px target minimum, and holds the 31px CDS glyph ring */
+    block-size: 2.5rem;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    background: color-mix(in srgb, var(--color-surface) 70%, transparent);
+    color: var(--color-ink);
+    border: 2px solid currentColor;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+  }
+  .cu-backdrop__pause:hover,
+  .cu-backdrop__pause:focus-visible { background: var(--color-surface); }
+  .cu-backdrop__pause .cu-icon { inline-size: 1.25rem; block-size: 1.25rem; }
+  .cu-backdrop__pause .cu-backdrop__play { display: none; }
+  .cu-backdrop__pause.is-paused .cu-backdrop__play { display: block; }
+  .cu-backdrop__pause.is-paused .cu-backdrop__stop { display: none; }
+  @media (min-width: 1024px) { .cu-backdrop__pause-wrap { bottom: 1.5625rem; } }
+  @media (min-width: 1200px) { .cu-backdrop__pause-wrap { bottom: 3.125rem; } }
+
+  .cu-banner {
+    position: relative;
+    margin: 0;
+    width: 100%;
+    aspect-ratio: 10 / 3;
+    min-height: 12.5rem;
+    max-height: 64vh;
+  }
+  .cu-banner > img {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 40%;
+    vertical-align: middle;
+  }
+  .cu-banner--short { aspect-ratio: 10 / 2; min-height: 10rem; }
+  .cu-banner--tall { aspect-ratio: 10 / 4; }
+  .cu-banner--tall-16x9 { aspect-ratio: 16 / 9; }
+  @media (min-width: 768px) {
+    .cu-banner { min-height: 22.5rem; }
+    .cu-banner--short { min-height: 11.25rem; }
+    .cu-banner--tall,
+    .cu-banner--tall-16x9 { min-height: 30rem; }
+  }
+  .cu-banner__caption {
+    position: absolute;
+    inset: auto auto 0 0;
+    padding: 0.2em 0.7em;
+    background: var(--overlay-caption-bg);
+    color: var(--color-on-scrim);
+    font-size: 0.75rem;
+  }
+  .cu-banner__caption--top { inset: 0 auto auto 0; }
+  .cu-banner__caption--right { inset-inline: auto 0; text-align: end; }
+}

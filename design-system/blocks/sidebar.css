@@ -1,0 +1,83 @@
+/* Block — page region with sidebars (CDS .region-sidebar). Two sidebars, one article:
+     primary    : sits ABOVE the article on phones; carries the section (secondary) navigation
+     secondary  : sits BELOW the article on phones; supplementary components
+   On desktop (768px+) both stack in one column (primary over secondary) beside the article, on the left or the right.
+   Source order stays primary, article, secondary, so reading order, tab order and the phone layout are right with no
+   JS; the side is chosen in CSS only.
+   <div class="cu-region cu-region--right cu-region--tint">          (--right is optional; --tint paints the sidebar column)
+     <div class="cu-container"><div class="cu-region__grid">
+       <div class="cu-sidebar cu-sidebar--primary">…<nav class="cu-section-nav">…</nav></div>
+       <div class="cu-region__article">…</div>
+       <div class="cu-sidebar cu-sidebar--secondary">…</div>
+     </div></div></div>
+   Figures in a sidebar lose their tint and get a soft lift instead (as CDS). */
+@layer blocks {
+  .cu-region {
+    --_gap: 0.9375rem;
+    --_tint: color-mix(in srgb, var(--gray-400) 9%, transparent);
+    --_split: 33%;
+  }
+  .cu-region__grid {
+    padding-block: 1.25em;
+  }
+  .cu-region__article, .cu-sidebar {
+    min-inline-size: 0;
+    margin-block-end: 1.5em;
+  }
+  .cu-region__article:empty, .cu-sidebar:empty { margin-block-end: 0; }
+  .cu-region__grid > :last-child { margin-block-end: 0; }
+
+  .cu-sidebar .cu-figure {
+    margin: 0;
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-1);
+  }
+  .cu-sidebar > :last-child { margin-block-end: 0; }
+  .cu-sidebar .cu-section-nav__title { margin-block-start: 0; }
+
+  @media (min-width: 768px) {
+    .cu-region__grid {
+      display: grid;
+      justify-content: center;
+      grid-template-rows: auto;
+      grid-template-columns: 33% 67%;
+      grid-template-areas:
+        'primary article'
+        'secondary article'
+        '. article';
+    }
+    .cu-region--right .cu-region__grid {
+      grid-template-columns: 67% 33%;
+      grid-template-areas:
+        'article primary'
+        'article secondary'
+        'article .';
+    }
+    .cu-region__article { grid-area: article; padding-inline: var(--_gap) 0; margin-block-end: 1.5em; }
+    .cu-sidebar { padding-inline: 0 var(--_gap); }
+    .cu-sidebar--primary { grid-area: primary; }
+    .cu-sidebar--secondary { grid-area: secondary; }
+    .cu-region--right .cu-region__article { padding-inline: 0 var(--_gap); }
+    .cu-region--right .cu-sidebar { padding-inline: var(--_gap) 0; }
+
+    .cu-region--tint { --_edge: calc(33% + 5px); background-image: linear-gradient(to right, var(--_tint) var(--_edge), transparent var(--_edge)); }
+    .cu-region--tint.cu-region--right { --_edge: calc(67% - 5px); background-image: linear-gradient(to right, transparent var(--_edge), var(--_tint) var(--_edge)); }
+  }
+  @media (min-width: 1024px) {
+    .cu-region { --_gap: 1.625rem; }
+    .cu-region__grid { padding-block: 2.5em; }
+    .cu-region--tint { --_edge: calc(33% + 10px); }
+    .cu-region--tint.cu-region--right { --_edge: calc(67% - 10px); }
+  }
+  @media (min-width: 1200px) {
+    .cu-region { --_gap: 1.625rem; }
+    .cu-region__article { padding-inline-start: 2.375rem; }
+    .cu-region--right .cu-region__article { padding-inline: 0 2.375rem; }
+    .cu-region--tint { --_edge: calc(33% + 20px); }
+    .cu-region--tint.cu-region--right { --_edge: calc(67% - 20px); }
+  }
+  @media (min-width: 1440px) {
+    .cu-region--tint { --_edge: calc(33% + 20px + ((100% - 1440px) * 0.17)); }
+    .cu-region--tint.cu-region--right { --_edge: calc(67% - 20px - ((100% - 1440px) * 0.17)); }
+  }
+}

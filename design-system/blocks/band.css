@@ -1,0 +1,67 @@
+/* Block — bands: full-width regions with their own surface (CDS .band.accent1–7).
+   .cu-band--accent1 … --accent7   (named aliases: --blue, --gray, --dark-gray, --charcoal, --white, --near-black, --black)
+   .cu-band--padded[-small|-medium|-large]   vertical padding steps from CDS
+   Dark bands (4, 6, 7) set color-scheme: dark, so every block inside them takes its dark-mode values. */
+@layer blocks {
+  .cu-band--accent1,
+  .cu-band--blue {
+    background-color: color-mix(in srgb, var(--band-accent1-src) var(--band-strength-1), var(--color-surface));
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--band-hairline) var(--band-hairline-strength), transparent),
+      inset 0 -1px 0 color-mix(in srgb, var(--band-hairline) var(--band-hairline-strength), transparent);
+  }
+  .cu-band--accent2,
+  .cu-band--gray {
+    background-color: color-mix(in srgb, var(--band-accent2-src) var(--band-strength-2), var(--color-surface));
+  }
+  .cu-band--accent3,
+  .cu-band--dark-gray {
+    background-color: color-mix(in srgb, var(--band-accent3-src) var(--band-strength-3), var(--color-surface));
+  }
+  .cu-band--accent4,
+  .cu-band--charcoal {
+    background-color: var(--band-accent4);
+  }
+  .cu-band--accent5,
+  .cu-band--white {
+    background-color: var(--band-accent5);
+  }
+  .cu-band--accent6,
+  .cu-band--near-black {
+    background-color: var(--band-accent6);
+  }
+  .cu-band--accent7,
+  .cu-band--black {
+    background-color: var(--band-accent7);
+  }
+  .cu-band--accent4,
+  .cu-band--charcoal,
+  .cu-band--accent6,
+  .cu-band--near-black,
+  .cu-band--accent7,
+  .cu-band--black {
+    color-scheme: dark;
+    color: var(--band-dark-ink);
+  }
+
+  /* Padding: CDS .padded 30/40/50, -medium 15/20/25, -small 15/20, -large 45/60/80 (steps at 768 and 1200). */
+  .cu-band--padded,
+  .cu-band--padded-medium,
+  .cu-band--padded-small,
+  .cu-band--padded-large {
+    padding-block: 1.875rem;
+  }
+  .cu-band--padded-medium { padding-block: 0.9375rem; }
+  .cu-band--padded-small { padding-block: 0.9375rem; }
+  .cu-band--padded-large { padding-block: 2.8125rem; }
+  @media (min-width: 768px) {
+    .cu-band--padded { padding-block: 2.5rem; }
+    .cu-band--padded-medium { padding-block: 1.25rem; }
+    .cu-band--padded-small { padding-block: 1.25rem; }
+    .cu-band--padded-large { padding-block: 3.75rem; }
+  }
+  @media (min-width: 1200px) {
+    .cu-band--padded { padding-block: 3.125rem; }
+    .cu-band--padded-medium { padding-block: 1.5625rem; }
+    .cu-band--padded-large { padding-block: 5rem; }
+  }
+}

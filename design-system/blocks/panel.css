@@ -1,0 +1,76 @@
+/* Block — panel and pill (non-semantic containers).
+   <div class="cu-panel cu-panel--blue cu-panel--heavy-left">…</div>
+   <span class="cu-pill cu-pill--green">New</span>   <a class="cu-pill" href>Link pill</a>
+   Accents tint from the surface so they work in light and dark: teal blue purple gold green red, and --light
+   for the half-strength version. --padded, --flush, --dark, --white, --heavy-left, --heavy-top,
+   --indent1…--indent4. */
+@layer blocks {
+  .cu-panel, .cu-pill {
+    --_accent: var(--color-line);
+    --_k: 12%;
+    --_lk: var(--panel-line-strength);
+    background-color: color-mix(in srgb, var(--_accent) var(--_k), var(--color-surface));
+    border: var(--border-thin) solid color-mix(in srgb, var(--_accent) var(--_lk), var(--color-surface));
+    color: var(--color-ink);
+  }
+  .cu-panel {
+    inline-size: 100%;
+    padding: 0.7em;
+    margin-block-end: 1.5em;
+    overflow: hidden;
+    clear: both;
+  }
+  ul.cu-panel, ol.cu-panel { list-style: none; }
+  .cu-panel--padded { padding: 1.1em; }
+  .cu-panel--flush { padding: 0; }
+  .cu-panel--dark {
+    --_accent: var(--cu-black);
+    --_k: 92%;
+    color: var(--cu-white);
+    border-color: transparent;
+  }
+  .cu-panel--white { background-color: var(--color-surface); border-color: var(--color-line); }
+  .cu-panel--gray { --_accent: var(--gray-400); }
+  .cu-panel--teal { --_accent: var(--accent-teal); --_k: var(--panel-strength); }
+  .cu-panel--blue { --_accent: var(--accent-blue); --_k: var(--panel-strength); }
+  .cu-panel--purple { --_accent: var(--accent-purple); --_k: var(--panel-strength); }
+  .cu-panel--gold { --_accent: var(--accent-gold); --_k: var(--panel-strength); }
+  .cu-panel--green { --_accent: var(--accent-green); --_k: var(--panel-strength); }
+  .cu-panel--red { --_accent: var(--accent-red); --_k: var(--panel-strength); }
+  .cu-panel--light { --_k: calc(var(--panel-strength) / 2); }
+  .cu-panel--heavy-left { border-inline-start-width: 3px; }
+  .cu-panel--heavy-top { border-block-start-width: 3px; }
+  .cu-panel--indent1 { inline-size: 98%; margin-inline-start: 2%; }
+  .cu-panel--indent2 { inline-size: 96%; margin-inline-start: 4%; }
+  .cu-panel--indent3 { inline-size: 94%; margin-inline-start: 6%; }
+  .cu-panel--indent4 { inline-size: 92%; margin-inline-start: 8%; }
+  @media (max-width: 479px) {
+    .cu-panel--indent1, .cu-panel--indent2, .cu-panel--indent3, .cu-panel--indent4 { inline-size: 100%; margin-inline-start: 0; }
+  }
+
+  .cu-pill {
+    display: inline-block;
+    inline-size: auto;
+    padding: 0 0.5em;
+    margin: 0;
+    font-size: var(--text-xs);
+    line-height: 1.7;
+    border-radius: 2px;
+    white-space: nowrap;
+    text-align: center;
+    text-decoration: none;
+    color: var(--color-ink);
+  }
+  a.cu-pill, button.cu-pill {
+    font-family: inherit;
+    cursor: pointer;
+  }
+  a.cu-pill:hover, button.cu-pill:hover { text-decoration: underline; color: var(--color-ink); }
+  a.cu-pill:active, button.cu-pill:active { color: var(--color-dim); }
+  .cu-pill--teal { --_accent: var(--accent-teal); --_k: var(--panel-strength); }
+  .cu-pill--blue { --_accent: var(--accent-blue); --_k: var(--panel-strength); }
+  .cu-pill--purple { --_accent: var(--accent-purple); --_k: var(--panel-strength); }
+  .cu-pill--gold { --_accent: var(--accent-gold); --_k: var(--panel-strength); }
+  .cu-pill--green { --_accent: var(--accent-green); --_k: var(--panel-strength); }
+  .cu-pill--red { --_accent: var(--accent-red); --_k: var(--panel-strength); }
+}

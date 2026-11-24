@@ -1,0 +1,80 @@
+{
+  "client/app/features/public/home/home.component.ts": {
+    "#222": 1,
+    "#f3f3f3": 1,
+    "#fff": 1
+  },
+  "client/app/shared/components/button/button.component.ts": {
+    "#fff": 3
+  },
+  "client/app/shared/components/chat-dialog/chat-dialog.component.ts": {
+    "#222": 1,
+    "#fff": 5,
+    "rgba(": 6
+  },
+  "client/app/shared/components/chat/chat-panel.component.ts": {
+    "#222": 2,
+    "#555": 1,
+    "#666": 2,
+    "#8a1113": 1,
+    "#8a5a00": 1,
+    "#f2f2f2": 1,
+    "#fdf1e0": 1,
+    "#fff": 4,
+    "rgba(": 2
+  },
+  "client/app/shared/components/chat/thinking-indicator.component.ts": {
+    "#666": 1
+  },
+  "client/app/shared/components/hero/hero.component.ts": {
+    "#2a2a2a": 1,
+    "#769cb6": 1,
+    "#c6b20f": 1,
+    "#fff": 1,
+    "rgba(": 1
+  },
+  "client/app/shared/components/lab-wordmark/lab-wordmark.component.ts": {
+    "#231f20": 17,
+    "#fff": 18
+  },
+  "client/app/shared/components/scroll-to-top/scroll-to-top.component.ts": {
+    "#8f1013": 1,
+    "#fff": 2,
+    "rgba(": 1
+  },
+  "client/app/shared/layout/public/inner-page-layout.component.ts": {
+    "#fff": 1,
+    "rgba(": 2
+  },
+  "client/app/shared/layout/public/public-masthead.component.ts": {
+    "#222": 1,
+    "#fff": 10,
+    "rgba(": 4
+  },
+  "client/app/shared/layout/public/site-footer.component.ts": {
+    "#bbb": 2,
+    "#fff": 2,
+    "rgba(": 2
+  },
+  "client/app/shared/theme/accessability.css": {
+    "#2e5690": 1
+  },
+  "client/app/shared/theme/variables.css": {
+    "#1176ac": 1,
+    "#1a1a1a": 1,
+    "#222222": 1,
+    "#292929": 1,
+    "#2d668e": 1,
+    "#333333": 1,
+    "#343434": 1,
+    "#666666": 1,
+    "#961b1b": 1,
+    "#a01114": 1,
+    "#b31b1b": 1,
+    "#bbbbbb": 1,
+    "#c6b20f": 1,
+    "#e0e0e0": 1,
+    "#f8981d": 1,
+    "#fff": 1
+  }
+}

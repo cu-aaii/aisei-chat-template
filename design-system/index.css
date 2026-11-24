@@ -1,0 +1,65 @@
+/* Cornell design system — everything, in cascade order.
+   Layer order is declared once, here, so a later layer always beats an earlier one regardless of
+   selector specificity: tokens < base < blocks < utilities. That is why blocks never need
+   !important and apps can override a block by writing their own rule in an unlayered stylesheet.
+
+   Use the whole thing:   <link rel="stylesheet" href="design-system/index.css">
+   Or take chunks:        import tokens/ + themes/ + base/ + only the blocks/ files you need. */
+@layer tokens, base, blocks, utilities;
+
+/* 1. Tokens and brand themes (themes after semantic.css so they win ties). Light/dark MODE is not a
+   file: it is light-dark() inside the tokens, switched by data-mode (see tokens/semantic.css). */
+@import url('tokens/primitives.css');
+@import url('tokens/semantic.css');
+@import url('tokens/scale.css');
+@import url('themes/dark-header.css');
+@import url('themes/red-header.css');
+@import url('themes/light-bar.css');
+@import url('themes/dark-bar.css');
+@import url('themes/blue-bar.css');
+
+/* 2. Base */
+@import url('base/reset.css');
+@import url('base/typography.css');
+@import url('base/a11y.css');
+
+/* 3. Blocks — each file stands alone */
+@import url('blocks/layout.css');
+@import url('blocks/button.css');
+@import url('blocks/field.css');
+@import url('blocks/notice.css');
+@import url('blocks/card.css');
+@import url('blocks/header.css');
+@import url('blocks/nav.css');
+@import url('blocks/footer.css');
+@import url('blocks/tabs.css');
+@import url('blocks/accordion.css');
+@import url('blocks/dialog.css');
+@import url('blocks/table.css');
+@import url('blocks/heading.css');
+@import url('blocks/rule.css');
+@import url('blocks/quote.css');
+@import url('blocks/panel.css');
+@import url('blocks/list.css');
+@import url('blocks/figure.css');
+@import url('blocks/inline.css');
+@import url('blocks/icon.css');
+@import url('blocks/sidebar.css');
+@import url('blocks/form.css');
+@import url('blocks/grid.css');
+@import url('blocks/band.css');
+@import url('blocks/columns.css');
+@import url('blocks/cards.css');
+@import url('blocks/callout.css');
+@import url('blocks/backdrop.css');
+@import url('blocks/tooltip.css');
+@import url('blocks/hovertabs.css');
+@import url('blocks/backtotop.css');
+@import url('blocks/slider.css');
+@import url('blocks/cardslider.css');
+@import url('blocks/toast.css');
+@import url('blocks/motion.css');
+@import url('blocks/modeswitch.css');
+@import url('blocks/app.css');
+@import url('blocks/dashboard.css');
+@import url('blocks/chat.css');

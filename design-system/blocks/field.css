@@ -1,0 +1,214 @@
+/* Block — form controls (CDS values). Class-based, so nothing leaks onto native elements outside a form.
+   <div class="cu-form-item">
+     <label class="cu-label" for="a">Name</label>
+     <input class="cu-input" id="a" aria-describedby="a-d a-e">
+     <div class="cu-description" id="a-d">Helper text</div>
+     <div class="cu-description cu-description--error" id="a-e">What went wrong</div>
+   </div>
+   Controls:  .cu-input (text, search, tel, url, email, password, number, date and time types), .cu-textarea, .cu-select
+              (+ --simple), .cu-select[multiple], .cu-check (checkbox and radio inputs) with .cu-option-label, .cu-file
+   Icon input: <div class="cu-input-wrap"><svg class="cu-icon">…</svg><input class="cu-input cu-input--icon"></div>
+   Width: fields fill their container up to 600px; .cu-form--no-constrain removes the cap; .cu-native-size honours size/cols.
+   Invalid: aria-invalid="true" on the control, and a .cu-description--error referenced by aria-describedby; the message
+   starts with an error glyph, so colour is never the only cue.
+   Placeholder text is darker than CDS (#aaa fails 4.5:1) so it passes contrast; keep real labels regardless. */
+@layer blocks {
+  :root { --select-band: url("data:image/svg+xml,%3Csvg width=%2227px%22 height=%22116px%22 viewBox=%220 0 27 116%22 version=%221.1%22 xmlns=%22http://www.w3.org/2000/svg%22 xmlns:xlink=%22http://www.w3.org/1999/xlink%22%3E%3Cg id=%22Page-1%22 stroke=%22none%22 stroke-width=%221%22 fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg id=%22unfold-band%22%3E%3Crect id=%22band%22 fill=%22%23006699%22 x=%220%22 y=%220%22 width=%2227%22 height=%22116%22%3E%3C/rect%3E%3Cpath d=%22M13.828125%2C53.34375 L11.171875%2C56 L10%2C54.828125 L13.828125%2C51 L17.65625%2C54.828125 L16.484375%2C56 L13.828125%2C53.34375 Z M13.828125%2C63.65625 L16.484375%2C61 L17.65625%2C62.171875 L13.828125%2C66 L10%2C62.171875 L11.171875%2C61 L13.828125%2C63.65625 Z%22 id=%22unfold-more%22 fill=%22%23FFFFFF%22%3E%3C/path%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); } /* the CDS select's blue band with the up/down arrows */
+  .cu-label {
+    display: block;
+    max-inline-size: var(--field-max);
+    margin: 0 0 0.2em;
+    font-weight: var(--weight-medium);
+  }
+  .cu-form--no-constrain :is(.cu-label, .cu-input, .cu-textarea, .cu-select, .cu-description) { max-inline-size: 100%; }
+
+  .cu-input, .cu-textarea, .cu-select {
+    max-inline-size: var(--field-max);
+    margin: 0 0 1.25em;
+  }
+  .cu-form-item > :is(.cu-input, .cu-textarea, .cu-select) { margin: 0.1em 0 0.2em; }
+  :is(.cu-input, .cu-textarea, .cu-select):last-child,
+  .cu-form-item > :is(.cu-input, .cu-textarea, .cu-select):last-child { margin-block-end: 0; }
+
+  /* Text-like inputs */
+  .cu-input, .cu-textarea {
+    display: block;
+    inline-size: 100%;
+    block-size: 2em;
+    min-block-size: 2em;
+    padding: 0.4em 0.5em;
+    background-color: var(--field-bg);
+    color: var(--color-ink);
+    border: 1px solid var(--field-border);
+    border-radius: 0;
+    box-shadow: inset 0 1px 0 0 var(--overlay-field-inset);
+    font: inherit;
+    font-size: 1rem; /* never below 16px: avoids zoom-on-focus on phones */
+    appearance: none;
+  }
+  .cu-input:focus, .cu-textarea:focus, .cu-select:focus { border-color: var(--field-border-focus); }
+  .cu-input::placeholder, .cu-textarea::placeholder { color: var(--color-placeholder); opacity: 1; }
+  .cu-input[type='search']::-webkit-search-decoration,
+  .cu-input[type='search']::-webkit-search-cancel-button { appearance: none; }
+  .cu-textarea { line-height: 1.4; padding: 0.5em 0.7em; min-block-size: 6.6em; block-size: auto; }
+  .cu-textarea[rows] { block-size: auto; min-block-size: 1.65em; }
+  .cu-input.cu-native-size, .cu-textarea.cu-native-size, .cu-native-size + .cu-description { inline-size: auto; max-inline-size: 100%; }
+  textarea.cu-native-size { block-size: auto; min-block-size: 0; }
+  .cu-input:is([type='datetime-local'], [type='date'], [type='month'], [type='time'], [type='week'], [type='number']) {
+    min-block-size: 2em;
+    block-size: auto;
+    vertical-align: baseline;
+  }
+  :is([data-mode='dark'], [data-theme='dark-header']) .cu-input::-webkit-calendar-picker-indicator { filter: invert(100%); }
+
+  .cu-input[aria-invalid='true'], .cu-textarea[aria-invalid='true'], .cu-select[aria-invalid='true'] {
+    border-color: var(--field-invalid-border);
+    background-color: var(--field-invalid-bg);
+  }
+  .cu-input:disabled, .cu-textarea:disabled, .cu-select:disabled {
+    background-color: var(--color-idle-tint);
+    color: var(--color-muted);
+    cursor: not-allowed;
+  }
+
+  /* Icon input: the icon is a sprite icon positioned in a wrapper, so it follows mode and colour */
+  .cu-input-wrap { position: relative; max-inline-size: var(--field-max); margin: 0.1em 0 0.2em; }
+  .cu-input-wrap > .cu-icon {
+    position: absolute;
+    inset-inline-start: 0.7em;
+    inset-block-start: 50%;
+    translate: 0 -50%;
+    color: var(--color-muted);
+    pointer-events: none;
+  }
+  .cu-input-wrap > .cu-input { margin: 0; padding-inline-start: calc(0.7em + 24px); }
+
+  /* Select: a native <select>; the default carries the CDS blue unfold band */
+  .cu-select {
+    --_band: var(--select-band);
+    display: block;
+    inline-size: 100%;
+    margin-block: 0.1em 0.2em;
+    padding: 0.5em 0.7em;
+    background-color: var(--select-multi-bg);
+    color: var(--color-ink);
+    border: 1px solid var(--select-border);
+    border-radius: 0;
+    font: inherit;
+    line-height: 1.18;
+    appearance: none;
+  }
+  /* .cu-select-look: the same closed-select look on a custom select (Angular Material's mat-form-field around a
+     mat-select, see client/app/shared/theme/design-system-bridge.css). The band draws the arrows. */
+  .cu-select-look {
+    --_band: var(--select-band);
+    display: block;
+    inline-size: 100%;
+    color: var(--color-ink);
+    border: 1px solid var(--select-border);
+    font: inherit;
+    line-height: 1.18;
+  }
+  .cu-select:not([multiple]):not([size]), .cu-select:not([multiple])[size='1'], .cu-select-look {
+    block-size: 2em;
+    padding: 0.35em calc(0.7em + 27px) 0.35em 0.7em;
+    border-radius: 4px;
+    background-image: var(--_band), linear-gradient(to bottom, var(--select-bg-top) 0%, var(--select-bg-bottom) 100%);
+    background-repeat: no-repeat;
+    background-position: 100% 50.5%, 0 0;
+    background-size: auto, auto;
+  }
+  /* Simple: a plain field with a drawn chevron pair in ink colour, for places where a blue band is too loud */
+  .cu-select--simple:not([multiple]):not([size]), .cu-select--simple:not([multiple])[size='1'] {
+    border-radius: 0;
+    border-color: var(--field-border);
+    background-color: var(--field-bg);
+    background-image: linear-gradient(45deg, transparent 50%, currentcolor 50%), linear-gradient(135deg, currentcolor 50%, transparent 50%);
+    background-size: 0.4em 0.4em, 0.4em 0.4em;
+    background-position: calc(100% - 1.15em) 52%, calc(100% - 0.75em) 52%;
+  }
+  .cu-select::-ms-expand { display: none; }
+
+  /* Checkbox and radio: 18px custom controls (CDS), checked in blue with a white mark */
+  .cu-check {
+    --_mark: url("data:image/svg+xml,%3Csvg width=%2212px%22 height=%2210px%22 viewBox=%220 0 12 10%22 version=%221.1%22 xmlns=%22http://www.w3.org/2000/svg%22 xmlns:xlink=%22http://www.w3.org/1999/xlink%22%3E%3Cdefs%3E%3Cpath d=%22M11.7466028%2C1.77324597 C11.8790766%2C1.90571975 11.9453125%2C2.06657835 11.9453125%2C2.25582661 C11.9453125%2C2.44507487 11.8790766%2C2.60593348 11.7466028%2C2.73840726 L5.64337702%2C8.84163306 C5.51090324%2C8.97410685 5.35004463%2C9.04034274 5.16079637%2C9.04034274 C4.97154811%2C9.04034274 4.81068951%2C8.97410685 4.67821573%2C8.84163306 L1.14402218%2C5.30743952 C1.0115484%2C5.17496574 0.9453125%2C5.01410713 0.9453125%2C4.82485887 C0.9453125%2C4.63561061 1.0115484%2C4.47475201 1.14402218%2C4.34227823 L2.10918347%2C3.37711694 C2.24165725%2C3.24464315 2.40251585%2C3.17840726 2.59176411%2C3.17840726 C2.78101237%2C3.17840726 2.94187098%2C3.24464315 3.07434476%2C3.37711694 L5.16079637%2C5.47066532 L9.81628024%2C0.808084677 C9.94875402%2C0.675610897 10.1096126%2C0.609375 10.2988609%2C0.609375 C10.4881091%2C0.609375 10.6489678%2C0.675610897 10.7814415%2C0.808084677 L11.7466028%2C1.77324597 Z%22 id=%22path-1%22%3E%3C/path%3E%3Cfilter x=%22-4.5%25%22 y=%22-5.9%25%22 width=%22109.1%25%22 height=%22123.7%25%22 filterUnits=%22objectBoundingBox%22 id=%22filter-2%22%3E%3CfeOffset dx=%220%22 dy=%221%22 in=%22SourceAlpha%22 result=%22shadowOffsetOuter1%22%3E%3C/feOffset%3E%3CfeColorMatrix values=%220 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.5 0%22 type=%22matrix%22 in=%22shadowOffsetOuter1%22%3E%3C/feColorMatrix%3E%3C/filter%3E%3C/defs%3E%3Cg id=%22Page-1%22 stroke=%22none%22 stroke-width=%221%22 fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg id=%22checked%22%3E%3Cuse fill=%22black%22 fill-opacity=%221%22 filter=%22url%28%23filter-2%29%22 xlink:href=%22%23path-1%22%3E%3C/use%3E%3Cuse fill=%22%23FFFFFF%22 fill-rule=%22evenodd%22 xlink:href=%22%23path-1%22%3E%3C/use%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    flex: none;
+    inline-size: 18px;
+    block-size: 18px;
+    margin: -0.3em 0 0;
+    padding: 0;
+    vertical-align: middle;
+    background-color: var(--check-bg);
+    background-position: center;
+    background-repeat: no-repeat;
+    border: 1px solid var(--check-border);
+    border-radius: 2px;
+    box-shadow: inset 0 1px 0 0 var(--overlay-field-inset);
+    appearance: none;
+  }
+  .cu-check[type='radio'] { --_mark: url("data:image/svg+xml,%3Csvg width=%226px%22 height=%228px%22 viewBox=%220 0 6 8%22 version=%221.1%22 xmlns=%22http://www.w3.org/2000/svg%22 xmlns:xlink=%22http://www.w3.org/1999/xlink%22%3E%3Cdefs%3E%3Ccircle id=%22path-1%22 cx=%223%22 cy=%224%22 r=%223%22%3E%3C/circle%3E%3Cfilter x=%22-8.3%25%22 y=%22-8.3%25%22 width=%22116.7%25%22 height=%22133.3%25%22 filterUnits=%22objectBoundingBox%22 id=%22filter-2%22%3E%3CfeOffset dx=%220%22 dy=%221%22 in=%22SourceAlpha%22 result=%22shadowOffsetOuter1%22%3E%3C/feOffset%3E%3CfeColorMatrix values=%220 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.5 0%22 type=%22matrix%22 in=%22shadowOffsetOuter1%22%3E%3C/feColorMatrix%3E%3C/filter%3E%3C/defs%3E%3Cg id=%22Page-1%22 stroke=%22none%22 stroke-width=%221%22 fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg id=%22checked-radio%22%3E%3Cuse fill=%22black%22 fill-opacity=%221%22 filter=%22url%28%23filter-2%29%22 xlink:href=%22%23path-1%22%3E%3C/use%3E%3Cuse fill=%22%23FFFFFF%22 fill-rule=%22evenodd%22 xlink:href=%22%23path-1%22%3E%3C/use%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); border-radius: 50%; }
+  .cu-check:active { background-color: color-mix(in srgb, var(--cu-black) 20%, var(--check-bg)); }
+  .cu-check:checked {
+    background-color: var(--color-primary);
+    background-image: var(--_mark);
+    border-color: transparent;
+    box-shadow: none;
+  }
+  .cu-check:checked:active { background-color: var(--color-primary-active); }
+  .cu-check:disabled { opacity: 0.5; cursor: not-allowed; }
+  .cu-check + .cu-label, .cu-check + .cu-option-label { display: inline; max-inline-size: none; font-weight: var(--weight-regular); margin-inline-start: 5px; margin-block: 0; cursor: pointer; }
+  .cu-option-label { font-weight: var(--weight-regular); }
+  .cu-check + .cu-option-label { margin-inline-start: 0; padding-inline-start: 5px; }
+  /* Make the whole row a comfortable target: the label (clickable) plus the box */
+  .cu-form-item:has(> .cu-check) { min-block-size: 1.5rem; }
+
+  /* File input: the browser button takes the CDS blue */
+  .cu-file { inline-size: 100%; max-inline-size: var(--field-max); min-block-size: 2em; margin-block-start: 0.2em; font: inherit; color: var(--color-ink); }
+  .cu-file::file-selector-button {
+    display: inline-block;
+    min-inline-size: 6em;
+    margin: 0 0.8em 0 0;
+    padding: 0.4em 1.25em 0.45em;
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    border: 1px solid transparent;
+    font: inherit;
+    vertical-align: middle;
+    white-space: nowrap;
+    cursor: pointer;
+    appearance: none;
+  }
+  .cu-file::file-selector-button:hover { background-color: var(--color-primary-hover); }
+  .cu-file::file-selector-button:active { background-color: var(--color-primary-active); }
+
+  /* Description (helper) and error text */
+  .cu-description, .cu-hint {
+    max-inline-size: var(--field-max);
+    margin: 0 0 0.9em;
+    font-size: var(--text-sm);
+    color: var(--color-dim);
+  }
+  .cu-description + .cu-description { margin-block-start: -0.9em; }
+  .cu-form-item > .cu-description + .cu-description { margin-block-start: 0; }
+  :is(.cu-input, .cu-textarea, .cu-select) + .cu-description { margin-block-start: -1em; }
+  .cu-form-item > :is(.cu-input, .cu-textarea, .cu-select) + .cu-description { margin: 0 0 0.2em; }
+  .cu-form-item > :is(.cu-input, .cu-textarea, .cu-select) + .cu-description:last-child { margin-block-end: 0; }
+  .cu-description--error, .cu-field__error { --_err-glyph: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 -960 960 960%22%3E%3Cpath d=%22M499.46-298.52q7.77-7.75 7.77-19.46t-7.75-19.48q-7.75-7.77-19.46-7.77t-19.48 7.75q-7.77 7.75-7.77 19.46t7.75 19.48q7.75 7.77 19.46 7.77t19.48-7.75Zm-39.92-133.33h45.38v-249.53h-45.38v249.53ZM480.33-100q-78.95 0-147.89-29.92-68.95-29.92-120.76-81.71-51.81-51.79-81.75-120.78Q100-401.39 100-480.43q0-78.66 29.92-147.87 29.92-69.21 81.71-120.52 51.79-51.31 120.78-81.25Q401.39-860 480.43-860q78.66 0 147.87 29.92 69.21 29.92 120.52 81.21 51.31 51.29 81.25 120.63Q860-558.9 860-480.33q0 78.95-29.92 147.89-29.92 68.95-81.21 120.57-51.29 51.63-120.63 81.75Q558.9-100 480.33-100Zm.17-45.39q139.19 0 236.65-97.76 97.46-97.77 97.46-237.35 0-139.19-97.27-236.65-97.27-97.46-237.34-97.46-139.08 0-236.85 97.27-97.76 97.27-97.76 237.34 0 139.08 97.76 236.85 97.77 97.76 237.35 97.76ZM480-480Z%22/%3E%3C/svg%3E"); color: var(--color-error-text); }
+  .cu-description--error::before, .cu-field__error::before {
+    content: '';
+    display: inline-block;
+    inline-size: 1.1em;
+    block-size: 1.1em;
+    margin-inline-end: 0.3em;
+    vertical-align: -0.2em;
+    background-color: currentcolor;
+    -webkit-mask-image: var(--_err-glyph);
+    mask-image: var(--_err-glyph);
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+  }
+}

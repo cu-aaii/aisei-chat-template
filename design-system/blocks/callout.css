@@ -1,0 +1,76 @@
+/* Block — callout (CDS .block-callout): a photo beside a short message, with a red rule under the heading.
+   .cu-callout > .cu-callout__photo > img  +  .cu-callout__message > h2|h3, p, a
+   Stacks when its own container is narrow (container query), so it works in a sidebar or a column. */
+@layer blocks {
+  .cu-callout-wrap { container-type: inline-size; }
+  .cu-callout {
+    display: flex;
+    flex-direction: column;
+    margin-inline: -0.9375rem;
+    margin-block: 0 0.5em;
+    padding-block: 1em;
+  }
+  .cu-callout__photo {
+    padding-inline: 0.9375rem;
+    margin-block-end: 1em;
+  }
+  .cu-callout__photo::before {
+    content: '';
+    display: block;
+    padding-block-end: 56%;
+  }
+  .cu-callout__photo { position: relative; }
+  .cu-callout__photo > img {
+    position: absolute;
+    inset: 0 0.9375rem;
+    width: calc(100% - 1.875rem);
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 25%;
+  }
+  .cu-callout__message {
+    position: relative;
+    flex-grow: 10;
+    padding-inline: 0.9375rem;
+    margin-block-end: 1em;
+  }
+  .cu-callout :is(h2, h3)::after {
+    content: '';
+    display: block;
+    width: 3.125rem;
+    margin: 0.8em 0 0 1px;
+    border-block-end: 3px solid var(--color-rule-red);
+  }
+  .cu-callout__badge {
+    display: inline-block;
+    padding: 0 0.4em 0.1em;
+    border: var(--border-thin) solid var(--color-line);
+    background: var(--color-canvas);
+    font-size: 0.6875rem;
+    font-variant-caps: all-small-caps;
+    vertical-align: super;
+  }
+  @media (min-width: 768px) {
+    .cu-callout { flex-direction: row; }
+    .cu-callout__photo { width: 40%; max-width: 18.75rem; }
+    .cu-callout__photo::before { padding-block-end: 100%; }
+    .cu-callout__message { width: 60%; }
+  }
+  @container (max-width: 345px) {
+    .cu-callout > * { font-size: 0.9375rem; }
+  }
+  @container (max-width: 600px) {
+    .cu-callout { flex-direction: column; }
+    .cu-callout__photo { width: 100%; max-width: none; }
+    .cu-callout__photo::before { padding-block-end: 56%; }
+    .cu-callout__message { width: 100%; }
+  }
+  @container (min-width: 800px) {
+    .cu-callout__message { padding-inline-start: calc(0.9375rem + 1%); }
+  }
+  @container (min-width: 900px) {
+    .cu-callout__photo { width: 50%; max-width: none; }
+    .cu-callout__photo::before { padding-block-end: 56%; }
+    .cu-callout__message { padding-inline-start: calc(0.9375rem + 2%); }
+  }
+}

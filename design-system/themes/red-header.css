@@ -1,0 +1,15 @@
+/* Red header — the CDS red banner: the whole brand zone is carnelian with the white seal and a white title,
+   and the utility bar is a slightly darker red. Use it on the header element itself (data-theme="red-header")
+   or on the page. Everything not listed here inherits the default (cornell) theme. */
+@layer tokens {
+  [data-theme='red-header'] {
+    --utility-bg: #a81919;
+    --utility-hover-bg: #961515;
+    --header-bg: var(--cu-carnelian);
+    --header-title: var(--cu-white);
+    --header-ink: #ffd7d7;
+    --header-focus: var(--cu-white);
+    --header-halo: var(--cu-carnelian);
+    --seal-color: var(--cu-white);
+  }
+}

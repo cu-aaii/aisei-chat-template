@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="../assets/favicon.ico" sizes="16x16">
+  <title>Cornell design system · Showcase</title>
+  <!-- Cornell typography (Typekit kit used by CDS): freight-sans-pro, freight-text-pro -->
+  <link rel="stylesheet" href="https://use.typekit.net/nwp2wku.css">
+  <link rel="stylesheet" href="../index.css">
+  <link rel="stylesheet" href="showcase.css">
+</head>
+<body class="sc-frame-body">
+<header>
+<h1 class="cu-sr-only">Cornell design system showcase</h1>
+  <div class="sc-controls" role="group" aria-label="Preview controls">
+    <div>
+      <label class="sc-lab" for="page">Page</label>
+      <select class="cu-select" id="page" style="inline-size:11rem">
+        <option value="gallery.html">Block gallery</option>
+        <option value="headers.html">Headers</option>
+        <option value="navigation.html">Navigation</option>
+        <option value="content.html">Content</option>
+        <option value="sidebars.html">Sidebars</option>
+        <option value="forms.html">Forms and buttons</option>
+        <option value="layout.html">Layout</option>
+        <option value="interactive.html">Interactive</option>
+        <option value="sliders.html">Sliders</option>
+        <option value="motion.html">Motion</option>
+        <option value="decisions.html">Header bar colours</option>
+        <option value="public.html">Public page (home)</option>
+        <option value="page.html">Public page (content)</option>
+        <option value="dashboard.html">Admin / app dashboard</option>
+        <option value="tokens.html">Tokens &amp; contrast</option>
+        <option value="customizer.html">Choose a look (customizer)</option>
+      </select>
+    </div>
+    <fieldset>
+      <legend>Theme</legend>
+      <div class="sc-seg" id="themes"></div>
+    </fieldset>
+    <fieldset>
+      <legend>Mode</legend>
+      <div class="sc-seg" id="modes"></div>
+    </fieldset>
+    <fieldset>
+      <legend>Device</legend>
+      <div class="sc-seg" id="devices"></div>
+    </fieldset>
+    <a class="cu-button cu-button--secondary cu-button--sm" id="open" href="gallery.html" target="_blank" rel="noopener">Open in its own tab</a>
+  </div>
+</header>
+<main class="sc-stage" id="main">
+  <div class="sc-device" id="device"><iframe id="frame" title="Design system preview" src="gallery.html"></iframe></div>
+</main>
+<script>
+(function () {
+  var themes = ['cornell', 'dark-header'];
+  var modes = [['Auto (OS)', 'auto'], ['Light', 'light'], ['Dark', 'dark']];
+  var devices = [['Phone', '375px'], ['Tablet', '768px'], ['Laptop', '1100px'], ['Full', '100%']];
+  var state = { theme: 'cornell', mode: 'auto', device: '100%', page: 'gallery.html' };
+  var h = new URLSearchParams(location.hash.slice(1));
+  ['theme', 'mode', 'device', 'page'].forEach(function (k) { if (h.get(k)) state[k] = h.get(k); });
+
+  function seg(host, name, items, key) {
+    items.forEach(function (it) {
+      var v = Array.isArray(it) ? it[1] : it, label = Array.isArray(it) ? it[0] : it;
+      var l = document.createElement('label'), i = document.createElement('input'), s = document.createElement('span');
+      i.type = 'radio'; i.name = name; i.value = v; i.checked = state[key] === v;
+      i.addEventListener('change', function () { state[key] = v; apply(); });
+      s.textContent = label.charAt(0).toUpperCase() + label.slice(1);
+      l.appendChild(i); l.appendChild(s); host.appendChild(l);
+    });
+  }
+  seg(document.getElementById('themes'), 'theme', themes, 'theme');
+  seg(document.getElementById('modes'), 'mode', modes, 'mode');
+  seg(document.getElementById('devices'), 'device', devices, 'device');
+  var page = document.getElementById('page');
+  page.value = state.page;
+  page.addEventListener('change', function () { state.page = page.value; apply(); });
+
+  function apply() {
+    var url = state.page + '?theme=' + state.theme + (state.mode === 'auto' ? '' : '&mode=' + state.mode);
+    document.getElementById('frame').src = url;
+    document.getElementById('open').href = url;
+    document.getElementById('device').style.setProperty('--w', state.device);
+    document.getElementById('device').classList.toggle('is-full', state.device === '100%');
+    history.replaceState(null, '', '#' + new URLSearchParams(state).toString());
+  }
+  apply();
+})();
+</script>
+</body>
+</html>

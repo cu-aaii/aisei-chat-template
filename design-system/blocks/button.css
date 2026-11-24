@@ -1,0 +1,131 @@
+/* Block — button (CDS "buttons and link buttons"). Works on <button>, <a> and <input type=button|submit|reset>.
+   Colour:  default blue, or --red --light-red --navy --green --black --gray --white --light-gray --medium-gray
+            --dark-gray --tint
+   Size:    default, --small, --mini, --large     (padding only; the text size follows the surroundings)
+   Shape:   square by default, --curved, --round
+   Finish:  --bordered, --classic (soft top-lit gradient)
+   Icon:    an icon placed first or last inside the button; --icon-only for a square, label-less button (needs aria-label)
+   App extensions beyond CDS (kept because the app needs them): --secondary (outline), --quiet (text-like),
+   --danger (outline, red). --accent is an alias for --red; --sm and --lg alias --small and --large.
+   Colours come from --btn-* tokens; each variant just swaps four block-local vars. */
+@layer blocks {
+  .cu-button {
+    --_bg: var(--color-primary);
+    --_bg-hover: var(--color-primary-hover);
+    --_bg-active: var(--color-primary-active);
+    --_ink: var(--color-on-primary);
+    --_edge: transparent;
+    --_pad: 0.4em 1.25em 0.45em;
+
+    display: inline-block;
+    min-inline-size: 6em;
+    min-block-size: 1.5rem; /* WCAG 2.5.8 target size, even for --mini */
+    margin: 0;
+    padding: var(--_pad);
+    background-color: var(--_bg);
+    background-image: var(--_finish, none);
+    color: var(--_ink);
+    border: var(--border-thin) solid var(--_edge);
+    border-radius: var(--_radius, 0);
+    font: inherit;
+    line-height: inherit;
+    text-align: center;
+    text-decoration: none;
+    vertical-align: middle;
+    cursor: pointer;
+    appearance: none;
+    transition: background-color var(--duration-fast) var(--ease);
+  }
+  .cu-button:hover,
+  .cu-button:focus-visible {
+    background-color: var(--_bg-hover);
+    color: var(--_ink);
+    text-decoration: none;
+  }
+  .cu-button:active {
+    background-color: var(--_bg-active);
+  }
+
+  /* ---- Colour ---- */
+  .cu-button--red, .cu-button--accent { --_bg: var(--btn-red); --_bg-hover: var(--btn-red-hover); --_bg-active: var(--btn-red-active); --_ink: var(--btn-red-ink); }
+  .cu-button--light-red { --_bg: var(--btn-light-red); --_bg-hover: var(--btn-light-red-hover); --_bg-active: var(--btn-light-red-active); --_ink: var(--btn-light-red-ink); }
+  .cu-button--navy { --_bg: var(--btn-navy); --_bg-hover: var(--btn-navy-hover); --_bg-active: var(--btn-navy-active); --_ink: var(--btn-navy-ink); --_edge: var(--overlay-btn-edge-dark); }
+  .cu-button--green { --_bg: var(--btn-green); --_bg-hover: var(--btn-green-hover); --_bg-active: var(--btn-green-active); --_ink: var(--btn-green-ink); }
+  .cu-button--black { --_bg: var(--btn-black); --_bg-hover: var(--btn-black-hover); --_bg-active: var(--btn-black-active); --_ink: var(--btn-black-ink); --_edge: var(--overlay-btn-edge-dark); }
+  .cu-button--gray { --_bg: var(--btn-gray); --_bg-hover: var(--btn-gray-hover); --_bg-active: var(--btn-gray-active); --_ink: var(--btn-gray-ink); }
+  .cu-button--white { --_bg: var(--btn-white); --_bg-hover: var(--btn-white-hover); --_bg-active: var(--btn-white-active); --_ink: var(--btn-white-ink); --_edge: var(--overlay-btn-edge-light); }
+  .cu-button--light-gray { --_bg: var(--btn-light-gray); --_bg-hover: var(--btn-light-gray-hover); --_bg-active: var(--btn-light-gray-active); --_ink: var(--btn-light-gray-ink); --_edge: var(--overlay-btn-edge-light); }
+  .cu-button--medium-gray { --_bg: var(--btn-medium-gray); --_bg-hover: var(--btn-medium-gray-hover); --_bg-active: var(--btn-medium-gray-active); --_ink: var(--btn-medium-gray-ink); }
+  .cu-button--dark-gray { --_bg: var(--btn-dark-gray); --_bg-hover: var(--btn-dark-gray-hover); --_bg-active: var(--btn-dark-gray-active); --_ink: var(--btn-dark-gray-ink); --_edge: var(--overlay-btn-edge-dark); }
+  .cu-button--tint { --_bg: var(--btn-tint); --_bg-hover: var(--btn-tint-hover); --_bg-active: var(--btn-tint-active); --_ink: var(--btn-tint-ink); }
+
+  /* ---- Size ---- */
+  .cu-button--small, .cu-button--sm { --_pad: 0.28em 1.25em 0.32em; }
+  .cu-button--mini { --_pad: 0.15em 0.8em 0.2em; min-inline-size: 0; }
+  .cu-button--large, .cu-button--lg { --_pad: 0.3em 1.5em 0.45em; }
+  .cu-button--large, .cu-button--lg { font-size: inherit; }
+
+  /* ---- Shape and finish ---- */
+  .cu-button--curved { --_radius: 0.25em; }
+  .cu-button--round { --_radius: 100em; }
+  .cu-button--bordered { --_edge: color-mix(in srgb, currentcolor 40%, transparent); }
+  .cu-button--bordered:hover, .cu-button--bordered:focus-visible { --_edge: color-mix(in srgb, currentcolor 70%, transparent); }
+  .cu-button--bordered:active { --_edge: color-mix(in srgb, currentcolor 90%, transparent); }
+  .cu-button--classic {
+    --_edge: color-mix(in srgb, var(--cu-black) 40%, transparent);
+    --_finish: linear-gradient(to bottom, color-mix(in srgb, var(--cu-white) 50%, transparent) 0%, color-mix(in srgb, var(--cu-white) 25%, transparent) 5%, color-mix(in srgb, var(--cu-white) 10%, transparent) 40%, color-mix(in srgb, var(--cu-black) 20%, transparent) 100%);
+    border-block-end-color: color-mix(in srgb, var(--cu-black) 70%, transparent);
+  }
+  .cu-button--classic:active { box-shadow: inset 0 1px 2px color-mix(in srgb, var(--cu-black) 30%, transparent); }
+
+  /* ---- Icons: first or last child; Material Symbols via .cu-icon ---- */
+  .cu-button > .cu-icon { opacity: 0.85; margin: 0 0.35em 0 -0.15em; vertical-align: -0.15em; }
+  .cu-button > * + .cu-icon { margin: 0 -0.2em 0 0.45em; }
+  /* Icon-only: a fixed square box (a round one is then a true circle, never an oval) */
+  .cu-button--icon-only {
+    --_box: 2.375em;
+    display: inline-grid;
+    place-items: center;
+    inline-size: var(--_box);
+    block-size: var(--_box);
+    min-inline-size: 0;
+    padding: 0;
+  }
+  .cu-button--icon-only.cu-button--small, .cu-button--icon-only.cu-button--sm { --_box: 2em; }
+  .cu-button--icon-only.cu-button--mini { --_box: 1.75em; }
+  .cu-button--icon-only.cu-button--large, .cu-button--icon-only.cu-button--lg { --_box: 2.875em; }
+  .cu-button--icon-only > .cu-icon { margin: 0; opacity: 1; }
+
+  /* ---- App extensions beyond CDS ---- */
+  .cu-button--secondary {
+    --_bg: transparent; --_bg-hover: var(--color-primary-tint); --_bg-active: var(--color-primary-tint);
+    --_ink: var(--color-link); --_edge: var(--color-link);
+  }
+  .cu-button--danger {
+    --_bg: transparent; --_bg-hover: var(--color-err-tint); --_bg-active: var(--color-err-tint);
+    --_ink: var(--color-err-ink); --_edge: var(--color-err-ink);
+  }
+  .cu-button--quiet {
+    --_bg: transparent; --_bg-hover: var(--color-primary-tint); --_bg-active: var(--color-primary-tint);
+    --_ink: var(--color-link);
+    min-inline-size: 0;
+  }
+
+  /* Disabled: native :disabled, or aria-disabled on a link. Muted text on a tint, never opacity. */
+  .cu-button:disabled,
+  .cu-button[aria-disabled='true'] {
+    --_bg: var(--color-idle-tint);
+    --_bg-hover: var(--color-idle-tint);
+    --_bg-active: var(--color-idle-tint);
+    --_ink: var(--color-muted);
+    --_edge: var(--color-line);
+    --_finish: none;
+    cursor: not-allowed;
+  }
+
+  @media (forced-colors: active) {
+    .cu-button { border-color: ButtonText; }
+    .cu-button:disabled,
+    .cu-button[aria-disabled='true'] { border-color: GrayText; }
+  }
+}

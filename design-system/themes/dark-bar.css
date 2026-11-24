@@ -1,0 +1,17 @@
+/* Dark bar — the CDS .navbar.fill.dark (#2b2b2b) as the header's top bar: white text and wordmark, the 4px carnelian
+   line above it. Put it on the header: data-theme="dark-bar". Only the bar changes; the brand zone keeps the page's
+   header colours. Everything not listed here inherits the default (cornell) theme. */
+@layer tokens {
+  [data-theme='dark-bar'] {
+    --utility-bg: #2b2b2b;
+    --utility-ink: var(--cu-white);
+    --utility-hover-bg: #3c3c3c; /* CDS: white at 8% over #2b2b2b, as a solid */
+    --utility-focus: var(--cu-white);
+    --utility-halo: #2b2b2b;
+    --utility-submit-bg: #444444;
+    --wordmark-color: var(--cu-white);
+    --header-topline: var(--cu-carnelian);
+    --utility-overlap: 0;
+    --header-topline-wide: 0.25rem;
+  }
+}

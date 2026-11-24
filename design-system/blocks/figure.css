@@ -1,0 +1,60 @@
+/* Block — figure, caption, aside, figure set, receded photo.
+   <figure class="cu-figure"><img src alt="…"><figcaption>Caption</figcaption></figure>
+   --left / --right (float from 600px, 40% wide)  --center  --small  --padded (no tinted ground)
+   <div class="cu-figure-set"><div><figure>…</figure><figure>…</figure></div></div>
+   <aside class="cu-aside"> (or <div role="note"> when it sits inside <main>, where a nested aside landmark fails axe) a quiet side note: tinted ground, red top edge.
+   <a class="cu-receded"><img …></a> faded photo that colours on hover. */
+@layer blocks {
+  .cu-figure {
+    margin: 0 0 1.5em;
+    background-color: color-mix(in srgb, var(--gray-400) 20%, var(--color-surface));
+    clear: both;
+    max-inline-size: 100%;
+  }
+  .cu-figure img, .cu-figure video { display: block; inline-size: 100%; block-size: auto; }
+  .cu-figure figcaption {
+    font-size: var(--text-sm);
+    padding: 0.55em 0.6em;
+    margin: 0;
+    clear: both;
+  }
+  .cu-figure--padded { background: none; }
+  .cu-figure--padded figcaption { padding-inline: 0; }
+  .cu-figure--center { margin-inline: auto; }
+  @media (min-width: 600px) {
+    .cu-figure--left, .cu-figure--right { inline-size: 40%; margin-block-end: 1em; clear: none; }
+    .cu-figure--left { float: inline-start; margin-inline-end: 1.5rem; }
+    .cu-figure--right { float: inline-end; margin-inline-start: 1.5rem; }
+  }
+
+  .cu-figure-set { background: none; margin-block-end: 1.5em; }
+  .cu-figure-set > div { display: flex; flex-wrap: nowrap; gap: 2px; }
+  .cu-figure-set > div > .cu-figure { flex: 1 1 0; min-inline-size: 0; margin: 0; }
+  .cu-figure-set--padded > div { gap: 0.625rem; }
+  @media (min-width: 768px) { .cu-figure-set--padded > div { gap: 0.9375rem; } }
+  @media (min-width: 1200px) { .cu-figure-set--padded > div { gap: 1.25rem; } }
+
+  .cu-aside {
+    margin: 0 0 1.5em;
+    padding: 1em 1.1em;
+    background-color: color-mix(in srgb, var(--gray-400) 12%, var(--color-surface));
+    border-block-start: 3px solid var(--color-rule-red);
+    font-size: var(--text-sm);
+  }
+  .cu-aside > :last-child { margin-block-end: 0; }
+
+  .cu-receded {
+    display: block;
+    overflow: hidden;
+    background-color: var(--cu-link-blue);
+  }
+  .cu-receded img { display: block; inline-size: 100%; block-size: auto; }
+  @media (hover: hover) {
+    .cu-receded img {
+      filter: grayscale(0.6) brightness(120%);
+      opacity: 0.7;
+      transition: filter var(--duration-fast), opacity var(--duration-fast);
+    }
+    .cu-receded:hover img, .cu-receded:focus-visible img { filter: none; opacity: 1; }
+  }
+}

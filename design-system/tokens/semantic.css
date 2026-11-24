@@ -1,0 +1,535 @@
+/* Tier 2 — semantic tokens: named for what a colour is FOR. Blocks use only these.
+   This file is the default brand theme (cornell) in BOTH colour modes.
+
+   MODES vs THEMES. Two independent settings:
+     mode   light | dark | (unset = follow the operating system)     data-mode on any element
+     theme  cornell | steel | white  (the brand frame)               data-theme on any element
+   Every colour that differs by mode is written once, as light-dark(<light>, <dark>). The browser
+   picks a side from the element's color-scheme, which the OS sets by default and data-mode forces.
+   So there is no second, duplicated dark block, and any element can be switched on its own.
+
+   Contrast: every text/background pair is declared with a pair comment of the form
+     @pair <foreground> <background> text|large|ui
+   (written inside a comment, as the lines below show) and tools/check.mjs checks it in EVERY
+   theme and EVERY mode: text 4.5:1, large 3:1, ui 3:1 (WCAG 2.2 AA). A pair comment here applies to
+   all themes; one inside a file in themes/ applies to that theme only. */
+@layer tokens {
+  :root {
+    color-scheme: light dark; /* follow the OS unless data-mode says otherwise */
+  }
+  [data-mode='light'] {
+    color-scheme: light;
+  }
+  [data-mode='dark'] {
+    color-scheme: dark;
+  }
+
+  :root,
+  [data-theme='cornell'] {
+    /* Surfaces and text. Light follows CDS (black text on white, light gray canvas); dark follows the CDS
+       dark sections (dark gray #222, near-white text, white links). */
+    --color-canvas: light-dark(var(--cu-light-gray), var(--cu-dark-gray)); /* grey bands (CDS .band), not the page */
+    --color-page: light-dark(var(--cu-white), var(--cu-dark-gray)); /* the page itself: CDS body #fff, #222 in dark */
+    --color-surface: light-dark(var(--cu-white), #2c2c2c);
+    --color-ink: light-dark(var(--cu-black), #dedede);
+    --color-muted: light-dark(var(--gray-600), #a1a1a1);
+    --color-line: light-dark(var(--gray-200), #444444);
+    --color-row-line: light-dark(var(--gray-100), #333333);
+    --color-field-line: light-dark(#808080, #8f8f8f);
+    --color-table-head: light-dark(#f2f2f2, #333333);
+    --color-scrim: light-dark(var(--cu-dark-gray), var(--cu-black));
+
+    /* Primary action and links: Cornell link blue for buttons and links; white links on dark, as CDS */
+    --color-primary: var(--cu-link-blue);
+    --color-primary-hover: light-dark(var(--cu-link-blue-hover), #0077b3);
+    --color-primary-active: light-dark(var(--cu-link-blue-active), #0077b3);
+    --color-primary-tint: light-dark(var(--cu-link-blue-tint), #333333);
+    --color-on-primary: var(--cu-white);
+    --color-link: light-dark(var(--cu-link-blue), var(--cu-white));
+    --color-link-hover: light-dark(var(--cu-link-blue-hover), #cdcdcd);
+
+    /* Accent: carnelian. -fill is a solid with white text on it; the plain value is for text, rules and
+       underlines on a surface, and lightens to CDS's pale red (#ffd7d7) on dark so it stays readable. */
+    --color-accent: light-dark(var(--cu-carnelian), #ffd7d7);
+    --color-accent-fill: var(--cu-carnelian);
+    --color-accent-fill-hover: var(--cu-carnelian-dark);
+    --color-accent-tint: light-dark(#f6e8e8, #3a2222);
+    --color-on-accent-fill: var(--cu-white);
+
+    /* Focus ring: a solid ring with a halo gap between it and the control, so it reads on any
+       background (WCAG 2.4.11 / 2.4.13). Both are checked against the surfaces. */
+    --color-focus: light-dark(var(--cu-link-blue), var(--cu-white));
+    --color-focus-halo: light-dark(var(--cu-white), var(--cu-dark-gray));
+
+    /* Status. Never colour alone: every use pairs the colour with a symbol and a label.
+       The plain hue is for marks (symbols, borders, dots); -ink is for text on the tint. Brand rule: the
+       graphic-only accents (#6eb43f, #f8981d, #ef4035) appear only on dark, as marks; text uses ink or an
+       any-size accent. Orange has no any-size value, so warnings write their text in ink. */
+    --color-ok: light-dark(var(--cu-green), var(--cu-green-graphic));
+    --color-ok-tint: light-dark(#f1f6ed, #26311f);
+    --color-ok-ink: light-dark(var(--cu-green), #dedede);
+    --color-err: light-dark(var(--cu-red), var(--cu-red-graphic));
+    --color-err-tint: light-dark(#fbe9e7, #3a2222);
+    --color-err-ink: light-dark(var(--cu-carnelian), #ffd7d7);
+    --color-warn: light-dark(var(--cu-orange-large), var(--cu-orange-graphic));
+    --color-warn-tint: light-dark(#fff9ee, #3a2f1c);
+    --color-warn-ink: var(--color-ink);
+    --color-warn-fill: var(--cu-orange-graphic);
+    --color-on-warn-fill: var(--cu-black);
+    --color-info: light-dark(var(--cu-link-blue), var(--cu-white));
+    --color-info-tint: var(--color-primary-tint);
+    --color-info-ink: light-dark(var(--cu-link-blue), #dedede);
+    --color-idle: light-dark(var(--gray-600), #b0b0b0);
+    --color-idle-tint: light-dark(var(--gray-100), #333333);
+
+    /* Header: the CDS site banner. Three parts: a carnelian utility bar, the brand zone (seal, title, subtitle) and
+       the main navigation. The seal and the wordmark may only be carnelian, black or white (brand.cornell.edu);
+       the checker enforces it in every theme and mode. */
+    --utility-bg: var(--cu-carnelian);
+    --utility-ink: var(--cu-white);
+    --utility-hover-bg: #a31919; /* CDS: black at 9% over carnelian, written as a solid so contrast can be checked */
+    --utility-focus: var(--cu-white);
+    --utility-halo: var(--cu-dark-gray);
+    --wordmark-color: var(--cu-white);
+    --header-topline: var(--utility-bg); /* the CDS 4px red line along the top of the header */
+    --header-bg: light-dark(var(--cu-white), var(--cu-dark-gray));
+    --header-title: light-dark(var(--cu-link-blue), var(--cu-white));
+    --header-ink: light-dark(#444444, #dedede);
+    --header-focus: light-dark(var(--cu-link-blue), #5cb3e0);
+    --header-halo: var(--header-bg);
+    --seal-color: light-dark(var(--cu-carnelian), var(--cu-white));
+    --header-scrim: linear-gradient(to bottom, rgb(34 34 34 / 0.6) 0%, rgb(34 34 34 / 0.2) 100%); /* over a photo: light enough that the picture reads; keep it dark where the text sits and check contrast per image */
+    --overlay-base: #121212; /* the phone menu overlay: CDS uses this at 94% over the page; contrast is checked on the solid */
+    --overlay-bg: rgb(18 18 18 / 0.94);
+    --overlay-button-bg: rgb(68 68 68 / 0.7);
+    --overlay-line: rgb(255 255 255 / 0.1);
+    /* Slide-down search panel (the CDS #cu-search) and the inline search field in the utility bar */
+    --searchbar-bg: #a01114;
+    --searchbar-line: var(--cu-carnelian);
+    --searchbar-label: #e3b8bf;
+    --searchbar-ink: #f3f3f3;
+    --searchbar-field-bg: #fbf2f2;
+    --searchbar-field-ink: var(--cu-black);
+    --searchbar-submit-bg: var(--cu-carnelian);
+    --searchbar-submit-ink: var(--cu-white);
+    --searchbar-submit-active: #780001;
+    --searchbar-focus: var(--cu-white);
+    --utility-submit-bg: #c61d1d;
+    --overlay-utility-field: rgb(0 0 0 / 0.14);
+    --search-bg: light-dark(var(--cu-dark-gray), #121212);
+    --search-ink: var(--cu-white);
+
+    /* Main navigation bar and the other chrome */
+    --nav-bg: light-dark(#2b2b2b, #1a1a1a);
+    --nav-ink: light-dark(var(--cu-white), #e8e8e8);
+    /* Navigation tones (dark is the default and uses the --nav-* tokens above) and dropdown panels */
+    --navbar-dark-panel-bg: light-dark(#333333, #262626);
+    --navbar-dark-panel-line: light-dark(#515151, #444444);
+    --navbar-plain-focus: var(--color-focus);
+    --navbar-plain-halo: var(--color-focus-halo);
+    --navbar-light-bg: light-dark(#ededed, #383838);
+    --navbar-light-ink: var(--color-ink);
+    --navbar-light-panel-bg: light-dark(#f7f7f7, #2f2f2f);
+    --navbar-light-panel-line: light-dark(#cdcdcd, #515151);
+    --navbar-light-focus: light-dark(var(--cu-link-blue), var(--cu-white));
+    --navbar-light-halo: light-dark(var(--cu-white), #383838);
+    --navbar-red-bg: var(--cu-carnelian);
+    --navbar-red-ink: var(--cu-white);
+    --navbar-red-panel-bg: #39302e;
+    --navbar-red-panel-line: #594e4e;
+    --navbar-blue-bg: var(--cu-navy);
+    --navbar-blue-ink: #e7eced;
+    --navbar-blue-panel-bg: #0e4455;
+    --navbar-blue-panel-line: #375c6e;
+    --overlay-navbar-gradient: linear-gradient(to right, rgb(34 34 34 / 0) 5%, rgb(34 34 34 / 0.6) 25%, rgb(34 34 34 / 0.6) 75%, rgb(34 34 34 / 0) 95%);
+    --overlay-red-hover: rgb(0 0 0 / 0.12);
+    --overlay-red-press: rgb(0 0 0 / 0.16);
+    --overlay-red-trail: rgb(0 0 0 / 0.09);
+    --overlay-panel-shadow: rgb(0 0 0 / 0.2);
+    --overlay-feature-bg: light-dark(rgb(0 0 0 / 0.04), rgb(0 0 0 / 0.1));
+    --nav-active-bg: var(--cu-carnelian);
+    --nav-active-ink: var(--cu-white);
+    --nav-focus: var(--cu-white);
+    --nav-halo: light-dark(var(--cu-dark-gray), #1a1a1a);
+    --sidenav-bg: var(--color-surface);
+    --sidenav-ink: var(--color-ink);
+    --sidenav-hover-bg: light-dark(var(--gray-100), #2a2a2a);
+    --sidenav-active-bg: var(--color-primary-tint);
+    --sidenav-active-ink: var(--color-link);
+    --footer-bg: light-dark(var(--cu-dark-gray), #0d0d0d);
+    --footer-sub-bg: light-dark(#1c1c1c, #0a0a0a);
+    --footer-ink: light-dark(#cdcdcd, #cdcdcd);
+    --footer-heading: #f3f3f3;
+    --footer-link: var(--cu-white);
+    --mode-switch-fill: var(--color-ink);
+    --mode-switch-on-fill: var(--color-surface);
+    --footer-muted: light-dark(#bdbdbd, #b0b0b0);
+
+    /* ---- Content: text tones, rule and panel accents, highlights ---- */
+    --color-heading: light-dark(var(--cu-black), #f3f3f3);
+    --color-heading-minor: light-dark(#444444, #f3f3f3);
+    --color-soft: light-dark(#525252, #a1a1a1);
+    --color-dim: light-dark(#707070, #a1a1a1);
+    --color-red-text: light-dark(var(--cu-carnelian), #fe8f8f);
+    --color-rule: light-dark(#e5e5e5, #4b4b4b);
+    --color-rule-red: light-dark(var(--cu-carnelian), #cc4d4d);
+    --rule-dotted: light-dark(#999999, #777777);
+    --rule-dashed: light-dark(#bbbbbb, #777777);
+    --rule-double: light-dark(#dddddd, #666666);
+    --rule-accent1: #9eddeb;
+    --rule-accent2: #9ebceb;
+    --rule-accent3: #ad9eeb;
+    --rule-accent4: #ebd59e;
+    --rule-accent5: #9eeba5;
+    --accent-teal: #94c6d3;
+    --accent-blue: #94abd3;
+    --accent-purple: #ada3d5;
+    --accent-gold: #d0c391;
+    --accent-green: #93d793;
+    --accent-red: #d99889;
+    /* ---- Layout: bands, cards, callouts, backdrops ---- */
+    --band-accent1-src: #8ac4da; /* tinted over the surface at --band-strength-1 (scale.css) */
+    --band-accent2-src: #aaaaaa;
+    --band-accent3-src: #a2a2a2;
+    --band-accent4: #222222; /* dark bands: the block sets color-scheme: dark */
+    --band-accent5: light-dark(#ffffff, #2c2c2c);
+    --band-accent6: #121212;
+    --band-accent7: #000000;
+    --band-dark-ink: #f2f2f2;
+    --band-hairline: #083f54; /* accent1's inset edge, mixed at --band-hairline-strength */
+    --card-rule: light-dark(#ededed, #444444);
+    --overlay-card-hover: rgb(182 182 182 / 0.16);
+    --overlay-card-press: rgb(119 119 119 / 0.15);
+    --overlay-card-scrim: linear-gradient(to bottom, rgb(0 0 0 / 0) 40%, rgb(0 0 0 / 0.8) 100%);
+    --overlay-badge-bg: rgb(0 0 0 / 0.7);
+    --color-on-scrim: #ffffff;
+    --overlay-backdrop-light: rgb(255 255 255 / 0.86);
+    --overlay-backdrop-dark: rgb(0 0 0 / 0.7);
+    --overlay-backdrop-grad-light: linear-gradient(to bottom, rgb(255 255 255 / 0.92) 10%, rgb(255 255 255 / 0.1) 100%);
+    --overlay-backdrop-grad-light-up: linear-gradient(to top, rgb(255 255 255 / 0.92) 10%, rgb(255 255 255 / 0.1) 100%);
+    --overlay-backdrop-grad-dark: linear-gradient(to bottom, rgb(0 0 0 / 0.9) 10%, rgb(0 0 0 / 0.1) 100%);
+    --overlay-backdrop-grad-dark-up: linear-gradient(to top, rgb(0 0 0 / 0.9) 10%, rgb(0 0 0 / 0.1) 100%);
+    --overlay-caption-bg: rgb(0 0 0 / 0.7);
+    --highlight-yellow: light-dark(#fff000, #b3a600);
+    --highlight-red: #e18575;
+    --highlight-green: #95df4f;
+    --highlight-blue: #7ccce1;
+    --highlight-purple: #c377fd;
+    --note-green: light-dark(#4b7b2b, #83c355);
+    --note-teal: light-dark(#007a8a, #09a5b9);
+    --note-purple: light-dark(#7c32c4, #c286fe);
+    --note-blue: light-dark(#265179, #5399db);
+    --note-orange: light-dark(#b34f1b, #e58552);
+    --note-gold: light-dark(#8f6b00, #dba400);
+    --quote-line: light-dark(#dddddd, #666666);
+
+    /* ---- Forms (CDS values; dark follows the CDS .dark inputs) ---- */
+    --field-border: light-dark(#808080, #8f8f8f);
+    --field-border-focus: light-dark(#222222, #c4c4c4);
+    --field-bg: light-dark(var(--cu-white), #353535);
+    --overlay-field-inset: light-dark(rgb(0 0 0 / 0.1), rgb(0 0 0 / 0.3));
+    --color-placeholder: light-dark(#707070, #a8a8a8);
+    --field-invalid-border: light-dark(#e62a00, #ff6a4d);
+    --field-invalid-bg: light-dark(#ffebe6, #4a2a26);
+    --color-error-text: light-dark(#c92400, #ff8a78);
+    --select-border: light-dark(#707070, #a0a0a0);
+    --select-bg-top: light-dark(#fcfcfc, #404040);
+    --select-bg-bottom: light-dark(#eeeeee, #3a3a3a);
+    --select-multi-bg: light-dark(#f9f9f9, #353535);
+    --check-bg: light-dark(#f9f9f9, #3d3d3d);
+    --check-border: light-dark(#666666, #a8a8a8);
+    --fieldset-line: light-dark(#e0e0e0, #4b4b4b);
+    --fieldset-line-strong: light-dark(#cccccc, #5e5e5e);
+    /* ---- Buttons: the CDS colours. Default blue is --color-primary. ---- */
+    --btn-red: #b31b1b;
+    --btn-red-hover: #c91e1e;
+    --btn-red-active: #941616;
+    --btn-red-ink: #ffffff;
+    --btn-light-red: #df1e12;
+    --btn-light-red-hover: #c8190e;
+    --btn-light-red-active: #a8150b;
+    --btn-light-red-ink: #ffffff;
+    --btn-navy: #073949;
+    --btn-navy-hover: #094b60;
+    --btn-navy-active: #052732;
+    --btn-navy-ink: #ffffff;
+    --btn-green: #4b7b2b;
+    --btn-green-hover: #3f6824;
+    --btn-green-active: #335419;
+    --btn-green-ink: #ffffff;
+    --btn-black: #000000;
+    --btn-black-hover: #333333;
+    --btn-black-active: #4d4d4d;
+    --btn-black-ink: #ffffff;
+    --btn-gray: #60646a;
+    --btn-gray-hover: #6c7177;
+    --btn-gray-active: #54575d;
+    --btn-gray-ink: #ffffff;
+    --btn-white: #ffffff;
+    --btn-white-hover: #f2f2f2;
+    --btn-white-active: #e6e6e6;
+    --btn-white-ink: #000000;
+    --btn-light-gray: #efefef;
+    --btn-light-gray-hover: #e2e2e2;
+    --btn-light-gray-active: #d6d6d6;
+    --btn-light-gray-ink: #000000;
+    --btn-medium-gray: #dbdbdb;
+    --btn-medium-gray-hover: #d1d1d1;
+    --btn-medium-gray-active: #c2c2c2;
+    --btn-medium-gray-ink: #000000;
+    --btn-dark-gray: #2b2b2b;
+    --btn-dark-gray-hover: #383838;
+    --btn-dark-gray-active: #1e1e1e;
+    --btn-dark-gray-ink: #ffffff;
+    --btn-tint: light-dark(#f0f0f0, #3a3a3a);
+    --btn-tint-hover: light-dark(#e8e8e8, #454545);
+    --btn-tint-active: light-dark(#f4f4f4, #323232);
+    --btn-tint-ink: var(--color-ink);
+    --overlay-btn-edge-dark: light-dark(transparent, #8a8a8a);
+    --overlay-btn-edge-light: light-dark(#b5b5b5, transparent);
+
+    /* ---- Interactive batch (tabs, accordions, tooltips, hover tabs, modal) ----
+       The --overlay-tint-* colours are only ever mixed in at a low strength (see the blocks), so they
+       lift or darken whatever surface they sit on, the way the CDS translucent greys do. */
+    --overlay-tint-a: #aaaaaa;
+    --overlay-tint-b: #bbbbbb;
+    --overlay-tint-c: #999999;
+    --overlay-tint-d: #b4b4b4; /* the lined-tab rail, mixed in at 18% */
+    --tabbar-dark: var(--gray-900); /* CDS .dark tab bar */
+    /* CDS .form-updates / .ui-toast */
+    --update-bg: light-dark(#fbf7ec, #333333);
+    --update-line: light-dark(#eeebe1, #4b4b4b);
+    --update-toast-line: light-dark(#a3a19a, #4b4b4b);
+    --accordion-line: light-dark(#d9d9d9, #5e5e5e); /* CDS classic/simple border; dark: white at 25% on #222 */
+    --tooltip-bg: light-dark(#fafafa, #2c2c2c);
+    --tooltip-ink: light-dark(#333333, #dddddd);
+    --tooltip-line: light-dark(#808080, #6b6b6b);
+    --tooltip-arrow-line: light-dark(#4d4d4d, #6b6b6b);
+    --hovertab-bg: light-dark(#f7f7f7, #2e2e2e);
+    --hovertab-ink: light-dark(#000000, #ffffff);
+    --hovertab-hover: light-dark(#dddddd, #3f3f3f);
+    --hovertab-active-bg: #000000;
+    --hovertab-active-ink: #ffffff;
+    --hovertab-stage: #121212;
+    --hovertab-stage-ink: #ffffff;
+    --hovertab-rule: #c53522;
+    --dialog-bg: light-dark(#ffffff, #333333);
+    --dialog-line: light-dark(#333333, #4b4b4b);
+    --modal-scrim: light-dark(#111111, #000000);
+    --float-ring: light-dark(#ffffff, #222222);
+
+    /* ---- Sliders. The image slider always sits on photographs, so it is dark in both modes. ---- */
+    --slider-bg: #444444;
+    --slider-ink: #ffffff;
+    --slider-shade: #000000;
+    --slider-caption-bg: #111111;
+    --slider-caption-ink: #ededed;
+    --cardslider-nav: light-dark(#767676, #3d3d3d);
+    --cardslider-nav-hover: light-dark(#666666, #4d4d4d);
+    --cardslider-nav-active: light-dark(#1a1a1a, #2a2a2a);
+    --cardslider-nav-ink: #ffffff;
+
+    /* ---- Pairs: checked in every theme and mode ---- */
+    /* @pair --tooltip-ink --tooltip-bg text */
+    /* @pair --slider-ink --slider-bg text */
+    /* @pair --slider-caption-ink --slider-caption-bg text */
+    /* @pair --cardslider-nav-ink --cardslider-nav ui */
+    /* @pair --cardslider-nav-ink --cardslider-nav-hover ui */
+    /* @pair --cardslider-nav-ink --cardslider-nav-active ui */
+    /* @pair --color-link --tooltip-bg text */
+    /* @pair --hovertab-ink --hovertab-bg text */
+    /* @pair --hovertab-ink --hovertab-hover text */
+    /* @pair --hovertab-active-ink --hovertab-active-bg text */
+    /* @pair --btn-red-ink --hovertab-rule text */
+    /* @pair --hovertab-stage-ink --hovertab-stage text */
+    /* @pair --hovertab-active-ink --tabbar-dark text */
+    /* @pair --color-ink --update-bg text */
+    /* @pair --color-ink --dialog-bg text */
+    /* @pair --color-link --dialog-bg text */
+    /* @pair --color-muted --dialog-bg text */
+    /* @pair --btn-red-ink --btn-red text */
+    /* @pair --color-accent --color-surface ui */
+    /* @pair --color-accent --color-canvas ui */
+    /* @pair --color-ink --color-surface ui */
+    /* @pair --color-ink --band-accent5 text */
+    /* @pair --band-dark-ink --band-accent4 text */
+    /* @pair --band-dark-ink --band-accent6 text */
+    /* @pair --band-dark-ink --band-accent7 text */
+    /* @pair --color-on-scrim --band-accent7 text */
+    /* @pair --color-ink --color-surface text */
+    /* @pair --color-ink --color-canvas text */
+    /* @pair --color-muted --color-surface text */
+    /* @pair --color-muted --color-canvas text */
+    /* @pair --color-link --color-surface text */
+    /* @pair --color-link --color-canvas text */
+    /* @pair --color-link --color-primary-tint text */
+    /* @pair --color-on-primary --color-primary text */
+    /* @pair --color-on-primary --color-primary-hover text */
+    /* @pair --color-on-primary --color-primary-active text */
+    /* @pair --color-ink --color-accent-tint text */
+    /* @pair --color-accent --color-surface text */
+    /* @pair --color-accent --color-canvas text */
+    /* @pair --color-accent --color-surface ui */
+    /* @pair --color-on-accent-fill --color-accent-fill text */
+    /* @pair --color-on-accent-fill --color-accent-fill-hover text */
+    /* @pair --color-ink --color-accent-tint text */
+    /* @pair --color-ok --color-surface ui */
+    /* @pair --color-ok --color-ok-tint ui */
+    /* @pair --color-ok-ink --color-ok-tint text */
+    /* @pair --color-ok-ink --color-surface text */
+    /* @pair --color-err --color-surface ui */
+    /* @pair --color-err --color-err-tint ui */
+    /* @pair --color-err-ink --color-err-tint text */
+    /* @pair --color-err-ink --color-surface text */
+    /* @pair --color-warn --color-surface ui */
+    /* @pair --color-warn --color-warn-tint ui */
+    /* @pair --color-warn-ink --color-warn-tint text */
+    /* @pair --color-on-warn-fill --color-warn-fill text */
+    /* @pair --color-info --color-surface ui */
+    /* @pair --color-info-ink --color-info-tint text */
+    /* @pair --color-ink --color-surface text */
+    /* @pair --color-focus --color-surface ui */
+    /* @pair --color-focus --color-canvas ui */
+    /* @pair --color-focus --color-focus-halo ui */
+    /* @pair --color-field-line --color-surface ui */
+    /* @pair --color-field-line --color-canvas ui */
+    /* @pair --color-ink --color-table-head text */
+    /* @pair --color-muted --color-table-head text */
+    /* @pair --color-ink --color-primary-tint text */
+    /* @pair --color-ink --color-ok-tint text */
+    /* @pair --color-ink --color-err-tint text */
+    /* @pair --color-ink --color-warn-tint text */
+    /* @pair --color-ink --color-info-tint text */
+    /* @pair --color-muted --color-idle-tint text */
+    /* @pair --color-idle --color-surface text */
+    /* @pair --color-idle --color-idle-tint text */
+    /* @pair --header-title --header-bg text */
+    /* @pair --header-ink --header-bg text */
+    /* @pair --seal-color --header-bg ui */
+    /* @pair --header-focus --header-bg ui */
+    /* @pair --searchbar-label --searchbar-bg text */
+    /* @pair --searchbar-ink --searchbar-bg text */
+    /* @pair --searchbar-field-ink --searchbar-field-bg text */
+    /* @pair --searchbar-submit-ink --searchbar-submit-bg text */
+    /* @pair --searchbar-submit-ink --searchbar-submit-active text */
+    /* @pair --searchbar-focus --searchbar-bg ui */
+    /* @pair --searchbar-field-bg --searchbar-bg ui */
+    /* @pair --utility-ink --utility-submit-bg text */
+    /* @pair --utility-ink --utility-bg text */
+    /* @pair --utility-ink --utility-hover-bg text */
+    /* @pair --wordmark-color --utility-bg ui */
+    /* @pair --utility-focus --utility-bg ui */
+    /* @pair --utility-focus --utility-halo ui */
+    /* @pair --search-ink --search-bg text */
+    /* @pair --search-ink --overlay-base text */
+    /* @pair --nav-active-ink --nav-active-bg text */
+    /* @pair --nav-ink --nav-bg text */
+    /* @pair --nav-ink --navbar-dark-panel-bg text */
+    /* @pair --nav-focus --navbar-dark-panel-bg ui */
+    /* @pair --navbar-light-ink --navbar-light-bg text */
+    /* @pair --navbar-light-ink --navbar-light-panel-bg text */
+    /* @pair --navbar-light-focus --navbar-light-bg ui */
+    /* @pair --navbar-light-focus --navbar-light-panel-bg ui */
+    /* @pair --navbar-light-focus --navbar-light-halo ui */
+    /* @pair --navbar-red-ink --navbar-red-bg text */
+    /* @pair --navbar-red-ink --navbar-red-panel-bg text */
+    /* @pair --nav-focus --navbar-red-bg ui */
+    /* @pair --nav-focus --navbar-red-panel-bg ui */
+    /* @pair --navbar-blue-ink --navbar-blue-bg text */
+    /* @pair --navbar-blue-ink --navbar-blue-panel-bg text */
+    /* @pair --nav-focus --navbar-blue-bg ui */
+    /* @pair --nav-focus --navbar-blue-panel-bg ui */
+    /* @pair --nav-active-ink --nav-active-bg text */
+    /* @pair --nav-focus --nav-bg ui */
+    /* @pair --nav-focus --nav-halo ui */
+    /* @pair --sidenav-ink --sidenav-bg text */
+    /* @pair --sidenav-ink --sidenav-hover-bg text */
+    /* @pair --sidenav-active-ink --sidenav-active-bg text */
+    /* @pair --footer-ink --footer-bg text */
+    /* @pair --footer-link --footer-bg text */
+    /* @pair --footer-muted --footer-bg text */
+    /* @pair --footer-heading --footer-bg text */
+    /* @pair --footer-ink --footer-sub-bg text */
+    /* @pair --footer-link --footer-sub-bg text */
+    /* @pair --footer-sub-bg --footer-link text */
+    /* @pair --footer-bg --footer-link text */
+    /* @pair --mode-switch-on-fill --mode-switch-fill text */
+    /* @pair --btn-red-ink --btn-red text */
+    /* @pair --btn-red-ink --btn-red-hover text */
+    /* @pair --btn-red-ink --btn-red-active text */
+    /* @pair --btn-light-red-ink --btn-light-red text */
+    /* @pair --btn-light-red-ink --btn-light-red-hover text */
+    /* @pair --btn-light-red-ink --btn-light-red-active text */
+    /* @pair --btn-navy-ink --btn-navy text */
+    /* @pair --btn-navy-ink --btn-navy-hover text */
+    /* @pair --btn-navy-ink --btn-navy-active text */
+    /* @pair --btn-green-ink --btn-green text */
+    /* @pair --btn-green-ink --btn-green-hover text */
+    /* @pair --btn-green-ink --btn-green-active text */
+    /* @pair --btn-black-ink --btn-black text */
+    /* @pair --btn-black-ink --btn-black-hover text */
+    /* @pair --btn-black-ink --btn-black-active text */
+    /* @pair --btn-gray-ink --btn-gray text */
+    /* @pair --btn-gray-ink --btn-gray-hover text */
+    /* @pair --btn-gray-ink --btn-gray-active text */
+    /* @pair --btn-white-ink --btn-white text */
+    /* @pair --btn-white-ink --btn-white-hover text */
+    /* @pair --btn-white-ink --btn-white-active text */
+    /* @pair --btn-light-gray-ink --btn-light-gray text */
+    /* @pair --btn-light-gray-ink --btn-light-gray-hover text */
+    /* @pair --btn-light-gray-ink --btn-light-gray-active text */
+    /* @pair --btn-medium-gray-ink --btn-medium-gray text */
+    /* @pair --btn-medium-gray-ink --btn-medium-gray-hover text */
+    /* @pair --btn-medium-gray-ink --btn-medium-gray-active text */
+    /* @pair --btn-dark-gray-ink --btn-dark-gray text */
+    /* @pair --btn-dark-gray-ink --btn-dark-gray-hover text */
+    /* @pair --btn-dark-gray-ink --btn-dark-gray-active text */
+    /* @pair --color-placeholder --field-bg text */
+    /* @pair --color-ink --field-bg text */
+    /* @pair --field-border --field-bg ui */
+    /* @pair --field-border --color-surface ui */
+    /* @pair --field-border-focus --field-bg ui */
+    /* @pair --color-error-text --color-surface text */
+    /* @pair --color-error-text --color-canvas text */
+    /* @pair --color-ink --field-invalid-bg text */
+    /* @pair --field-invalid-border --field-invalid-bg ui */
+    /* @pair --color-ink --select-bg-top text */
+    /* @pair --color-ink --select-bg-bottom text */
+    /* @pair --select-border --select-bg-top ui */
+    /* @pair --color-ink --select-multi-bg text */
+    /* @pair --check-border --color-surface ui */
+    /* @pair --btn-tint-ink --btn-tint text */
+    /* @pair --btn-tint-ink --btn-tint-hover text */
+    /* @pair --btn-tint-ink --btn-tint-active text */
+    /* @pair --color-heading --color-surface text */
+    /* @pair --color-heading --color-canvas text */
+    /* @pair --color-heading-minor --color-surface text */
+    /* @pair --color-heading-minor --color-canvas text */
+    /* @pair --color-soft --color-surface text */
+    /* @pair --color-soft --color-canvas text */
+    /* @pair --color-dim --color-surface text */
+    /* @pair --color-dim --color-canvas text */
+    /* @pair --color-red-text --color-surface text */
+    /* @pair --color-red-text --color-canvas text */
+    /* @pair --color-accent --color-page ui */
+    /* @pair --color-ink --color-page text */
+    /* @pair --color-muted --color-page text */
+    /* @pair --color-link --color-page text */
+    /* @pair --color-accent --color-page text */
+    /* @pair --color-focus --color-page ui */
+    /* @pair --color-field-line --color-page ui */
+    /* @pair --color-error-text --color-page text */
+    /* @pair --color-heading --color-page text */
+    /* @pair --color-heading-minor --color-page text */
+    /* @pair --color-soft --color-page text */
+    /* @pair --color-dim --color-page text */
+    /* @pair --color-red-text --color-page text */
+    /* @pair --note-green --color-surface text */
+    /* @pair --note-teal --color-surface text */
+    /* @pair --note-purple --color-surface text */
+    /* @pair --note-blue --color-surface text */
+    /* @pair --note-orange --color-surface text */
+    /* @pair --note-gold --color-surface text */
+    /* @pair --color-rule-red --color-surface ui */
+  }
+}
