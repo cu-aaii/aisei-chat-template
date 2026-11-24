@@ -1,0 +1,20 @@
+/* Cascade order for the whole app (angular.json loads this first, then design-system/index.css, then client/styles.css).
+
+   The Cornell design system (design-system/index.css) is built in layers: tokens < base < blocks < utilities.
+   An unlayered rule beats every layered one, so the app's own CSS is imported into two layers of its own, on either
+   side of the design system:
+
+     app-base       styles.css: html/body basics and the page colours. Lowest, so the design system's tokens and base
+                    styles win. App-only tokens (--app-*, each pointing at a design-system token) would go here too.
+     app-utilities  accessability.css (the focus ring on the design system's tokens, the mobile input minimum, reduced
+                    motion) and app.css (the few app-wide rules that sit between blocks: the chat launcher and back to
+                    top sharing a corner). Highest, so they beat a design-system base or block rule.
+
+   This app has no Angular Material, so base-template's client/theme.css and design-system-bridge.css are not loaded.
+   Component styles stay in each component's own `styles:`; a new unlayered global file in angular.json would
+   silently override every design-system block (cornell-components). */
+@layer app-base, tokens, base, blocks, utilities, app-utilities;
+
+@import url('./styles.css') layer(app-base);
+@import url('./accessability.css') layer(app-utilities);
+@import url('./app.css') layer(app-utilities);

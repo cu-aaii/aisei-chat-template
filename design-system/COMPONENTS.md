@@ -29,19 +29,19 @@ has its markup pattern and what its behaviour must keep. A block is plain CSS (`
 | `blocks/dialog.css` | modal dialog (CDS "Modal Dialog"), on the native &lt;dialog&gt; element (dialog.showModal()) | `.cu-dialog` | gallery, interactive | - |
 | `blocks/field.css` | form controls (CDS values) | `.cu-input` `.cu-select` `.cu-textarea` `.cu-description` `.cu-check` `.cu-form-item` | dashboard, forms, gallery, headers, index | - |
 | `blocks/figure.css` | figure, caption, aside, figure set, receded photo | `.cu-figure` `.cu-figure-set` `.cu-receded` `.cu-aside` | content, sidebars | - |
-| `blocks/footer.css` | footer | `.cu-footer` | dashboard, gallery, page, public | - |
-| `blocks/form.css` | form, form item, form actions, fieldset (CDS "custom forms" and "fieldsets") | `.cu-fieldset` `.cu-form-actions` `.cu-form` `.cu-sr-only` | customizer, dashboard, decisions, forms, gallery | - |
+| `blocks/footer.css` | footer | `.cu-footer` | dashboard, gallery, page, public | `shared/layout/public/site-footer.component.ts` |
+| `blocks/form.css` | form, form item, form actions, fieldset (CDS "custom forms" and "fieldsets") | `.cu-fieldset` `.cu-form-actions` `.cu-form` `.cu-sr-only` | customizer, dashboard, decisions, forms, gallery | `shared/layout/site-header/site-header.component.ts` |
 | `blocks/grid.css` | 12-column flex grid (CDS .flex-grid) | `.cu-grid` `.cu-col-1` `.cu-col-2` `.cu-col-3` `.cu-col-4` `.cu-col-5` | forms | - |
-| `blocks/header.css` | site header, the CDS site banner | `.cu-header` `.cu-utility` `.cu-brand` `.cu-search` `.cu-seal` | dashboard, decisions, gallery, headers, page | - |
-| `blocks/heading.css` | heading variants | `.cu-heading` `.cu-h1` `.cu-h2` `.cu-h3` `.cu-h4` `.cu-h5` | content, gallery, interactive, layout, motion | - |
+| `blocks/header.css` | site header, the CDS site banner | `.cu-header` `.cu-utility` `.cu-brand` `.cu-search` `.cu-seal` | dashboard, decisions, gallery, headers, page | `shared/layout/site-header/site-header.component.ts` |
+| `blocks/heading.css` | heading variants | `.cu-heading` `.cu-h1` `.cu-h2` `.cu-h3` `.cu-h4` `.cu-h5` | content, gallery, interactive, layout, motion | `shared/layout/public/site-footer.component.ts` |
 | `blocks/hovertabs.css` | hover tabs (CDS "Hover Tabs") | `.cu-hovertabs` | interactive | - |
-| `blocks/icon.css` | icons: Google Material Symbols (Outlined, weight 300), named exactly as the app's &lt;mat-icon&gt; names (expand_more, verified_user, …), so a name from... | `.cu-icon` | content, dashboard, forms, interactive | - |
+| `blocks/icon.css` | icons: Google Material Symbols (Outlined, weight 300), named exactly as the app's &lt;mat-icon&gt; names (expand_more, verified_user, …), so a name from... | `.cu-icon` | content, dashboard, forms, interactive | `shared/components/icon/icon.component.ts`, `shared/layout/site-header/site-header.component.ts` |
 | `blocks/inline.css` | inline text styles: highlights, documentation notes, text tones, code bits, link variants | `.cu-note` `.cu-hl` `.cu-link-quiet` `.cu-text-soft` `.cu-text-dim` `.cu-text-red` | content, page, public | - |
-| `blocks/layout.css` | layout primitives | `.cu-container` `.cu-shell` `.cu-with-sidebar` `.cu-stack` `.cu-layout` `.cu-cluster` | content, dashboard, decisions, forms, gallery | - |
+| `blocks/layout.css` | layout primitives | `.cu-container` `.cu-shell` `.cu-with-sidebar` `.cu-stack` `.cu-layout` `.cu-cluster` | content, dashboard, decisions, forms, gallery | `shared/layout/public/site-footer.component.ts`, `shared/layout/site-header/site-header.component.ts` |
 | `blocks/list.css` | lists | `.cu-list` `.cu-deflist` | content | - |
-| `blocks/modeswitch.css` | mode switch: Automatic / Light / Dark as one small segmented control | `.cu-mode-switch` | customizer, dashboard, page, public | - |
+| `blocks/modeswitch.css` | mode switch: Automatic / Light / Dark as one small segmented control | `.cu-mode-switch` | customizer, dashboard, page, public | `shared/layout/public/site-footer.component.ts` |
 | `blocks/motion.css` | motion (CDS "Motion Design") | `.cu-motion-fadein` `.cu-motion-slidein` `.cu-motion-parallax` `.cu-motion-custom` | motion | - |
-| `blocks/nav.css` | navigation | `.cu-nav` `.cu-section-nav` `.cu-sidenav` `.cu-nav-toggle` `.cu-breadcrumb` | dashboard, decisions, gallery, headers, interactive | - |
+| `blocks/nav.css` | navigation | `.cu-nav` `.cu-section-nav` `.cu-sidenav` `.cu-nav-toggle` `.cu-breadcrumb` | dashboard, decisions, gallery, headers, interactive | `shared/layout/site-header/site-header.component.ts`, `shared/look/look.ts` |
 | `blocks/notice.css` | notice (callout) and badge | `.cu-notice` | gallery, page, public | - |
 | `blocks/panel.css` | panel and pill (non-semantic containers) | `.cu-panel` `.cu-pill` | content, dashboard, forms, layout, sidebars | - |
 | `blocks/quote.css` | blockquote | `.cu-quote` | content, page, public | - |

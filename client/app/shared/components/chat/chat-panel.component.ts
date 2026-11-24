@@ -86,7 +86,7 @@ interface MessagePart {
         }
       } @else {
         <div class="empty">
-          <app-icon name="chat" />
+          <app-icon name="forum" />
           <h2>Ask about the Hub</h2>
           <p>Ask me about anything on this site.</p>
         </div>

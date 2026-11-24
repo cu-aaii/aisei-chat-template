@@ -1,0 +1,22 @@
+/* App-wide rules between blocks, in the app-utilities layer (layers.css). Tokens only. */
+
+/* The chat launcher (.cu-chat) and the floating back-to-top button (.cu-back-to-top--floating) both claim the
+   bottom-right corner. Back to top sits above the launcher, with a gap, at every width. */
+.cu-back-to-top--floating {
+  inset-block-end: calc(1.125rem + max(2.75rem, var(--control-h)) + var(--space-3));
+}
+@media (min-width: 768px) {
+  .cu-back-to-top--floating {
+    inset-block-end: calc(var(--space-5) + max(2.75rem, var(--control-h)) + var(--space-3));
+  }
+}
+
+/* blocks/chat.css keeps room under the page's last row and scroll padding for focus only when .cu-chat is a direct
+   child of <body> (`body:has(> .cu-chat)`). In Angular it sits inside <app-root>, so those rules never match; the
+   same two rules, for a chat anywhere on the page (cornell-design-system finding, #22). */
+:where(body:has(.cu-chat)) .cu-footer__sub {
+  padding-block-end: calc(2.75rem + 2 * var(--space-5) + var(--space-4));
+}
+:where(html:has(.cu-chat)) {
+  scroll-padding-block-end: calc(2.75rem + 2 * var(--space-5));
+}

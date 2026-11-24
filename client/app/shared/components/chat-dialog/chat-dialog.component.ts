@@ -46,7 +46,7 @@ import { IconComponent } from '../icon/icon.component';
       (cancel)="onDialogCancel($event)"
     >
       <div class="titlebar">
-        <app-icon name="chat" />
+        <app-icon name="forum" />
         <span class="title">Hub Assistant</span>
         <button
           type="button"
@@ -66,7 +66,7 @@ import { IconComponent } from '../icon/icon.component';
             [attr.aria-expanded]="expanded()"
             (click)="toggleExpanded()"
           >
-            <app-icon [name]="expanded() ? 'close_fullscreen' : 'open_in_full'" />
+            <app-icon [name]="expanded() ? 'unfold_less' : 'unfold_more'" />
           </button>
           <button type="button" class="titlebar-btn" aria-label="Close chat" (click)="close()">
             <app-icon name="close" />
@@ -89,7 +89,7 @@ import { IconComponent } from '../icon/icon.component';
       [attr.tabindex]="open() ? -1 : null"
       (click)="openPanel()"
     >
-      <app-icon name="chat" />
+      <app-icon name="forum" />
       <span>Ask the Hub</span>
     </button>
   `,

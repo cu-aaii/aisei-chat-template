@@ -1,72 +1,98 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { LabWordmarkComponent } from '../../components/lab-wordmark/lab-wordmark.component';
+import { LOOK } from '../../look/look';
+import { ColorMode, ThemeService } from '../../services/theme/theme.service';
+import { PRIMARY_NAV } from './nav-items';
 
 interface FooterLink {
   label: string;
-  path: string;
+  href: string;
 }
 
 /**
- * Site footer: 25% wordmark/contact column + 75% three-column link block,
- * plus a legal bar. Mirrors the live site's `.secondary`/`.primary` split —
- * Replace the address, contact link, and link columns with your own.
+ * The Cornell footer, from the design system's `.cu-footer` block (design-system/blocks/footer.css): a content
+ * band with the site's own content (who you are, how to reach you, link lists) and, beside it, the Appearance
+ * switch (Automatic follows the operating system, Light and Dark are remembered; `modeSwitch` in provideLook turns
+ * it off); then the sub-footer with the three links every Cornell site carries. The year is always the current one.
+ *
+ * Replace the address, the contact address and the link lists with your own. Page links come from nav-items.ts.
  */
 @Component({
   selector: 'app-site-footer',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, LabWordmarkComponent],
-  host: { class: 'site-footer' },
+  imports: [RouterLink],
+  host: { style: 'display: block' },
   template: `
-    <footer>
-      <div class="container-fluid">
-        <div class="row">
-          <div class="secondary">
-            <app-lab-wordmark class="wordmark" />
-            <address>
-              Your team or lab name<br />
-              Cornell University, Ithaca, NY 14853
-            </address>
-            <a
-              class="contact"
-              href="mailto:you@cornell.edu"
-              >Contact Us</a
-            >
+    <footer class="cu-footer" aria-label="Site footer">
+      <div class="cu-footer__main">
+        <div class="cu-container cu-footer__cols">
+          <div class="cu-footer__primary">
+            <h2 class="cu-footer__heading">{{ siteName }}</h2>
+            <div class="app-footer__columns">
+              <div>
+                <address>
+                  Your team or lab name<br />
+                  Cornell University, Ithaca, NY 14853
+                </address>
+                <p><a [href]="'mailto:' + contactEmail">Contact us</a></p>
+              </div>
+              <nav aria-labelledby="footer-pages">
+                <h3 id="footer-pages" class="cu-h6">Pages</h3>
+                <ul role="list">
+                  @for (item of pages; track item.path) {
+                    <li><a [routerLink]="item.path">{{ item.label }}</a></li>
+                  }
+                </ul>
+              </nav>
+              <nav aria-labelledby="footer-resources">
+                <h3 id="footer-resources" class="cu-h6">Resources</h3>
+                <ul role="list">
+                  @for (link of resources; track link.href) {
+                    <li><a [href]="link.href">{{ link.label }}</a></li>
+                  }
+                </ul>
+              </nav>
+            </div>
+            <p class="app-footer__a11y">
+              If you have a disability and are having trouble accessing information on this website or need materials
+              in an alternate format, contact <a [href]="'mailto:' + contactEmail">{{ contactEmail }}</a> for assistance.
+            </p>
           </div>
-
-          <div class="primary">
-            <div>
-              <h2>Pages</h2>
-              <ul>
-                @for (a of pages; track a.path) {
-                  <li><a [routerLink]="a.path">{{ a.label }}</a></li>
-                }
-              </ul>
-            </div>
-
-            <div>
-              <h2>Resources</h2>
-              <ul>
-                <li><a href="https://ai.cornell.edu" target="_blank" rel="noopener">Cornell AI Initiative</a></li>
-              </ul>
-              <h2 class="part-of">Built with</h2>
-              <ul>
-                <li><a href="https://github.com/cu-aaii/aisei-chat-template" target="_blank" rel="noopener">aisei-chat-template</a></li>
-              </ul>
-            </div>
+          <div class="cu-footer__secondary">
+            @if (look.modeSwitch) {
+              <div class="cu-footer__prefs">
+                <fieldset class="cu-mode-switch">
+                  <legend>Appearance</legend>
+                  <span class="cu-mode-switch__options">
+                    @for (option of modes; track option.value) {
+                      <label>
+                        <input
+                          type="radio"
+                          name="cu-footer-mode"
+                          [value]="option.value"
+                          [checked]="theme.mode() === option.value"
+                          (change)="theme.setMode(option.value)"
+                        /><span>{{ option.label }}</span>
+                      </label>
+                    }
+                  </span>
+                </fieldset>
+              </div>
+            }
           </div>
         </div>
       </div>
-
-      <div class="legal">
-        <div class="container-fluid">
-          <div class="legal-row">
-            <ul class="legal-list">
-              <li><a href="https://www.cornell.edu" rel="noopener">Cornell University</a> &copy;2026</li>
-              <li><a href="https://privacy.cornell.edu/" rel="noopener">University Privacy</a></li>
+      <div class="cu-footer__sub">
+        <div class="cu-container">
+          <div class="cu-footer__links">
+            <ul role="list">
+              <li><a href="https://www.cornell.edu">Cornell University</a> &copy;{{ year }}</li>
+              <li><a href="https://privacy.cornell.edu/">University Privacy</a></li>
             </ul>
-            <ul class="legal-list">
-              <li><a href="mailto:you@cornell.edu">Web Accessibility Assistance</a></li>
+            <ul role="list">
+              <li>
+                <a href="https://tdx.cornell.edu/TDClient/39/Portal/Requests/ServiceDet?ID=373">Web Accessibility Assistance</a>
+              </li>
             </ul>
           </div>
         </div>
@@ -74,81 +100,36 @@ interface FooterLink {
     </footer>
   `,
   styles: `
-    :host { display: block; font-family: var(--body-font); }
-    footer { background: var(--color-footer-bg); color: var(--color-footer-text); }
-
-    .row {
-      display: flex;
-      padding-top: 45px;
-      padding-bottom: 45px;
+    /* The content band's own columns (address, Pages, Resources): no block lays out a footer's link lists, so a
+       small grid here, tokens only. Colours are the footer block's (it sets the link colour and focus ring). */
+    .app-footer__columns {
+      display: grid;
+      gap: var(--space-5);
+      margin-block-end: var(--space-5);
     }
-    .secondary { flex: 0 0 25%; padding-right: 15px; }
-    .primary { flex: 1; display: flex; gap: 34px; padding-left: 15px; }
-    .primary > div { flex: 1; min-width: 0; }
-
-    /* h2, not h4: the footer's column titles follow page content whose deepest level is
-       h2, so h4 skipped a level (Lighthouse/axe heading-order). Sized and spaced as the
-       h4s were, line-height included, so nothing moves. */
-    h2 {
-      color: #bbb;
-      font-family: var(--heading-font);
-      font-weight: 500;
-      font-size: 18px;
-      line-height: 0.875rem;
-      margin: 0 0 14px;
+    @media (min-width: 768px) {
+      .app-footer__columns { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     }
-    ul { list-style: none; padding: 0; margin: 0; }
-    li { margin-bottom: 7.5px; }
-    a { color: #fff; text-decoration: underline; }
-    /* inline-block + line-height gives each link a 26px-tall hit area (WCAG 2.2
-       target-size wants 24x24; the inherited 14px body line-height gave 21px).
-       The li margin drops by the same amount the line box grew, so the 28.5px
-       vertical pitch between links is unchanged. */
-    .primary a { display: inline-block; line-height: 26px; font-size: 16px; }
-    .primary li { margin-bottom: 2.5px; }
-    .primary a::before { content: "\\2197  "; text-decoration: none; }
-
-    .secondary .wordmark { display: block; width: 250px; height: auto; margin-bottom: 20px; }
-    .secondary address {
-      font-style: normal;
-      color: #bbb;
-      font-size: 16px;
-      line-height: 24px;
-      margin: 0 0 24px;
-    }
-    .secondary .contact {
-      display: inline-block;
-      margin-top: 8px;
-      background: rgba(109, 195, 255, .15);
-      color: #fff;
-      padding: 14px 18px 11px;
-      font-size: 18px;
-      text-decoration: none;
-    }
-    .secondary .contact:hover { background: rgba(109, 195, 255, .28); }
-
-    .part-of { margin-top: 40px; }
-
-    .legal { background: var(--color-footer-legal-bg); }
-    .legal .container-fluid { padding-top: 20px; padding-bottom: 20px; }
-    .legal-row { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-    .legal-list { display: flex; gap: 16px; flex-wrap: wrap; }
-    .legal-list a { font-size: 15px; }
-    .legal-list a::before { content: none; }
-
-    @media (max-width: 767px) {
-      .row { flex-direction: column; }
-      .secondary { flex: none; padding-right: 0; margin-bottom: 32px; }
-      .primary { flex-direction: column; gap: 32px; }
-
-      .legal-row { flex-direction: column; align-items: center; text-align: center; }
-      .legal-list { flex-direction: column; align-items: center; }
-    }
+    address { font-style: normal; margin-block-end: var(--space-3); }
+    h3 { margin: 0 0 var(--space-2); color: var(--footer-heading); }
+    ul { margin: 0; padding: 0; list-style: none; }
+    li { margin-block-end: var(--space-2); }
   `,
 })
 export class SiteFooterComponent {
-  readonly pages: FooterLink[] = [
-    { label: 'Home', path: '/' },
-    { label: 'About', path: '/about' },
+  protected readonly siteName = 'AI Innovation Hub';
+  protected readonly contactEmail = 'you@cornell.edu';
+  protected readonly pages = PRIMARY_NAV;
+  protected readonly resources: FooterLink[] = [
+    { label: 'Cornell AI Initiative', href: 'https://ai.cornell.edu' },
+    { label: 'Built with aisei-chat-template', href: 'https://github.com/cu-aaii/aisei-chat-template' },
+  ];
+  protected readonly year = new Date().getFullYear();
+  protected readonly theme = inject(ThemeService);
+  protected readonly look = inject(LOOK);
+  protected readonly modes: { value: ColorMode; label: string }[] = [
+    { value: 'auto', label: 'Automatic' },
+    { value: 'light', label: 'Light' },
+    { value: 'dark', label: 'Dark' },
   ];
 }

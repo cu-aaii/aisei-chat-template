@@ -38,7 +38,7 @@ const SHOW_AFTER_PX = 400;
       [inert]="!visible()"
       (click)="scrollToTop()"
     >
-      <app-icon name="keyboard_arrow_up" />
+      <app-icon name="arrow_upward" />
       <span class="sr-only">Back to top</span>
     </button>
   `,
