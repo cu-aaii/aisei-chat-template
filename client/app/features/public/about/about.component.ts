@@ -37,15 +37,10 @@ import { InnerPageLayoutComponent } from '../../../shared/layout/public/inner-pa
   `,
   styles: `
     :host { display: block; }
-    .body { max-width: 760px; }
-    .body h2 {
-      font-family: var(--heading-font);
-      font-size: 24px;
-      font-weight: 700;
-      margin: 32px 0 10px;
-    }
-    .body h2:first-child { margin-top: 0; }
-    .body p { font-size: 17px; line-height: 1.6; margin: 0 0 12px; }
+    .body { max-width: 48rem; }
+    .body h2 { margin: var(--space-6) 0 var(--space-2); }
+    .body h2:first-child { margin-block-start: 0; }
+    .body p { font-size: var(--text-lg); line-height: var(--leading-body); }
   `,
 })
 export class AboutComponent {}

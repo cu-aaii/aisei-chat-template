@@ -25,8 +25,8 @@ const FRAME_MS = 90;
       align-items: center;
       gap: 6px;
       margin: 6px 0;
-      font-size: 15px;
-      color: #666;
+      font-size: var(--text-sm);
+      color: var(--color-muted);
     }
     .spinner {
       display: inline-block;

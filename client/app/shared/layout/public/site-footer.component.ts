@@ -37,7 +37,7 @@ interface FooterLink {
                 <p><a [href]="'mailto:' + contactEmail">Contact us</a></p>
               </div>
               <nav aria-labelledby="footer-pages">
-                <h3 id="footer-pages" class="cu-h6">Pages</h3>
+                <h3 id="footer-pages">Pages</h3>
                 <ul role="list">
                   @for (item of pages; track item.path) {
                     <li><a [routerLink]="item.path">{{ item.label }}</a></li>
@@ -45,7 +45,7 @@ interface FooterLink {
                 </ul>
               </nav>
               <nav aria-labelledby="footer-resources">
-                <h3 id="footer-resources" class="cu-h6">Resources</h3>
+                <h3 id="footer-resources">Resources</h3>
                 <ul role="list">
                   @for (link of resources; track link.href) {
                     <li><a [href]="link.href">{{ link.label }}</a></li>
@@ -111,7 +111,13 @@ interface FooterLink {
       .app-footer__columns { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     }
     address { font-style: normal; margin-block-end: var(--space-3); }
-    h3 { margin: 0 0 var(--space-2); color: var(--footer-heading); }
+    h3 {
+      margin: 0 0 var(--space-2);
+      color: var(--footer-heading);
+      font-family: var(--font-sans);
+      font-size: var(--text-base);
+      font-weight: var(--weight-semibold);
+    }
     ul { margin: 0; padding: 0; list-style: none; }
     li { margin-block-end: var(--space-2); }
   `,

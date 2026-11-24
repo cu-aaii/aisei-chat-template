@@ -1,290 +1,142 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   computed,
+  effect,
   inject,
   signal,
   viewChild,
 } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { ChatEngineService } from '../../services/chat-engine.service';
 import { ChatPanelComponent } from '../chat/chat-panel.component';
 import { IconComponent } from '../icon/icon.component';
+import { stopsIn, wrapTab } from '../../layout/focus-wrap';
+
+/** Everything a keyboard can reach inside the panel (focus-wrap's default list has no textarea). */
+const PANEL_STOPS = 'a[href], button:not([disabled]), textarea, summary';
 
 /**
- * Floating global chat launcher, mounted once in `PublicLayoutComponent`
- * outside the router outlet so the conversation survives navigation.
- * Hidden via `[class.suppressed]` (not `@if`) on routes flagged
- * `data.hideChatWidget === true` (currently just `/search`, which builds the
- * same conversation into its own layout) — CSS suppression, not destruction,
- * keeps the `@defer`-loaded panel's state intact if a visitor opened it
- * before navigating there. Also suppressed sitewide when
- * `ChatEngineService.enabled()` is `false` (server's `CHAT_ENABLED=false`).
+ * Floating chat, on the design system's agent-chat block (`cu-chat`, design-system/blocks/chat.css; reference
+ * behaviour `initChat` in showcase.js). Mounted once in `PublicLayoutComponent`, outside the router outlet, so
+ * the conversation survives navigation.
  *
- * `<app-chat-panel>` only loads on first interaction with the launcher —
- * `marked`/`dompurify`/the message list stay out of every page's initial
- * bundle for visitors who never open the widget.
+ * Behaviour, as the block requires: the launcher opens a non-modal `<dialog>` (the page stays usable) and hides
+ * itself; focus goes to the message field; Tab and Shift+Tab wrap inside the panel; Escape or Minimize closes it
+ * and returns focus to the launcher. Below 768px the panel fills the screen, so there it is modal (`aria-modal`,
+ * the page behind inert). "Expand" is this app's addition: a modal (`showModal()`) panel over most of the window;
+ * Escape there returns to the small panel first.
+ *
+ * Hidden (CSS, not `@if`) on routes flagged `data.hideChatWidget === true` and when the server reports
+ * `CHAT_ENABLED=false`, so the `@defer`-loaded panel keeps its state. `<app-chat-panel>` (and `marked`,
+ * `dompurify`) loads on first interaction with the launcher, out of every page's initial bundle.
  */
 @Component({
   selector: 'app-chat-dialog',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [IconComponent, ChatPanelComponent],
   host: { '[class.suppressed]': '!enabled()' },
   template: `
-    <dialog
-      #panel
-      class="chat-panel-shell"
-      aria-label="Chat with the AI Innovation Hub assistant"
-      tabindex="-1"
-      [class.open]="open()"
-      [class.expanded]="expanded()"
-      [attr.aria-hidden]="open() ? null : 'true'"
-      [attr.inert]="open() ? null : ''"
-      (keydown.escape)="onEscape()"
-      (cancel)="onDialogCancel($event)"
-    >
-      <div class="titlebar">
-        <app-icon name="forum" />
-        <span class="title">Hub Assistant</span>
-        <button
-          type="button"
-          class="titlebar-btn"
-          aria-label="Clear chat"
-          [disabled]="chatEngine.chat.messages.length === 0"
-          (click)="clearChat()"
-        >
-          <app-icon name="delete" />
-        </button>
-        <span class="divider" aria-hidden="true"></span>
-        <div class="actions">
+    <div class="cu-chat" #root>
+      <button
+        #launcher
+        type="button"
+        class="cu-chat__launcher"
+        [attr.aria-expanded]="open()"
+        aria-controls="site-chat"
+        (click)="openPanel()"
+      >
+        <svg appIcon="forum"></svg>Ask the Hub
+      </button>
+      <dialog
+        #panel
+        id="site-chat"
+        class="cu-chat__panel"
+        [class.app-chat--expanded]="expanded()"
+        aria-labelledby="site-chat-title"
+        tabindex="-1"
+        [attr.aria-modal]="modal() ? 'true' : null"
+        (keydown)="onKeydown($event)"
+        (cancel)="onDialogCancel($event)"
+      >
+        <div class="cu-chat__bar">
+          <h2 class="cu-chat__title" id="site-chat-title">Hub Assistant</h2>
           <button
             type="button"
-            class="titlebar-btn"
+            class="cu-chat__icon"
+            aria-label="Clear chat"
+            [disabled]="chatEngine.chat.messages.length === 0"
+            (click)="clearChat()"
+          >
+            <svg appIcon="delete"></svg>
+          </button>
+          <span class="app-chat__divider" aria-hidden="true"></span>
+          <button
+            type="button"
+            class="cu-chat__icon app-chat__expand"
             [attr.aria-label]="expanded() ? 'Restore smaller chat' : 'Expand chat'"
-            [attr.aria-expanded]="expanded()"
             (click)="toggleExpanded()"
           >
-            <app-icon [name]="expanded() ? 'unfold_less' : 'unfold_more'" />
+            <svg [appIcon]="expanded() ? 'unfold_less' : 'unfold_more'"></svg>
           </button>
-          <button type="button" class="titlebar-btn" aria-label="Close chat" (click)="close()">
-            <app-icon name="close" />
+          <button type="button" class="cu-chat__icon" aria-label="Minimize chat" (click)="close()">
+            <svg appIcon="remove"></svg>
           </button>
         </div>
-      </div>
-      @defer (on interaction(launcher)) {
-        <app-chat-panel />
-      } @placeholder {
-        <div class="panel-placeholder"></div>
-      }
-    </dialog>
-
-    <button
-      #launcher
-      type="button"
-      class="launcher"
-      [class.hidden]="open()"
-      [attr.aria-hidden]="open() ? 'true' : null"
-      [attr.tabindex]="open() ? -1 : null"
-      (click)="openPanel()"
-    >
-      <app-icon name="forum" />
-      <span>Ask the Hub</span>
-    </button>
+        @defer (on interaction(launcher)) {
+          <app-chat-panel />
+        } @placeholder {
+          <div class="app-chat__placeholder"></div>
+        }
+      </dialog>
+    </div>
   `,
   styles: `
-    :host {
-      display: block;
+    :host(.suppressed) { display: none; }
+
+    .app-chat__placeholder { flex: 1; }
+    /* "Clear chat" is destructive and cannot be undone: a rule sets it apart from the window controls beside it,
+       so a slightly-off click on Expand or Minimize never wipes the conversation. */
+    .app-chat__divider { align-self: stretch; margin-block: var(--space-1); border-inline-start: var(--border-thin) solid var(--color-line); }
+    .cu-chat__icon:disabled { color: var(--color-dim); cursor: default; }
+    .cu-chat__icon:disabled:hover { background: none; }
+
+    /* Expanded: a modal panel over most of the window (this app's addition to the block). */
+    .cu-chat__panel.app-chat--expanded {
       position: fixed;
-      right: 20px;
-      bottom: 20px;
-      z-index: 900;
+      inset: var(--space-8) var(--space-5) var(--space-5);
+      inline-size: auto;
+      block-size: auto;
+      max-inline-size: none;
+      max-block-size: none;
     }
-    :host(.suppressed) {
-      display: none;
-    }
+    .cu-chat__panel::backdrop { background: color-mix(in srgb, var(--color-scrim) 40%, transparent); }
 
-    .launcher {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 20px;
-      border: none;
-      border-radius: 999px;
-      background: var(--color-accent);
-      color: #fff;
-      font-family: var(--body-font);
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
-    }
-    .launcher app-icon {
-      font-size: 20px;
-    }
-    .launcher:hover {
-      background: var(--color-accent-dark);
-    }
-    .launcher:focus-visible {
-      outline: 2px solid var(--color-accent-dark);
-      outline-offset: 2px;
-    }
-    .launcher.hidden {
-      display: none;
-    }
-
-    .chat-panel-shell {
-      margin: 0;
-      padding: 0;
-      max-width: none;
-      max-height: none;
-      position: absolute;
-      left: auto;
-      right: 0;
-      bottom: 0;
-      width: 420px;
-      height: min(640px, calc(100vh - 120px));
-      display: flex;
-      flex-direction: column;
-      background: #fff;
-      border: 1px solid var(--color-border);
-      border-radius: 12px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
-      overflow: hidden;
-      visibility: hidden;
-      opacity: 0;
-      transform: translateY(10px) scale(0.98);
-      pointer-events: none;
-    }
-    @media (prefers-reduced-motion: no-preference) {
-      .chat-panel-shell {
-        transition: opacity 0.18s ease, transform 0.18s ease, visibility 0s linear 0.18s;
-      }
-      .chat-panel-shell.open {
-        transition: opacity 0.18s ease, transform 0.18s ease;
-      }
-    }
-    .chat-panel-shell.open {
-      visibility: visible;
-      opacity: 1;
-      transform: none;
-      pointer-events: auto;
-    }
-    .chat-panel-shell.expanded {
-      position: fixed;
-      top: 68px;
-      right: 20px;
-      bottom: 20px;
-      left: 20px;
-      width: auto;
-      height: auto;
-      z-index: 1000;
-    }
-    .chat-panel-shell::backdrop {
-      background: rgba(20, 20, 20, 0.32);
-    }
-    .chat-panel-shell app-chat-panel {
-      flex: 1;
-      min-height: 0;
-    }
-    .panel-placeholder {
-      flex: 1;
-    }
-
-    .titlebar {
-      flex: 0 0 auto;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 12px;
-      background: var(--color-primary, #222);
-      color: #fff;
-    }
-    .titlebar app-icon:first-child {
-      font-size: 18px;
-    }
-    .title {
-      font-family: var(--heading-font);
-      font-weight: 700;
-      font-size: 16px;
-      flex: 1;
-    }
-    /**
-     * Separates "Clear chat" — destructive, and irreversible — from the
-     * window controls next to it, so expanding or closing the panel can't
-     * become a wiped conversation from a slightly-off click.
-     */
-    .divider {
-      flex: 0 0 auto;
-      width: 1px;
-      height: 20px;
-      background: rgba(255, 255, 255, 0.25);
-    }
-    .actions {
-      display: flex;
-      gap: 2px;
-    }
-    .titlebar-btn {
-      width: 34px;
-      height: 34px;
-      border: none;
-      border-radius: 6px;
-      background: transparent;
-      color: rgba(255, 255, 255, 0.75);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-    }
-    .titlebar-btn app-icon {
-      font-size: 20px;
-    }
-    .titlebar-btn:hover {
-      color: #fff;
-      background: rgba(255, 255, 255, 0.12);
-    }
-    .titlebar-btn:focus-visible {
-      outline: 2px solid #fff;
-      outline-offset: 1px;
-    }
-    .titlebar-btn:disabled {
-      opacity: 0.35;
-      cursor: default;
-    }
-    .titlebar-btn:disabled:hover {
-      background: transparent;
-    }
-
+    /* Phones: the block already fills the screen with the panel, so there is nothing to expand. */
     @media (max-width: 767px) {
-      :host {
-        right: 12px;
-        bottom: 12px;
-      }
-      .chat-panel-shell {
-        width: calc(100vw - 24px);
-        height: min(70vh, calc(100vh - 80px));
-      }
-      .chat-panel-shell.expanded {
-        top: 60px;
-        right: 12px;
-        bottom: 12px;
-        left: 12px;
-        width: auto;
-        height: auto;
-      }
+      .app-chat__expand { display: none; }
+      .cu-chat__panel.app-chat--expanded { inset: 0; }
     }
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChatDialogComponent {
   private readonly router = inject(Router);
+  private readonly doc = inject(DOCUMENT);
   protected readonly chatEngine = inject(ChatEngineService);
 
   protected readonly open = signal(false);
   protected readonly expanded = signal(false);
+  private readonly phone = signal(false);
+  /** Modal while it fills a phone screen; expanded is modal through showModal() and needs no extra attribute. */
+  protected readonly modal = computed(() => this.open() && this.phone() && !this.expanded());
 
-  private readonly launcherEl = viewChild<ElementRef<HTMLElement>>('launcher');
+  private readonly rootEl = viewChild.required<ElementRef<HTMLElement>>('root');
+  private readonly launcherEl = viewChild.required<ElementRef<HTMLButtonElement>>('launcher');
   private readonly panelEl = viewChild.required<ElementRef<HTMLDialogElement>>('panel');
 
   private readonly url = toSignal(
@@ -303,36 +155,59 @@ export class ChatDialogComponent {
     return route.data['hideChatWidget'] !== true;
   });
 
+  constructor() {
+    const media = this.doc.defaultView?.matchMedia?.('(max-width: 767px)');
+    if (media) {
+      this.phone.set(media.matches);
+      const onChange = (e: MediaQueryListEvent) => this.phone.set(e.matches);
+      media.addEventListener('change', onChange);
+      inject(DestroyRef).onDestroy(() => media.removeEventListener('change', onChange));
+    }
+    // While the panel fills a phone screen, everything outside the chat is inert.
+    effect((onCleanup) => {
+      if (!this.modal()) return;
+      const inerted = this.inertOutside(this.rootEl().nativeElement);
+      onCleanup(() => inerted.forEach((el) => el.removeAttribute('inert')));
+    });
+  }
+
   protected openPanel(): void {
     const dialog = this.panelEl().nativeElement;
     if (!dialog.open) dialog.show();
     this.open.set(true);
+    // On the first open the panel is still loading (@defer); it focuses its own field once it renders.
+    this.focusField();
   }
 
   protected clearChat(): void {
     void this.chatEngine.clear();
+    this.focusField();
   }
 
   protected toggleExpanded(): void {
-    if (this.expanded()) {
-      this.collapseFromExpanded();
-      return;
-    }
     const dialog = this.panelEl().nativeElement;
-    if (dialog.open) dialog.close();
-    dialog.showModal();
-    this.expanded.set(true);
+    dialog.close();
+    if (this.expanded()) dialog.show();
+    else dialog.showModal();
+    this.expanded.update((v) => !v);
+    this.focusField();
   }
 
+  /** Escape on a modal (expanded) dialog: return to the small panel instead of closing. */
   protected onDialogCancel(event: Event): void {
     event.preventDefault();
-    if (this.expanded()) this.collapseFromExpanded();
+    if (this.expanded()) this.toggleExpanded();
   }
 
-  protected onEscape(): void {
+  protected onKeydown(e: KeyboardEvent): void {
     const dialog = this.panelEl().nativeElement;
-    if (dialog.matches(':modal')) return;
-    this.close();
+    if (e.key === 'Escape') {
+      if (dialog.matches(':modal')) return; // the cancel event handles it
+      e.preventDefault();
+      this.close();
+      return;
+    }
+    if (e.key === 'Tab') wrapTab(e, stopsIn(dialog, PANEL_STOPS), dialog, this.doc.activeElement);
   }
 
   protected close(): void {
@@ -341,13 +216,28 @@ export class ChatDialogComponent {
     if (dialog.open) dialog.close();
     this.open.set(false);
     this.expanded.set(false);
-    requestAnimationFrame(() => this.launcherEl()?.nativeElement.focus());
+    // After change detection has shown the launcher again (aria-expanded="true" hides it).
+    setTimeout(() => this.launcherEl().nativeElement.focus());
   }
 
-  private collapseFromExpanded(): void {
-    const dialog = this.panelEl().nativeElement;
-    dialog.close();
-    dialog.show();
-    this.expanded.set(false);
+  private focusField(): void {
+    setTimeout(() => this.panelEl().nativeElement.querySelector('textarea')?.focus());
+  }
+
+  /** Mark every sibling of the chat's ancestors (up to <body>) inert, and return what was marked. */
+  private inertOutside(keep: HTMLElement): HTMLElement[] {
+    const marked: HTMLElement[] = [];
+    let node: HTMLElement | null = keep;
+    while (node && node !== this.doc.body) {
+      const parent: HTMLElement | null = node.parentElement;
+      if (!parent) break;
+      for (const sibling of Array.from(parent.children) as HTMLElement[]) {
+        if (sibling === node || sibling.hasAttribute('inert') || sibling.tagName === 'SCRIPT') continue;
+        sibling.setAttribute('inert', '');
+        marked.push(sibling);
+      }
+      node = parent;
+    }
+    return marked;
   }
 }

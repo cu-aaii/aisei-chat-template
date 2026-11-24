@@ -5,7 +5,7 @@ import { ICON_NAMES } from '../components/icon/icon-names';
 /**
  * index.html carries only the icons this site uses (the full design-system sprite is 66 kB, on every prerendered
  * page). Each one must be the design system's own symbol, byte for byte (cornell-branding: one icon set, Material
- * Symbols Outlined 300), and every name `<app-icon>` accepts must be there.
+ * Symbols Outlined 300), and every name `svg[appIcon]` accepts must be there.
  */
 const read = (p: string) => readFileSync(new URL(`../../../../${p}`, import.meta.url), 'utf8');
 const icons = (html: string) => (html.match(/<symbol id="cu-i-[\s\S]*?<\/symbol>/g) ?? []);

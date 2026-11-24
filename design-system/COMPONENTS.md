@@ -16,33 +16,33 @@ has its markup pattern and what its behaviour must keep. A block is plain CSS (`
 | `blocks/accordion.css` | accordion, built on native &lt;details&gt;/&lt;summary&gt; | `.cu-accordion` `.cu-accordion-set` | gallery, interactive, page, public | - |
 | `blocks/app.css` | app shell: the frame for an application or dashboard (not in CDS; CDS frames websites) | `.cu-app` | dashboard | - |
 | `blocks/backdrop.css` | media backdrops and banners | `.cu-backdrop` `.cu-banner` | layout | - |
-| `blocks/backtotop.css` | back to top (CDS "Back-to-Top Button") | `.cu-back-to-top` | interactive | - |
-| `blocks/band.css` | bands: full-width regions with their own surface (CDS .band.accent1–7) | `.cu-band` | layout, public | - |
-| `blocks/button.css` | button (CDS "buttons and link buttons") | `.cu-button` | customizer, dashboard, forms, gallery, headers | - |
+| `blocks/backtotop.css` | back to top (CDS "Back-to-Top Button") | `.cu-back-to-top` | interactive | `shared/components/icon/icon.component.ts`, `shared/components/scroll-to-top/scroll-to-top.component.ts` |
+| `blocks/band.css` | bands: full-width regions with their own surface (CDS .band.accent1–7) | `.cu-band` | layout, public | `shared/components/hero/hero.component.ts`, `shared/layout/public/inner-page-layout.component.ts` |
+| `blocks/button.css` | button (CDS "buttons and link buttons") | `.cu-button` | customizer, dashboard, forms, gallery, headers | `features/public/home/home.component.ts`, `shared/components/chat/chat-panel.component.ts` |
 | `blocks/callout.css` | callout (CDS .block-callout) | `.cu-callout` `.cu-callout-wrap` | layout, page, public | - |
 | `blocks/card.css` | card | `.cu-card` | gallery, sliders | - |
 | `blocks/cards.css` | cards (CDS .layout-cards) | `.cu-cards` | gallery, layout, page, public, sliders | - |
 | `blocks/cardslider.css` | card slider (CDS "Card Slider") | `.cu-card-slider` | sliders | - |
-| `blocks/chat.css` | agent chat (not in CDS) | `.cu-chat` | dashboard | - |
+| `blocks/chat.css` | agent chat (not in CDS) | `.cu-chat` | dashboard | `shared/components/chat-dialog/chat-dialog.component.ts` |
 | `blocks/columns.css` | column layouts (CDS .layout-1-1 … .layout-1-2-1) | `.cu-columns` | layout | - |
 | `blocks/dashboard.css` | dashboard parts for apps (not in CDS) | `.cu-stat` `.cu-badge` `.cu-pane` `.cu-filters` `.cu-page-header` `.cu-empty` | dashboard, forms, gallery, page, public | - |
 | `blocks/dialog.css` | modal dialog (CDS "Modal Dialog"), on the native &lt;dialog&gt; element (dialog.showModal()) | `.cu-dialog` | gallery, interactive | - |
-| `blocks/field.css` | form controls (CDS values) | `.cu-input` `.cu-select` `.cu-textarea` `.cu-description` `.cu-check` `.cu-form-item` | dashboard, forms, gallery, headers, index | - |
+| `blocks/field.css` | form controls (CDS values) | `.cu-input` `.cu-select` `.cu-textarea` `.cu-description` `.cu-check` `.cu-form-item` | dashboard, forms, gallery, headers, index | `shared/components/chat/chat-panel.component.ts` |
 | `blocks/figure.css` | figure, caption, aside, figure set, receded photo | `.cu-figure` `.cu-figure-set` `.cu-receded` `.cu-aside` | content, sidebars | - |
 | `blocks/footer.css` | footer | `.cu-footer` | dashboard, gallery, page, public | `shared/layout/public/site-footer.component.ts` |
-| `blocks/form.css` | form, form item, form actions, fieldset (CDS "custom forms" and "fieldsets") | `.cu-fieldset` `.cu-form-actions` `.cu-form` `.cu-sr-only` | customizer, dashboard, decisions, forms, gallery | `shared/layout/site-header/site-header.component.ts` |
+| `blocks/form.css` | form, form item, form actions, fieldset (CDS "custom forms" and "fieldsets") | `.cu-fieldset` `.cu-form-actions` `.cu-form` `.cu-sr-only` | customizer, dashboard, decisions, forms, gallery | `shared/components/chat/chat-panel.component.ts`, `shared/layout/site-header/site-header.component.ts` |
 | `blocks/grid.css` | 12-column flex grid (CDS .flex-grid) | `.cu-grid` `.cu-col-1` `.cu-col-2` `.cu-col-3` `.cu-col-4` `.cu-col-5` | forms | - |
 | `blocks/header.css` | site header, the CDS site banner | `.cu-header` `.cu-utility` `.cu-brand` `.cu-search` `.cu-seal` | dashboard, decisions, gallery, headers, page | `shared/layout/site-header/site-header.component.ts` |
-| `blocks/heading.css` | heading variants | `.cu-heading` `.cu-h1` `.cu-h2` `.cu-h3` `.cu-h4` `.cu-h5` | content, gallery, interactive, layout, motion | `shared/layout/public/site-footer.component.ts` |
+| `blocks/heading.css` | heading variants | `.cu-heading` `.cu-h1` `.cu-h2` `.cu-h3` `.cu-h4` `.cu-h5` | content, gallery, interactive, layout, motion | - |
 | `blocks/hovertabs.css` | hover tabs (CDS "Hover Tabs") | `.cu-hovertabs` | interactive | - |
-| `blocks/icon.css` | icons: Google Material Symbols (Outlined, weight 300), named exactly as the app's &lt;mat-icon&gt; names (expand_more, verified_user, …), so a name from... | `.cu-icon` | content, dashboard, forms, interactive | `shared/components/icon/icon.component.ts`, `shared/layout/site-header/site-header.component.ts` |
+| `blocks/icon.css` | icons: Google Material Symbols (Outlined, weight 300), named exactly as the app's &lt;mat-icon&gt; names (expand_more, verified_user, …), so a name from... | `.cu-icon` | content, dashboard, forms, interactive | `features/public/home/home.component.ts`, `shared/components/icon/icon.component.ts`, `shared/layout/site-header/site-header.component.ts` |
 | `blocks/inline.css` | inline text styles: highlights, documentation notes, text tones, code bits, link variants | `.cu-note` `.cu-hl` `.cu-link-quiet` `.cu-text-soft` `.cu-text-dim` `.cu-text-red` | content, page, public | - |
-| `blocks/layout.css` | layout primitives | `.cu-container` `.cu-shell` `.cu-with-sidebar` `.cu-stack` `.cu-layout` `.cu-cluster` | content, dashboard, decisions, forms, gallery | `shared/layout/public/site-footer.component.ts`, `shared/layout/site-header/site-header.component.ts` |
+| `blocks/layout.css` | layout primitives | `.cu-container` `.cu-shell` `.cu-with-sidebar` `.cu-stack` `.cu-layout` `.cu-cluster` | content, dashboard, decisions, forms, gallery | `features/public/home/home.component.ts`, `shared/components/hero/hero.component.ts`, `shared/layout/public/inner-page-layout.component.ts`, `shared/layout/public/site-footer.component.ts` |
 | `blocks/list.css` | lists | `.cu-list` `.cu-deflist` | content | - |
 | `blocks/modeswitch.css` | mode switch: Automatic / Light / Dark as one small segmented control | `.cu-mode-switch` | customizer, dashboard, page, public | `shared/layout/public/site-footer.component.ts` |
 | `blocks/motion.css` | motion (CDS "Motion Design") | `.cu-motion-fadein` `.cu-motion-slidein` `.cu-motion-parallax` `.cu-motion-custom` | motion | - |
 | `blocks/nav.css` | navigation | `.cu-nav` `.cu-section-nav` `.cu-sidenav` `.cu-nav-toggle` `.cu-breadcrumb` | dashboard, decisions, gallery, headers, interactive | `shared/layout/site-header/site-header.component.ts`, `shared/look/look.ts` |
-| `blocks/notice.css` | notice (callout) and badge | `.cu-notice` | gallery, page, public | - |
+| `blocks/notice.css` | notice (callout) and badge | `.cu-notice` | gallery, page, public | `shared/components/chat/chat-panel.component.ts` |
 | `blocks/panel.css` | panel and pill (non-semantic containers) | `.cu-panel` `.cu-pill` | content, dashboard, forms, layout, sidebars | - |
 | `blocks/quote.css` | blockquote | `.cu-quote` | content, page, public | - |
 | `blocks/rule.css` | horizontal rules | `.cu-rule` | content, forms | - |

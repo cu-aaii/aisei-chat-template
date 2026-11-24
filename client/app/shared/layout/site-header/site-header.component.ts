@@ -155,6 +155,7 @@ export interface UtilityItem {
           [attr.aria-modal]="overlay() ? 'true' : null"
           [attr.tabindex]="overlay() ? -1 : null"
           [class.cu-nav--menu]="hasMenus()"
+          [attr.data-ready]="hasMenus() ? '' : null"
         >
           <a class="cu-nav__home" [routerLink]="homeLink()">
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 11 12 3l9 8M5 10v10h5v-6h4v6h5V10" /></svg>
@@ -170,7 +171,7 @@ export interface UtilityItem {
                 @if (item.children?.length) {
                   <li
                     class="cu-nav__parent"
-                    [class.is-open]="openMenu() === item.label"
+                    [class.is-open]="isOpen(item.label)"
                     (mouseenter)="hoverMenu(item.label, true)"
                     (mouseleave)="hoverMenu(item.label, false)"
                     (focusout)="onMenuFocusOut($event, item.label)"
@@ -186,7 +187,7 @@ export interface UtilityItem {
                       #menuToggle
                       class="cu-nav__toggle"
                       type="button"
-                      [attr.aria-expanded]="openMenu() === item.label"
+                      [attr.aria-expanded]="isOpen(item.label)"
                       [attr.aria-controls]="navId + '-sub-' + $index"
                       (click)="toggleMenu(item.label, menuToggle)"
                     >
@@ -195,7 +196,13 @@ export interface UtilityItem {
                     <ul class="cu-nav__sub" role="list" [id]="navId + '-sub-' + $index">
                       @for (child of item.children; track child.path) {
                         <li>
-                          <a class="cu-nav__link" [routerLink]="child.path" routerLinkActive ariaCurrentWhenActive="page">{{
+                          <a
+                            class="cu-nav__link"
+                            [routerLink]="child.path"
+                            routerLinkActive
+                            ariaCurrentWhenActive="page"
+                            [routerLinkActiveOptions]="{ exact: child.path === '/' }"
+                            >{{
                             child.label
                           }}</a>
                         </li>
@@ -480,6 +487,7 @@ export class SiteHeaderComponent {
       .subscribe(() => {
         this.menuOpen.set(false);
         this.openMenu.set(null);
+        this.hoverOpen.set(null);
       });
 
     // While the overlay is open, everything outside the header is inert; focus goes to Close.
@@ -494,21 +502,30 @@ export class SiteHeaderComponent {
   protected readonly hasMenus = computed(() => this.items().some((i) => !!i.children?.length));
   /** The label of the open dropdown, or null: one at a time. Any navigation closes it (constructor). */
   protected readonly openMenu = signal<string | null>(null);
+  /** The dropdown a pointer is hovering open (desktop), kept apart so a click on its chevron pins it rather than shutting it. */
+  private readonly hoverOpen = signal<string | null>(null);
+  protected isOpen(label: string): boolean {
+    return this.openMenu() === label || this.hoverOpen() === label;
+  }
   private readonly menuToggles = viewChildren<ElementRef<HTMLButtonElement>>('menuToggle');
   private hoverTimer: ReturnType<typeof setTimeout> | undefined;
 
   /** The chevron is a disclosure button. Focus it first: Safari does not focus a clicked button, and focus-out is what closes the menu. */
   protected toggleMenu(label: string, button: HTMLButtonElement): void {
     button.focus();
-    this.openMenu.update((open) => (open === label ? null : label));
+    if (this.hoverOpen() === label && this.openMenu() !== label) this.openMenu.set(label);
+    else {
+      this.openMenu.update((open) => (open === label ? null : label));
+      this.hoverOpen.set(null);
+    }
   }
 
   /** Desktop only: a pointer opens a dropdown on hover and it closes shortly after the pointer leaves (showcase.js initNav). */
   protected hoverMenu(label: string, enter: boolean): void {
     if (this.narrow()) return;
     clearTimeout(this.hoverTimer);
-    if (enter) this.openMenu.set(label);
-    else this.hoverTimer = setTimeout(() => this.openMenu.update((o) => (o === label ? null : o)), 180);
+    if (enter) this.hoverOpen.set(label);
+    else this.hoverTimer = setTimeout(() => this.hoverOpen.update((o) => (o === label ? null : o)), 180);
   }
 
   /** Focus left the item (Tab past it, a click elsewhere): close it. A window losing focus (no relatedTarget) keeps it open. */
@@ -518,6 +535,7 @@ export class SiteHeaderComponent {
     if (next === null && !this.doc.hasFocus()) return;
     if (next && (e.currentTarget as HTMLElement).contains(next)) return;
     this.openMenu.set(null);
+    this.hoverOpen.set(null);
   }
 
   /** Close the menu; `returnFocus` puts focus back on the Menu button (Escape, Close). */
@@ -528,11 +546,12 @@ export class SiteHeaderComponent {
   }
 
   protected onNavKeydown(e: KeyboardEvent): void {
-    const open = this.openMenu();
+    const open = this.openMenu() ?? this.hoverOpen();
     if (e.key === 'Escape' && open !== null && !this.overlay()) {
       // Escape closes the open dropdown and puts focus back on its chevron.
       const i = this.items().filter((it) => it.children?.length).findIndex((it) => it.label === open);
       this.openMenu.set(null);
+      this.hoverOpen.set(null);
       this.menuToggles()[i]?.nativeElement.focus();
       return;
     }

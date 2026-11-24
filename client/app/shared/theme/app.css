@@ -20,3 +20,11 @@
 :where(html:has(.cu-chat)) {
   scroll-padding-block-end: calc(2.75rem + 2 * var(--space-5));
 }
+
+/* The chat assistant's answers: Markdown rendered through [innerHTML] (chat-panel.component.ts), which a component's
+   encapsulated styles cannot reach. The design system's base styles draw the elements; this only sets the spacing
+   inside a message bubble. */
+.app-chat-panel .text > :first-child { margin-block-start: 0; }
+.app-chat-panel .text :is(p, ul, ol, pre, blockquote) { margin-block: 0 var(--space-2); max-inline-size: none; }
+.app-chat-panel .text > :last-child { margin-block-end: 0; }
+.app-chat-panel .text pre { overflow-x: auto; }

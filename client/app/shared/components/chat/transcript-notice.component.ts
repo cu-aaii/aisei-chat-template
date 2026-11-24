@@ -17,11 +17,12 @@ import { ChatEngineService } from '../../services/chat-engine.service';
   `,
   styles: `
     .transcript-notice {
-      margin: 0 0 8px;
-      padding: 0 4px;
-      font-size: 13px;
-      line-height: 1.4;
+      margin: 0;
+      padding: 0 var(--space-4) var(--space-2);
+      font-size: var(--text-xs);
+      line-height: var(--leading-snug);
       color: var(--color-muted);
+      max-inline-size: none;
     }
   `,
 })
