@@ -70,9 +70,26 @@ requiredEnvVars.forEach((key) => {
   }
 });
 
+/**
+ * Runtime mode, failing closed: an **unset** `NODE_ENV` counts as production, so a container
+ * started without it still gets the `Secure` CSRF cookie and no streamed model reasoning.
+ * Local dev sets `NODE_ENV=development` in `.env` (see `example.env`); Vitest sets `test`
+ * itself; the Dockerfile bakes `production`. An empty or unknown value refuses to start
+ * rather than guessing. Same rule as cu-aaii/payflow#51 and cu-aaii/base-template#129.
+ */
+export function resolveIsProduction(nodeEnv: string | undefined): boolean {
+  if (nodeEnv === undefined) return true;
+  if (nodeEnv === 'production') return true;
+  if (nodeEnv === 'development' || nodeEnv === 'test') return false;
+  throw new Error(
+    `Invalid NODE_ENV ${JSON.stringify(nodeEnv)}: expected development, production or test ` +
+      '(unset counts as production; set NODE_ENV=development in .env for a local run).',
+  );
+}
+
 export const config = {
   port: Number(typedEnv.PORT ?? 4318),
-  isProduction: process.env.NODE_ENV === 'production',
+  isProduction: resolveIsProduction(process.env.NODE_ENV),
   chatEnabled: typedEnv.CHAT_ENABLED !== 'false',
   gatewayBaseUrl: GATEWAY_BASE_URL,
   gatewayApiKey: typedEnv.GATEWAY_API_KEY,
